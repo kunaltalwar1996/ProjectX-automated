@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin="anonymous">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Employee Panel - Broker Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+  <script type="module" crossorigin src="/assets/auth-TPhssE9F.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-BwtUtcjS.css">
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex">
+<!-- SideNavBar (Shared Component) -->
+<nav class="h-screen w-64 border-r fixed left-0 top-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-['Inter'] text-sm font-medium z-40 flex flex-col justify-between">
+<div class="flex flex-col p-4 gap-2">
+<!-- Header -->
+<div class="flex items-center gap-3 px-3 py-4 mb-4">
+<div aria-label="Broker Profile" class="h-10 w-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center overflow-hidden flex-shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">real_estate_agent</span>
+</div>
+<div>
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">Premier Realty</h2>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Broker Dashboard</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Overview</span>
+</a>
+<!-- ACTIVE TAB: Listings -->
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
+<span class="material-symbols-outlined">domain</span>
+<span>Listings</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/map.html">
+<span class="material-symbols-outlined">person_search</span>
+<span>Leads</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/broker-dashboard.html">
+<span class="material-symbols-outlined">insights</span>
+<span>Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/admin-panel.html">
+<span class="material-symbols-outlined">forum</span>
+<span>Messages</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</div>
+<!-- CTA -->
+<div class="mt-6 px-3">
+<button class="w-full flex items-center justify-center gap-2 py-2 bg-primary text-on-primary rounded-lg font-medium shadow-sm hover:opacity-90 transition-all duration-200 ease-in-out">
+<span class="material-symbols-outlined">add</span>
+<span>Add Listing</span>
+</button>
+</div>
+</div>
+<!-- Footer Links -->
+<div class="flex flex-col p-4 gap-2 border-t border-slate-200 dark:border-slate-800">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/">
+<span class="material-symbols-outlined">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="#" onclick="window.logout(); return false;">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="ml-64 flex-1 p-margin-desktop bg-background min-h-screen">
+<div class="max-w-[1400px] mx-auto flex flex-col gap-gutter">
+<!-- Page Header -->
+<header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-6">
+<div>
+<h1 class="font-h2 text-h2 text-on-background mb-1">Employee Operations Panel</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage listings, support requests, and platform moderation.</p>
+</div>
+<div class="flex gap-3">
+<span class="inline-flex items-center gap-2 bg-surface-container px-3 py-1.5 rounded-full font-label-caps text-label-caps text-on-surface">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+                        System Operational
+                    </span>
+</div>
+</header>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-gutter">
+<!-- Listings Review Queue (Spans 2 columns) -->
+<section class="xl:col-span-2 flex flex-col gap-stack-md bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg shadow-sm">
+<div class="flex justify-between items-center mb-2">
+<h2 class="font-h3 text-h3 text-on-background flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">fact_check</span>
+                            Listings Review Queue
+                        </h2>
+<span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md">4 Pending</span>
+</div>
+<!-- Review Card 1 -->
+<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
+<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="A bright, high-resolution interior photograph of a modern, open-concept living room in a luxury urban penthouse. The space is flooded with natural daylight from floor-to-ceiling windows overlooking a city skyline. The decor features minimalist, light-colored furniture, hardwood floors, and a sleek, neutral color palette with subtle accents of deep blue and emerald green. The overall aesthetic is clean, airy, and highly professional, reflecting a premium real estate listing suitable for a high-end corporate dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-Fl8xt1U6ry0q-kHHLfk01_XfkcVRCxO2R6aVg1X_hruAuOQmabNIvNIPkH8JIicr7F7LYicnEUNTyLP70P0a919Bl86Fgh-uYb6dmnkeB0wyvz7hUk9m5DO2AiRSD1xIRG-pFSe7E4Q1ktZX3KUEhcae5fdpZJe9rnphsIMd82_ymkufHm2h4tpcbGfoJddy_uzBHYtHGYTyPrIl-chEFEYtSQAmV3co2fqI1nxoNuHpsFe6I4EnU7_A4rMN7YZD0wrOUlwE7TQr"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-h3 text-h3 text-on-background text-lg">742 Evergreen Terrace</h3>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                        Content Checked ✓
+                                    </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #8839</span> • 2 hours ago</p>
+<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹12.5 Cr</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 4 Beds</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 3 Baths</span>
+</div>
+</div>
+<div class="flex gap-3 mt-4">
+<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
+<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
+<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
+</div>
+</div>
+</div>
+<!-- Review Card 2 -->
+<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
+<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="An exterior shot of a contemporary single-family home on a sunny day with clear blue skies. The architecture features clean, geometric lines, large glass panels, and a mix of white stucco and natural wood siding. A neatly manicured green lawn and a small paved driveway complete the front yard. The lighting is crisp and natural, highlighting the property's modern aesthetic and premium quality, styled to fit perfectly within a clean, light-mode corporate software interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu5tsxERN5-n8yuHPOnFYIzHX-e5LDmJE7vWmZnQ-zg6fkdDw31zBNI1SSUYqzrJ9bHVOdU1pFedSO1rv4UIzdxVs0EDN9Gxh9AI0vuxq36Jl3gZGCAXfJ42c4xXxfAl0OOdAfGo0y9RFoYCitoGA4R2Ka-ZICpMGVac94Ba6vN2dqrNuePlokZKp8uq-yRQIO45CcUB5lJ7n19wxrfjfiXTlVXnlzDaJEsdk1JhJ24enYktpnZj7HRI93x-niamm3kXX_EZfExqAN"/>
+</div>
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-h3 text-h3 text-on-background text-lg">1001 Modernist Way</h3>
+<span class="bg-surface-container text-on-surface-variant border border-outline-variant px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">pending</span>
+                                        Scan Pending
+                                    </span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #2104</span> • 5 hours ago</p>
+<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹34.0 Cr</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 5 Beds</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 4.5 Baths</span>
+</div>
+</div>
+<div class="flex gap-3 mt-4">
+<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
+<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
+<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Support & Moderation -->
+<div class="flex flex-col gap-gutter">
+<!-- Support Tickets -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-h3 text-h3 text-on-background text-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">support_agent</span>
+                                Support Tickets
+                            </h2>
+<button class="text-on-tertiary-container font-body-sm text-body-sm font-medium hover:underline">View All</button>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Ticket Item -->
+<div class="p-3 border border-outline-variant rounded-lg bg-surface-bright flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant">#TK-8992</span>
+<span class="bg-error-container text-on-error-container px-2 py-0.5 rounded font-label-caps text-[10px]">High Priority</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-background font-medium">Listing upload error</p>
+<div class="flex justify-between items-center mt-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant text-xs">Agent: Sarah J.</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-xs">10m ago</span>
+</div>
+</div>
+<!-- Ticket Item -->
+<div class="p-3 border border-outline-variant rounded-lg bg-surface-bright flex flex-col gap-2">
+<div class="flex justify-between items-start">
+<span class="font-label-caps text-label-caps text-on-surface-variant">#TK-8991</span>
+<span class="bg-surface-container-high text-on-surface px-2 py-0.5 rounded font-label-caps text-[10px]">Open</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-background font-medium">Account access issue</p>
+<div class="flex justify-between items-center mt-1">
+<span class="font-body-sm text-body-sm text-on-surface-variant text-xs">User: Mike T.</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant text-xs">1h ago</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Moderation Log -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm flex-1">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-h3 text-h3 text-on-background text-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">history</span>
+                                Moderation Log
+                            </h2>
+</div>
+<div class="relative pl-4 border-l-2 border-surface-container-high flex flex-col gap-6">
+<!-- Log Item -->
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-secondary"></div>
+<p class="font-body-sm text-body-sm text-on-background mb-0.5"><span class="font-medium">System</span> verified images for Listing #4492.</p>
+<span class="font-label-caps text-label-caps text-on-surface-variant">Just now</span>
+</div>
+<!-- Log Item -->
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-primary"></div>
+<p class="font-body-sm text-body-sm text-on-background mb-0.5"><span class="font-medium">Admin (You)</span> approved Listing #4490.</p>
+<span class="font-label-caps text-label-caps text-on-surface-variant">15 mins ago</span>
+</div>
+<!-- Log Item -->
+<div class="relative">
+<div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-error"></div>
+<p class="font-body-sm text-body-sm text-on-background mb-0.5"><span class="font-medium">Admin (You)</span> flagged User Report #102.</p>
+<span class="font-label-caps text-label-caps text-on-surface-variant">1 hr ago</span>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</main>
+</body></html>
