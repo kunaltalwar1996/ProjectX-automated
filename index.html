@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>EstatePro - Premium Real Estate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/auth.js"></script>
+</head>
+<body class="bg-white text-slate-900 font-['Inter'] antialiased min-h-screen flex flex-col">
+  <!-- Top Navigation -->
+  <nav class="fixed top-0 w-full z-50 bg-white border-b border-slate-100 h-16 flex items-center">
+    <div class="max-w-[1280px] mx-auto px-6 w-full flex items-center justify-between">
+      <a href="/index.html" class="text-xl font-black tracking-tighter text-slate-900">EstatePro</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a href="/properties.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Buy</a>
+        <a href="/map.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Rent</a>
+        <a href="/sell.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Sell</a>
+        <a href="/admin-panel.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Agents</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="/admin-panel.html" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-sm">Dashboard</a>
+        <button class="text-slate-400 hover:text-slate-900 transition-colors">
+          <span class="material-symbols-outlined">account_circle</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="pt-32 pb-20 px-6">
+    <div class="max-w-[1280px] mx-auto text-center">
+      <h1 class="text-6xl md:text-8xl font-black tracking-tight text-slate-900 mb-8 leading-[0.9]">
+        Find Your <br><span class="text-slate-400">Masterpiece.</span>
+      </h1>
+      <p class="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-12 font-medium">
+        Curated high-end real estate across Mumbai & Delhi. <br class="hidden md:block"> Experience the pinnacle of modern luxury living.
+      </p>
+      
+      <!-- Premium Search Bar -->
+      <div class="max-w-2xl mx-auto bg-white p-2 rounded-[32px] shadow-2xl border border-slate-100 flex items-center gap-2">
+        <div class="flex-1 flex items-center gap-3 px-6">
+          <span class="material-symbols-outlined text-slate-400">location_on</span>
+          <input type="text" id="location-search" placeholder="Search by neighborhood..." class="w-full py-4 text-sm font-bold outline-none">
+        </div>
+        <button class="bg-slate-900 text-white w-14 h-14 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors">
+          <span class="material-symbols-outlined">search</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Featured Section -->
+  <section class="py-24 bg-slate-50">
+    <div class="max-w-[1280px] mx-auto px-6">
+      <div class="flex items-end justify-between mb-16">
+        <div>
+          <h2 class="text-4xl font-black tracking-tight text-slate-900">Featured Homes</h2>
+          <p class="text-slate-500 font-medium mt-2">Handpicked luxury residences for the discerning</p>
+        </div>
+        <a href="/properties.html" class="hidden md:flex items-center gap-2 text-sm font-black uppercase tracking-widest text-slate-900 hover:gap-4 transition-all">
+          Explore All <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <!-- Property 1 -->
+        <div class="group cursor-pointer">
+          <div class="aspect-[4/5] rounded-[40px] overflow-hidden relative shadow-2xl mb-8 bg-slate-200">
+            <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvHl-OJW_afKBgKl2rT39AGy3KwG51Ej_tY3c_nJAw1-3zUwzf53LzyH-XQdNt34BPXin-KdNJERyMMSJO97lOUT7GYOYTeGoK06xn6wBhb7c9P--mm4xrAN7Y0vZDhKzaEu5G1C7ueAeODBpY4qwEnxINJUAR7WjgcL-qveWbML9gfi3q0jqdVavQFH6u3oNjzI0fxzxdZ7WI3PqUmREJrI5p-9cXyGI0656WN-hDVGyKvulxY6prH8YMgxgWPA-uSJw8AcyCcF8h" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+            <div class="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 text-white translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+              <h3 class="text-xl font-black mb-1">Marine Drive Penthouse</h3>
+              <p class="text-white/70 text-sm font-medium">₹28.5 Cr • Mumbai</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Property 2 -->
+        <div class="group cursor-pointer">
+          <div class="aspect-[4/5] rounded-[40px] overflow-hidden relative shadow-2xl mb-8 bg-slate-200">
+            <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCNP2aTGDnkfqSHa4ntzoQA2m_ggHg3cFrjA39cvexTFa8B9FdIpD7xEDxHUIbIvLB6xJMfXRxgLJ1p2a4cfmSTpfnUlOW7JN8HdibTBPxIA9G7WHvNNzeuDMOIZyIMosdVxGoNYaz-pQug8qDBT5fk44CZcgRWH0BPmzK0yqRzYFbqXUClD3DahzgNRv39pUS_CO0-PDLQRhKfwL4CWn6hU0Fi1bQVHKlzBdLCf1u1L646jDnDyRxN04XnMl0xu8PUAtOtCnn-yfC" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+            <div class="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 text-white translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+              <h3 class="text-xl font-black mb-1">BKC Corporate Suite</h3>
+              <p class="text-white/70 text-sm font-medium">₹11.5 Cr • Mumbai</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Property 3 -->
+        <div class="group cursor-pointer">
+          <div class="aspect-[4/5] rounded-[40px] overflow-hidden relative shadow-2xl mb-8 bg-slate-200">
+            <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWqaJN_MYIMLr9eCDFt5KinL15valxJ1kD-6e7gbizuYe97SjjJrjv5igj5NUvz4-HnQd2cWipmYiVBMuZIn1MT34seVjdXH0cdtvGqaK7hlwNvjjdHrcwlgUG0aIYL8Mjz4HGhB9pQfazQRaGwsI2ObE6sXIM7J05qp424lZMW4fQyVRP3P4LpGW8EFoDGRttghjqi991gQM4-Key2jvwzthWAdx3oiK_EsKcYNV8Fc2qI0zCLQiYRglK86lZU8GuqiBduXpnTjh0" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+            <div class="absolute bottom-8 left-8 right-8 p-6 bg-white/10 backdrop-blur-2xl rounded-3xl border border-white/20 text-white translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+              <h3 class="text-xl font-black mb-1">Vasant Vihar Mansion</h3>
+              <p class="text-white/70 text-sm font-medium">₹42.0 Cr • New Delhi</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-white py-16 px-6 border-t border-slate-50">
+    <div class="max-w-[1280px] mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
+      <div class="text-2xl font-black tracking-tighter">EstatePro</div>
+      <div class="flex gap-8 text-xs font-bold uppercase tracking-widest text-slate-400">
+        <a href="#" class="hover:text-slate-900">About</a>
+        <a href="#" class="hover:text-slate-900">Careers</a>
+        <a href="#" class="hover:text-slate-900">Privacy</a>
+        <a href="#" class="hover:text-slate-900">Terms</a>
+      </div>
+      <div class="text-xs font-medium text-slate-400">© 2025 EstatePro India.</div>
+    </div>
+  </footer>
+
+  <script>
+    const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY';
+    // ... Place autocomplete logic same as before but cleaner ...
+  </script>
+</body>
+</html>
