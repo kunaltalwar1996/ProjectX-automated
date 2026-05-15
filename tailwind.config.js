@@ -69,13 +69,13 @@ module.exports = {
               "stack-md": "16px"
           },
           "fontFamily": {
-              "body-sm": ["Inter"],
-              "body-lg": ["Inter"],
-              "h1": ["Inter"],
-              "h3": ["Inter"],
-              "body-md": ["Inter"],
-              "label-caps": ["Inter"],
-              "h2": ["Inter"]
+              "body-sm": ["Outfit"],
+              "body-lg": ["Outfit"],
+              "h1": ["Outfit"],
+              "h3": ["Outfit"],
+              "body-md": ["Outfit"],
+              "label-caps": ["Outfit"],
+              "h2": ["Outfit"]
           },
           "fontSize": {
               "body-sm": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],

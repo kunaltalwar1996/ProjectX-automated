@@ -1,226 +1,312 @@
 <!DOCTYPE html>
 
-<html class="light" lang="en"><head>
-<link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin="anonymous">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Luxury Property Listing - EstatePro</title>
+<html class="light" lang="en">
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<head>
+    <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Luxury Property Listing - EstatePro</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
 
     <link rel="stylesheet" href="/style.css">
-<script type="module" src="/auth.js"></script>
+    <script type="module" src="/auth.js"></script>
+    <script src="/demo-data.js"></script>
+    <script>
+      // Populate property details from demo data using ?id= URL param
+      document.addEventListener('DOMContentLoaded', () => {
+        const id = parseInt(new URLSearchParams(window.location.search).get('id'));
+        if (!id || !window.DEMO_LISTINGS) return;
+        const l = window.DEMO_LISTINGS.find(x => x.id === id);
+        if (!l) return;
+
+        // Update page title
+        document.title = `${l.title} — ProjectX`;
+
+        // Hero image
+        const heroImg = document.querySelector('.hero-img');
+        if (heroImg) heroImg.src = l.img;
+
+        // Price
+        const priceEl = document.getElementById('detail-price');
+        if (priceEl) priceEl.innerHTML = window.formatPrice ? window.formatPrice(l.price, l.intent) : `₹${l.price} Cr`;
+
+        // Title & address
+        const titleEl = document.getElementById('detail-title');
+        if (titleEl) titleEl.textContent = l.title;
+        const addrEl = document.getElementById('detail-address');
+        if (addrEl) addrEl.innerHTML = `<span class="material-symbols-outlined text-[20px]">location_on</span> ${l.address || l.location}`;
+
+        // Stats
+        const bedsEl = document.getElementById('detail-beds');
+        if (bedsEl) bedsEl.textContent = l.beds;
+        const bathsEl = document.getElementById('detail-baths');
+        if (bathsEl) bathsEl.textContent = l.baths;
+        const sqftEl = document.getElementById('detail-sqft');
+        if (sqftEl) sqftEl.textContent = l.sqft.toLocaleString();
+        const typeEl = document.getElementById('detail-type');
+        if (typeEl) typeEl.textContent = l.type;
+
+        // Description
+        const descEl = document.getElementById('detail-desc');
+        if (descEl) {
+          descEl.innerHTML = `<p>This exquisite ${l.type.toLowerCase()} located in ${l.location} offers a premium living experience with ${l.beds} spacious bedrooms and ${l.baths} modern bathrooms. Spanning ${l.sqft.toLocaleString()} sqft, the property features high-end finishes, abundant natural light, and breathtaking views.</p>
+          <p>Perfect for those seeking luxury and comfort, this home includes state-of-the-art amenities and is situated in a prime neighborhood with easy access to the city's best attractions.</p>`;
+        }
+      });
+    </script>
 </head>
-<body class="bg-white text-slate-900 font-['Inter'] antialiased pt-16">
-<!-- TopNavBar -->
-<nav class="fixed top-0 w-full z-50 bg-white border-b border-slate-200 shadow-sm font-['Inter'] text-sm tracking-tight text-slate-900">
-<div class="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
-<!-- Brand -->
-<div class="flex items-center gap-2">
-<a href="/index.html" class="text-xl font-black tracking-tighter text-slate-900">EstatePro</a>
-</div>
-<!-- Search Bar -->
-<div class="hidden md:flex flex-1 max-w-md items-center bg-surface-container-low border border-outline-variant rounded-full px-4 py-2 transition-all focus-within:border-primary-container focus-within:ring-2 focus-within:ring-primary-fixed">
-<span class="material-symbols-outlined text-on-surface-variant mr-2 text-[20px]">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-sm w-full placeholder-on-surface-variant font-body-sm text-on-surface outline-none" placeholder="Search..." type="text"/>
-</div>
-<!-- Navigation Links -->
-<div class="hidden md:flex items-center gap-6">
-<a class="text-slate-500 hover:text-slate-900 transition-colors active:opacity-80 pb-1" href="/properties.html">Buy</a>
-<a class="text-slate-500 hover:text-slate-900 transition-colors active:opacity-80 pb-1" href="/map.html">Rent</a>
-<a class="text-slate-500 hover:text-slate-900 transition-colors active:opacity-80 pb-1" href="/sell.html">Sell</a>
-<a class="text-slate-500 hover:text-slate-900 transition-colors active:opacity-80 pb-1" href="/properties.html">Invest</a>
-<a class="text-slate-500 hover:text-slate-900 transition-colors active:opacity-80 pb-1" href="/properties.html">Agents</a>
-</div>
-<!-- Trailing Actions -->
-<div class="flex items-center gap-4">
-<button class="hidden lg:block text-slate-500 hover:text-slate-900 transition-colors">
-<span class="material-symbols-outlined text-[24px]">notifications</span>
-</button>
-<button class="text-slate-500 hover:text-slate-900 transition-colors">
-<span class="material-symbols-outlined text-[24px]">account_circle</span>
-</button>
-<button class="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm hover:opacity-90 transition-opacity">
-                    Dashboard
-                </button>
-</div>
-</div>
-</nav>
-<main class="max-w-[1280px] mx-auto px-6 py-12">
-<!-- Hero Section -->
-<div class="mb-12">
-<div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8">
-<div>
-<h1 class="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-2">The Glass Pavilion</h1>
-<p class="text-lg font-medium text-slate-500 flex items-center gap-2">
-<span class="material-symbols-outlined text-[20px]">location_on</span>
+
+<body class="bg-white text-slate-900 font-['Outfit'] antialiased pt-16">
+    <!-- TopNavBar -->
+    <nav
+        class="fixed top-0 w-full z-50 bg-white border-b border-slate-200 shadow-sm font-['Outfit'] text-sm tracking-tight text-slate-900">
+        <div class="max-w-[1280px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
+            <div class="flex items-center gap-2">
+                <a href="/index.html" class="text-xl font-black tracking-tighter text-slate-900">ProjectX</a>
+            </div>
+            <!-- Navigation Links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+                    href="/properties.html?intent=Buy">Buy</a>
+                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+                    href="/properties.html?intent=Rent">Rent</a>
+                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+                    href="/map.html">Map View</a>
+                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+                    href="/sell.html">Sell</a>
+            </div>
+            <!-- Trailing Actions -->
+      <div class="flex items-center gap-4">
+        <button class="text-slate-500 hover:text-slate-900 transition-colors">
+          <span class="material-symbols-outlined text-[24px]">account_circle</span>
+        </button>
+        <button class="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider ml-2">
+          Dashboard
+        </button>
+      </div>
+    </div>
+  </nav>
+    <main class="max-w-[1280px] mx-auto px-6 py-12">
+        <!-- Hero Section -->
+        <div class="mb-12">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8">
+                <div>
+                    <h1 id="detail-title" class="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-2">The Glass Pavilion
+                    </h1>
+                    <p id="detail-address" class="text-lg font-medium text-slate-500 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">location_on</span>
                         1428 Elm Street, Mumbai, MH 400050
                     </p>
-</div>
-<div class="mt-6 md:mt-0 text-left md:text-right">
-<div class="text-4xl font-black text-slate-900">₹125.0 Cr</div>
-<div class="flex items-center gap-2 mt-2 md:justify-end">
-<span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Active</span>
-<span class="text-sm font-bold text-slate-500">Est. ₹5.8L/mo</span>
-</div>
-</div>
-</div>
-<!-- Bento Gallery -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 h-auto md:h-[600px]">
-<div class="md:col-span-3 rounded-[32px] overflow-hidden relative shadow-2xl">
-<img loading="lazy" decoding="async" alt="Main Property View" class="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnrhxQHVcVanXosIWOUFNvDpVw-nQi_5eIvuFB_P1vfAVB3oWGbsOM6MC0njO7zVxSBihDqCFDVzIBMuYkLdaFmucT0zSg2QrQxeMc4O2ZnSH7xZxAdxH3eYfRGUhgZLA1ImahtrQ8lha0PP8zfMSRlYLsloiFXziOKV-gx0vH8Wq1dVmdI7H6hA0BS_aUtxh8fqhgpzvjmQlj47ZP44WklIT1_yJZsmNgbT-cQuvTfQmD6Wy98lDktlFPbzrPo6mOGfT5NEa70XJp"/>
-</div>
-<div class="hidden md:flex flex-col gap-4 h-full">
-<div class="flex-1 rounded-[32px] overflow-hidden relative shadow-xl">
-<img loading="lazy" decoding="async" alt="Interior Living Room" class="w-full h-full object-cover hover:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApJgZZti87ve16B-4_2QMqqbuOdwcKSiKqOy3i1Bw6cEVi4GtZizt1_EfIPPwQ4XL-v6-eVLJvi8nu1FJfUkhtUOGnV9wwUg9EhLIl_VrsG9PcjfIJXuSTwzVfEgQ94PCe4NDTS-upceK7ooWfIn-Ysacs9OhL8Eq-Yoi0laE-8adlNA1mn3neAFtzanhXJDlg2QmTxCuf2kF_Q0rmtfrhRFiJ2cWl4zwAYYrqA_VtlbujGig3CzZH7fUYgkrr4drH32D9WOKm-63z"/>
-</div>
-<div class="flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-xl">
-<img loading="lazy" decoding="async" alt="Kitchen View" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXPzXIJ-17OSd-Ef792jYN4tCAsOYZICAysYZ-7tm3gM8ICdpkCKfhoKXtu492GoqdM5bKWz2lgWjrC8YWlMUhpGGXaNmEycAytuDLFXc5jNh67H3uc4Kdn5xWnQOW4GYXrP9NrtqRb9JVEfP3ocNfa3XMUDjLDqI7SKz49Ts0pa9eSjktj6YG1vZ1ir-7Wrx7k2VNZ9kY0sjeLxg9d_4E0UODX7K-3LM16rM1-1xpCBzsvMFPYIilaA2Msbcc8woy6lOihw6g4Qcx"/>
-<div class="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-<span class="text-white font-bold flex items-center gap-2"><span class="material-symbols-outlined">photo_library</span> View All 24 Photos</span>
-</div>
-</div>
-</div>
-</div>
-</div>
+                </div>
+                <div class="mt-6 md:mt-0 text-left md:text-right">
+                    <div id="detail-price" class="text-4xl font-black text-slate-900">₹125.0 Cr</div>
+                    <div class="flex items-center gap-2 mt-2 md:justify-end">
+                        <span
+                            class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Active</span>
+                        <span class="text-sm font-bold text-slate-500">Est. ₹5.8L/mo</span>
+                    </div>
+                    <button id="share-listing-btn"
+                        class="mt-4 flex items-center justify-center md:justify-end gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-sm w-full md:w-auto"
+                        onclick="navigator.clipboard.writeText(window.location.href).then(() => showToast('Listing link copied to clipboard!'))">
+                        <span class="material-symbols-outlined text-[18px]">share</span> Share Listing
+                    </button>
+                </div>
+            </div>
+            <!-- Bento Gallery -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 h-auto md:h-[600px]">
+                <div class="md:col-span-3 rounded-[32px] overflow-hidden relative shadow-2xl">
+                    <img loading="lazy" decoding="async" alt="Main Property View"
+                        class="hero-img w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
+                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnrhxQHVcVanXosIWOUFNvDpVw-nQi_5eIvuFB_P1vfAVB3oWGbsOM6MC0njO7zVxSBihDqCFDVzIBMuYkLdaFmucT0zSg2QrQxeMc4O2ZnSH7xZxAdxH3eYfRGUhgZLA1ImahtrQ8lha0PP8zfMSRlYLsloiFXziOKV-gx0vH8Wq1dVmdI7H6hA0BS_aUtxh8fqhgpzvjmQlj47ZP44WklIT1_yJZsmNgbT-cQuvTfQmD6Wy98lDktlFPbzrPo6mOGfT5NEa70XJp" />
+                </div>
+                <div class="hidden md:flex flex-col gap-4 h-full">
+                    <div class="flex-1 rounded-[32px] overflow-hidden relative shadow-xl">
+                        <img loading="lazy" decoding="async" alt="Interior Living Room"
+                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuApJgZZti87ve16B-4_2QMqqbuOdwcKSiKqOy3i1Bw6cEVi4GtZizt1_EfIPPwQ4XL-v6-eVLJvi8nu1FJfUkhtUOGnV9wwUg9EhLIl_VrsG9PcjfIJXuSTwzVfEgQ94PCe4NDTS-upceK7ooWfIn-Ysacs9OhL8Eq-Yoi0laE-8adlNA1mn3neAFtzanhXJDlg2QmTxCuf2kF_Q0rmtfrhRFiJ2cWl4zwAYYrqA_VtlbujGig3CzZH7fUYgkrr4drH32D9WOKm-63z" />
+                    </div>
+                    <div class="flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-xl">
+                        <img loading="lazy" decoding="async" alt="Kitchen View"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXPzXIJ-17OSd-Ef792jYN4tCAsOYZICAysYZ-7tm3gM8ICdpkCKfhoKXtu492GoqdM5bKWz2lgWjrC8YWlMUhpGGXaNmEycAytuDLFXc5jNh67H3uc4Kdn5xWnQOW4GYXrP9NrtqRb9JVEfP3ocNfa3XMUDjLDqI7SKz49Ts0pa9eSjktj6YG1vZ1ir-7Wrx7k2VNZ9kY0sjeLxg9d_4E0UODX7K-3LM16rM1-1xpCBzsvMFPYIilaA2Msbcc8woy6lOihw6g4Qcx" />
+                        <div
+                            class="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <span class="text-white font-bold flex items-center gap-2"><span
+                                    class="material-symbols-outlined">photo_library</span> View All 24 Photos</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
-<!-- Main Content Column -->
-<div class="lg:col-span-2 space-y-12">
-<!-- Specs Grid -->
-<section class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl relative z-10 -mt-12 md:-mt-0 md:static">
-<h3 class="text-2xl font-black text-slate-900 mb-8">Property Overview</h3>
-<div class="grid grid-cols-2 md:grid-cols-5 gap-6">
-<div class="flex flex-col gap-1">
-<span class="material-symbols-outlined text-slate-400 mb-2">bed</span>
-<span class="text-3xl font-black text-slate-900">5</span>
-<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Beds</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="material-symbols-outlined text-slate-400 mb-2">shower</span>
-<span class="text-3xl font-black text-slate-900">6.5</span>
-<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Baths</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="material-symbols-outlined text-slate-400 mb-2">straighten</span>
-<span class="text-3xl font-black text-slate-900">8,500</span>
-<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Sq Ft</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="material-symbols-outlined text-slate-400 mb-2">landscape</span>
-<span class="text-3xl font-black text-slate-900">1.2</span>
-<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Acres Lot</span>
-</div>
-<div class="flex flex-col gap-1">
-<span class="material-symbols-outlined text-slate-400 mb-2">calendar_month</span>
-<span class="text-3xl font-black text-slate-900">2022</span>
-<span class="text-xs font-bold uppercase tracking-widest text-slate-500">Year Built</span>
-</div>
-</div>
-</section>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+            <!-- Main Content Column -->
+            <div class="lg:col-span-2 space-y-12">
+                <!-- Specs Grid -->
+                <section
+                    class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl relative z-10 -mt-12 md:-mt-0 md:static">
+                    <h3 class="text-2xl font-black text-slate-900 mb-8">Property Overview</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+                        <div class="flex flex-col gap-1">
+                            <span class="material-symbols-outlined text-slate-400 mb-2">bed</span>
+                            <span id="detail-beds" class="text-3xl font-black text-slate-900">5</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Beds</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="material-symbols-outlined text-slate-400 mb-2">shower</span>
+                            <span id="detail-baths" class="text-3xl font-black text-slate-900">6.5</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Baths</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="material-symbols-outlined text-slate-400 mb-2">straighten</span>
+                            <span id="detail-sqft" class="text-3xl font-black text-slate-900">8,500</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Sq Ft</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="material-symbols-outlined text-slate-400 mb-2">landscape</span>
+                            <span id="detail-type" class="text-3xl font-black text-slate-900">1.2</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Type</span>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <span class="material-symbols-outlined text-slate-400 mb-2">calendar_month</span>
+                            <span class="text-3xl font-black text-slate-900">2022</span>
+                            <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Year Built</span>
+                        </div>
+                    </div>
+                </section>
 
-<!-- Description -->
-<section>
-<h3 class="text-2xl font-black text-slate-900 mb-4">About This Home</h3>
-<div class="text-lg font-medium text-slate-500 space-y-6 leading-relaxed">
-<p>An architectural masterpiece situated in the most prestigious enclave of Bandra West. The Glass Pavilion offers unparalleled panoramic views of the city skyline and ocean beyond. Designed with an emphasis on seamless indoor-outdoor living, the property features retractable glass walls that open entirely to expansive terraces and a zero-edge infinity pool.</p>
-<p>Interior finishes include rare imported stones, custom millwork, and state-of-the-art smart home integration. The primary suite is a sanctuary unto itself, boasting dual spa-like bathrooms and boutique-style dressing rooms. A truly exceptional offering for the discerning buyer seeking ultimate privacy and modern luxury.</p>
-</div>
-</section>
+                <!-- Description -->
+                <section>
+                    <h3 class="text-2xl font-black text-slate-900 mb-4">About This Home</h3>
+                    <div id="detail-desc" class="text-lg font-medium text-slate-500 space-y-6 leading-relaxed">
+                        <p>An architectural masterpiece situated in the most prestigious enclave of Bandra West...</p>
+                    </div>
+                </section>
 
-<!-- Amenities -->
-<section>
-<h3 class="text-2xl font-black text-slate-900 mb-6">Key Features</h3>
-<div class="grid grid-cols-2 md:grid-cols-3 gap-6">
-<div class="flex items-center gap-3 font-bold text-slate-700">
-<span class="material-symbols-outlined text-slate-400">pool</span> Infinity Pool
+                <!-- Amenities -->
+                <section>
+                    <h3 class="text-2xl font-black text-slate-900 mb-6">Key Features</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                        <div class="flex items-center gap-3 font-bold text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">pool</span> Infinity Pool
                         </div>
-<div class="flex items-center gap-3 font-bold text-slate-700">
-<span class="material-symbols-outlined text-slate-400">directions_car</span> 4-Car Garage
+                        <div class="flex items-center gap-3 font-bold text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">directions_car</span> 4-Car Garage
                         </div>
-<div class="flex items-center gap-3 font-bold text-slate-700">
-<span class="material-symbols-outlined text-slate-400">wine_bar</span> Wine Cellar
+                        <div class="flex items-center gap-3 font-bold text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">wine_bar</span> Wine Cellar
                         </div>
-<div class="flex items-center gap-3 font-bold text-slate-700">
-<span class="material-symbols-outlined text-slate-400">fitness_center</span> Home Gym
+                        <div class="flex items-center gap-3 font-bold text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">fitness_center</span> Home Gym
                         </div>
-<div class="flex items-center gap-3 font-bold text-slate-700">
-<span class="material-symbols-outlined text-slate-400">theaters</span> Media Room
+                        <div class="flex items-center gap-3 font-bold text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">theaters</span> Media Room
                         </div>
-<div class="flex items-center gap-3 font-bold text-slate-700">
-<span class="material-symbols-outlined text-slate-400">security</span> Smart Security
+                        <div class="flex items-center gap-3 font-bold text-slate-700">
+                            <span class="material-symbols-outlined text-slate-400">security</span> Smart Security
                         </div>
-</div>
-</section>
-</div>
+                    </div>
+                </section>
+            </div>
 
-<!-- Sidebar Column -->
-<div class="space-y-8">
-<!-- Contact Card -->
-<div class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl sticky top-24">
-<div class="flex items-center gap-4 mb-8">
-<img loading="lazy" decoding="async" alt="Broker Sarah Jenkins" class="w-16 h-16 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJXlkYyG0W75dfi_Tn4rfN1mc_mfpccc1WEuiQ_vh8ihLWlIogYcoJfKpgw69Lk_r9HJ95r_hHksUVnS2edBsdVVp1V32FL7DTo9Nj5HOZRCIWhQeRlAkkqRLn-lhytIT49NNGKfJWQpJIgQCmMxDeWPQwALT3AspkhCJF14OroT9NbDKhNlQB-jC1WdMNhir5SoALGs14cyGXLPiSjp8PQw4QbQkLm-JY9RrOgzM86HJveToutWzIXN80NvvyJXiR6ztRXVCdHFdW"/>
-<div>
-<div class="text-xl font-black text-slate-900">Sarah Jenkins</div>
-<div class="text-sm font-bold text-slate-500">Premier Luxury Estates</div>
-<div class="flex items-center gap-1 text-sm font-bold text-slate-900 mt-1">
-<span class="material-symbols-outlined text-[16px] text-amber-400" data-weight="fill" style="font-variation-settings: 'FILL' 1;">star</span>
+            <!-- Sidebar Column -->
+            <div class="space-y-8">
+                <!-- Contact Card -->
+                <div class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl sticky top-24">
+                    <div class="flex items-center gap-4 mb-8">
+                        <img loading="lazy" decoding="async" alt="Broker Sarah Jenkins"
+                            class="w-16 h-16 rounded-full object-cover"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJXlkYyG0W75dfi_Tn4rfN1mc_mfpccc1WEuiQ_vh8ihLWlIogYcoJfKpgw69Lk_r9HJ95r_hHksUVnS2edBsdVVp1V32FL7DTo9Nj5HOZRCIWhQeRlAkkqRLn-lhytIT49NNGKfJWQpJIgQCmMxDeWPQwALT3AspkhCJF14OroT9NbDKhNlQB-jC1WdMNhir5SoALGs14cyGXLPiSjp8PQw4QbQkLm-JY9RrOgzM86HJveToutWzIXN80NvvyJXiR6ztRXVCdHFdW" />
+                        <div>
+                            <div class="text-xl font-black text-slate-900">Sarah Jenkins</div>
+                            <div class="text-sm font-bold text-slate-500">Premier Luxury Estates</div>
+                            <div class="flex items-center gap-1 text-sm font-bold text-slate-900 mt-1">
+                                <span class="material-symbols-outlined text-[16px] text-amber-400" data-weight="fill"
+                                    style="font-variation-settings: 'FILL' 1;">star</span>
                                 4.9 <span class="text-slate-400">(120 reviews)</span>
                             </div>
-</div>
-</div>
-<form id="buyer-inquiry-form" class="space-y-4">
-<div>
-<label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Inquiry Type</label>
-<select id="inquiry-type" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all">
-<option>Schedule a Tour</option>
-<option>Request Info</option>
-<option>Make an Offer</option>
-</select>
-</div>
-<div class="grid grid-cols-2 gap-4">
-<div>
-<input id="buyer-first-name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all" placeholder="First Name" type="text"/>
-</div>
-<div>
-<input id="buyer-last-name" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all" placeholder="Last Name" type="text"/>
-</div>
-</div>
-<div>
-<input id="buyer-email" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all" placeholder="Email Address" type="email"/>
-</div>
-<div>
-<input id="buyer-phone" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all" placeholder="Phone Number" type="tel"/>
-</div>
-<div>
-<textarea id="buyer-message" class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all resize-none" placeholder="Message" rows="3"></textarea>
-</div>
-<button id="contact-agent-btn" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors" type="button">Chat with Broker</button>
-</form>
-</div>
-</div>
-</div>
-</main>
-<!-- Footer -->
-<footer class="w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 font-['Inter'] text-xs uppercase tracking-widest mt-stack-lg">
-<div class="max-w-[1280px] mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
-<div class="text-lg font-black text-slate-900 dark:text-white">
-                EstatePro
+                        </div>
+                    </div>
+                    <form id="buyer-inquiry-form" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Inquiry
+                                Type</label>
+                            <select id="inquiry-type"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all">
+                                <option>Schedule a Tour</option>
+                                <option>Request Info</option>
+                                <option>Make an Offer</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <input id="buyer-first-name"
+                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all"
+                                    placeholder="First Name" type="text" />
+                            </div>
+                            <div>
+                                <input id="buyer-last-name"
+                                    class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all"
+                                    placeholder="Last Name" type="text" />
+                            </div>
+                        </div>
+                        <div>
+                            <input id="buyer-email"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all"
+                                placeholder="Email Address" type="email" />
+                        </div>
+                        <div>
+                            <input id="buyer-phone"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all"
+                                placeholder="Phone Number" type="tel" />
+                        </div>
+                        <div>
+                            <textarea id="buyer-message"
+                                class="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-4 text-sm font-bold text-slate-900 placeholder-slate-400 focus:border-slate-900 focus:ring-1 focus:ring-slate-900 outline-none transition-all resize-none"
+                                placeholder="Message" rows="3"></textarea>
+                        </div>
+                        <button id="contact-agent-btn"
+                            class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors"
+                            type="button">Chat with Broker</button>
+                    </form>
+                </div>
             </div>
-<div class="flex flex-wrap justify-center gap-6">
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity" href="/index.html">About Us</a>
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity" href="/terms.html">Terms of Service</a>
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity" href="/privacy.html">Privacy Policy</a>
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity" href="/privacy.html">Cookie Settings</a>
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity" href="/login.html">Contact Support</a>
-<a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity" href="/index.html">Sitemap</a>
-</div>
-<div class="text-slate-500 dark:text-slate-400">
-                © 2025 EstatePro India. All rights reserved.
+        </div>
+    </main>
+    <!-- Footer -->
+    <footer
+        class="w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 font-['Outfit'] text-xs uppercase tracking-widest mt-stack-lg">
+        <div class="max-w-[1280px] mx-auto px-6 py-12 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-lg font-black text-slate-900 dark:text-white">
+                ProjectX
             </div>
-</div>
-</footer>
-</body></html>
+            <div class="flex flex-wrap justify-center gap-6">
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity"
+                    href="/index.html">About Us</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity"
+                    href="/terms.html">Terms of Service</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity"
+                    href="/privacy.html">Privacy Policy</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity"
+                    href="/privacy.html">Cookie Settings</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity"
+                    href="/login.html">Contact Support</a>
+                <a class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:underline underline-offset-4 opacity-100 hover:opacity-80 transition-opacity"
+                    href="/index.html">Sitemap</a>
+            </div>
+            <div class="text-slate-500 dark:text-slate-400">
+                © 2026 ProjectX India. All rights reserved.
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

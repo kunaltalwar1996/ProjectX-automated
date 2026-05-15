@@ -30,7 +30,8 @@ function showToast(message) {
 
 // ─── Route Maps ───────────────────────────────────────────────────────────────
 
-const buyerPages = ['index.html', 'properties.html', 'map.html', 'property-details.html', 'sell.html'];
+const buyerPages = ['index.html', 'properties.html', 'map.html', 'property-details.html', 'sell.html', 'profile.html'];
+const guestPages  = ['index.html', 'properties.html', 'map.html', 'property-details.html', 'sell.html'];
 
 const roleHomePage = {
     'Admin':    'admin-panel.html',
@@ -41,16 +42,16 @@ const roleHomePage = {
 };
 
 const roleAllowedPages = {
-    'Admin':    ['admin-panel.html', 'employee-panel.html', 'broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html'],
+    'Admin':    ['admin-panel.html', 'employee-panel.html', 'broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html', 'profile.html'],
     'Employee': ['employee-panel.html', 'broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html'],
     'Broker':   ['broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html'],
     'Buyer':    buyerPages,
-    'Guest':    buyerPages
+    'Guest':    guestPages
 };
 
 // ─── Global Auth Guard (synchronous) ──────────────────────────────────────────
 
-const isLoginPage = currentPage === 'login.html';
+const isLoginPage = currentPage === 'login.html' || currentPage === 'staff-login.html';
 
 if (!isLoginPage) {
     if (!userRole) {
@@ -90,8 +91,43 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isLoginPage) {
         const roleButtons = document.querySelectorAll('#role-tabs button');
         const formTitle   = document.getElementById('form-title');
-        const nameField   = document.getElementById('broker-name-field');
+        const nameField   = document.getElementById('name-field') || document.getElementById('broker-name-field');
+        const nameLabel   = document.getElementById('name-label');
+        const modeText    = document.getElementById('mode-text');
+        const toggleBtn   = document.getElementById('toggle-mode-btn');
+        const signInBtn   = document.getElementById('sign-in-btn');
         let selectedRole  = 'Buyer';
+        let isSignUp      = false;
+
+        function updateUI() {
+            if (formTitle) {
+                formTitle.textContent = isSignUp ? `Join as ${selectedRole}` : `${selectedRole} Sign In`;
+            }
+            if (signInBtn) {
+                signInBtn.textContent = isSignUp ? 'Create Account' : 'Sign In';
+            }
+            if (modeText) {
+                modeText.innerHTML = isSignUp 
+                    ? `Already have an account? <button id="toggle-mode-btn" type="button" class="font-bold text-slate-900 hover:underline ml-1">Sign In</button>`
+                    : `Don't have an account? <button id="toggle-mode-btn" type="button" class="font-bold text-slate-900 hover:underline ml-1">Sign Up</button>`;
+                
+                // Re-bind click event since we replaced innerHTML
+                document.getElementById('toggle-mode-btn').onclick = (e) => {
+                    e.preventDefault();
+                    isSignUp = !isSignUp;
+                    updateUI();
+                };
+            }
+            if (nameField) {
+                if (isSignUp) {
+                    nameField.style.display = 'block';
+                    if (nameLabel) nameLabel.textContent = selectedRole === 'Broker' ? 'Company/Full Name' : 'Full Name';
+                } else {
+                    nameField.style.display = (selectedRole === 'Broker') ? 'block' : 'none';
+                    if (nameLabel) nameLabel.textContent = 'Company/Full Name';
+                }
+            }
+        }
 
         function resetRoleTabs() {
             roleButtons.forEach(b => {
@@ -108,32 +144,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded bg-white text-slate-900 shadow-sm transition-all scale-105 font-bold';
             }
 
-            if (formTitle) {
-                formTitle.textContent = `${role} Sign In`;
-            }
-
-            if (nameField) {
-                nameField.style.display = (role === 'Broker') ? 'block' : 'none';
-            }
+            updateUI();
         }
 
         roleButtons.forEach(btn => {
             btn.onclick = () => selectRole(btn.textContent.trim());
         });
 
+        // Initialize toggle if it exists initially
+        if (toggleBtn) {
+            toggleBtn.onclick = (e) => {
+                e.preventDefault();
+                isSignUp = !isSignUp;
+                updateUI();
+            };
+        }
+
         // Handle URL parameters for role selection
         const urlParams = new URLSearchParams(window.location.search);
         const urlRole = urlParams.get('role');
         if (urlRole) selectRole(urlRole);
-        else selectRole('Buyer');
+        else selectRole(currentPage === 'staff-login.html' ? 'Admin' : 'Buyer');
 
         // Sign In button
-        const signInBtn = document.getElementById('sign-in-btn');
         if (signInBtn) {
             signInBtn.onclick = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('input-name')?.value?.trim() || '';
-                window.login(selectedRole, selectedRole === 'Broker' && name ? name : null);
+                
+                if (isSignUp && !name) {
+                    showToast('Please enter your name to create an account.');
+                    return;
+                }
+                
+                if (isSignUp) {
+                    if (selectedRole === 'Buyer') {
+                        localStorage.setItem('showWelcome', name);
+                    } else {
+                        showToast('Account created successfully!');
+                    }
+                }
+                
+                window.login(selectedRole, name ? name : null);
             };
         }
 
@@ -180,20 +232,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (accountBtn) {
             const isGuest = userRole === 'Guest' || !userRole;
-            const statusText = isGuest ? 'Browsing as Guest — Click to sign in' : `Signed in as ${userRole} — Click to sign out`;
-            accountBtn.title = statusText;
             
-            // Add a tooltip-like behavior if title isn't enough, but title is standard
-            accountBtn.onclick = (e) => {
-                e.preventDefault();
-                if (userRole && userRole !== 'Guest') {
-                    if (confirm('Are you sure you want to sign out?')) {
-                        window.logout();
-                    }
-                } else {
-                    window.logout(); // Guest logout is just returning to login
-                }
-            };
+            // Re-style the button based on state
+            if (isGuest) {
+                accountBtn.innerHTML = '<span class="font-bold text-xs uppercase tracking-wider px-2">Sign In</span>';
+                accountBtn.title = 'Sign In to EstatePro';
+                accountBtn.onclick = (e) => { e.preventDefault(); navigateTo('login.html'); };
+            } else if (userRole === 'Buyer') {
+                accountBtn.innerHTML = '<span class="material-symbols-outlined text-[24px]">account_circle</span>';
+                accountBtn.title = `Signed in as ${userRole} — Go to Profile`;
+                accountBtn.onclick = (e) => { e.preventDefault(); navigateTo('profile.html'); };
+            } else {
+                accountBtn.innerHTML = '<span class="material-symbols-outlined text-[24px]">logout</span>';
+                accountBtn.title = `Signed in as ${userRole} — Click to sign out`;
+                accountBtn.onclick = (e) => {
+                    e.preventDefault();
+                    if (confirm('Are you sure you want to sign out?')) window.logout();
+                };
+            }
         }
     }
 
@@ -402,6 +458,9 @@ function generateListingsHTML(listings, showViews) {
           ${showViews ? `<td class="p-4">${l.views.toLocaleString()}</td>` : ''}
           <td class="p-4 text-right">
             <div class="flex justify-end gap-2">
+              <button onclick="shareListing(${l.id})" class="p-1.5 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container" title="Share">
+                <span class="material-symbols-outlined text-[20px]">share</span>
+              </button>
               <button onclick="openListingModal(${l.id})" class="p-1.5 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container" title="Edit">
                 <span class="material-symbols-outlined text-[20px]">edit</span>
               </button>
@@ -421,6 +480,17 @@ function deleteListing(id) {
 }
 
 window.deleteListing = deleteListing;
+
+function shareListing(id) {
+    const url = window.location.origin + '/property-details.html?id=' + id;
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('Listing link copied to clipboard!');
+    }).catch(() => {
+        showToast('Failed to copy link.');
+    });
+}
+
+window.shareListing = shareListing;
 
 function openListingModal(id) {
     const modal = document.getElementById('listing-modal');
@@ -957,6 +1027,15 @@ function initBuyerListingsPage() {
     cards.forEach(card => {
         card.addEventListener('click', (e) => {
             if (e.target.closest('.save-property-btn')) return;
+            if (e.target.closest('.share-property-btn')) {
+                const url = window.location.origin + '/property-details.html?id=' + (card.dataset.id || '');
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast('Link copied to clipboard!');
+                }).catch(() => {
+                    showToast('Failed to copy link.');
+                });
+                return;
+            }
             navigateTo('property-details.html');
         });
 
@@ -1053,19 +1132,12 @@ function initBuyerMapPage() {
 
 
 
-    // Load Listings from localStorage
-    const listings = typeof getListings === 'function' ? getListings() : [];
+    // Load Listings from DEMO_LISTINGS
+    const listings = window.DEMO_LISTINGS || [];
     
-    // Assign fake lat/lng to listings based on location for demo purposes
-    // (In a real app, these would come from geocoding)
-    const markersData = listings.map(l => {
-        let lat = 19.0760 + (Math.random() - 0.5) * 0.1;
-        let lng = 72.8777 + (Math.random() - 0.5) * 0.1;
-        if (l.location && l.location.toLowerCase().includes('delhi')) {
-            lat = 28.6139 + (Math.random() - 0.5) * 0.1;
-            lng = 77.2090 + (Math.random() - 0.5) * 0.1;
-        }
-        return { ...l, lat, lng };
+    // Use coordinates from demo data
+    const markersData = listings.filter(l => l.coords).map(l => {
+        return { ...l, lat: l.coords[0], lng: l.coords[1] };
     });
 
     const markers = [];
@@ -1102,15 +1174,9 @@ function initBuyerMapPage() {
     }
 
     markersData.forEach(p => {
-        // Beds and baths logic
-        const beds = p.beds || Math.floor(Math.random()*3)+2;
-        const baths = p.baths || Math.floor(Math.random()*3)+1;
-        p.beds = beds; 
-        p.baths = baths;
-
         const icon = L.divIcon({
             className: 'bg-transparent border-none', // Leaflet container
-            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${p.id}">${escHtml(p.price)}</div>`,
+            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${p.id}">${escHtml(p.price)}${p.intent === 'Rent' ? '' : ' Cr'}</div>`,
             iconSize: [0, 0],
             iconAnchor: [0, 0]
         });
@@ -1119,10 +1185,10 @@ function initBuyerMapPage() {
         
         marker.bindPopup(`
             <div class="p-2 min-w-[150px]">
-                <h4 class="font-bold text-sm text-slate-900">${escHtml(p.price)}/mo</h4>
+                <h4 class="font-bold text-sm text-slate-900">${window.formatPrice ? window.formatPrice(p.price, p.intent) : p.price}</h4>
                 <p class="text-xs font-medium text-slate-500 mt-0.5">${escHtml(p.title)}</p>
                 <div class="flex items-center gap-2 mt-2 text-slate-600 text-[10px] font-bold">
-                    <span>${beds} BEDS</span> &bull; <span>${baths} BATHS</span>
+                    <span>${p.beds} BEDS</span> &bull; <span>${p.baths} BATHS</span>
                 </div>
                 <button onclick="window.location.href='property-details.html?id=${p.id}'" class="mt-3 w-full bg-slate-900 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold hover:bg-slate-800 transition-colors">View Details</button>
             </div>
@@ -1136,17 +1202,17 @@ function initBuyerMapPage() {
     });
 
     const sidebarContainer = document.querySelector('.overflow-y-auto.p-6');
-    const matchesCountEl = document.querySelector('h2 + p');
+    const matchesCountEl = document.querySelector('#map-listings-count');
 
     window.toggleMapFavorite = function(e, id) {
         e.stopPropagation(); // prevent card click
         let saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
         if (saved.includes(id)) {
             saved = saved.filter(savedId => savedId != id);
-            showToast('Removed from favorites');
+            if (typeof showToast === 'function') showToast('Removed from favorites');
         } else {
             saved.push(id);
-            showToast('Added to favorites');
+            if (typeof showToast === 'function') showToast('Added to favorites');
         }
         localStorage.setItem('savedProperties', JSON.stringify(saved));
         updateSidebar(); 
@@ -1184,11 +1250,11 @@ function initBuyerMapPage() {
             <div id="card-${l.id}" class="listing-card cursor-pointer bg-white rounded-3xl border ${activeClasses} overflow-hidden transition-all duration-300" onclick="clickSidebarCard(${l.id})">
               <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
                 <img loading="lazy" src="${l.img || 'https://via.placeholder.com/400x225?text=House'}" class="w-full h-full object-cover transition-transform duration-700 ${isActive ? '' : 'group-hover:scale-105'}">
-                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${escHtml(l.status)}</div>
+                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${escHtml(l.badge || l.intent)}</div>
               </div>
               <div class="p-5">
                 <div class="flex justify-between items-start mb-1">
-                  <h3 class="text-xl font-black text-slate-900">${escHtml(l.price)}<span class="text-sm font-normal text-slate-500"> /mo</span></h3>
+                  <h3 class="text-xl font-black text-slate-900">${window.formatPrice ? window.formatPrice(l.price, l.intent) : l.price}</h3>
                   <button class="transition-colors ${isSaved ? 'text-red-500' : 'text-slate-200 hover:text-red-500'}" onclick="toggleMapFavorite(event, ${l.id})">
                     <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">favorite</span>
                   </button>
@@ -1205,7 +1271,7 @@ function initBuyerMapPage() {
                   </div>
                   <div class="flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-[18px]">square_foot</span>
-                    <span class="text-xs font-black text-slate-900">${Math.floor(Math.random()*2000)+1000} <span class="font-normal text-slate-400">sqft</span></span>
+                    <span class="text-xs font-black text-slate-900">${l.sqft.toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span>
                   </div>
                 </div>
               </div>
@@ -1231,6 +1297,81 @@ function initBuyerMapPage() {
     });
     
     setTimeout(updateSidebar, 100);
+
+    // ── [Map Search Bar Navigation] ──
+    const searchInput = document.getElementById('map-location-search');
+    const searchBtn = document.getElementById('map-search-btn');
+    const resultsContainer = document.getElementById('map-search-results');
+    let debounceTimer;
+
+    if (searchBtn && searchInput) {
+        searchBtn.onclick = () => {
+            const val = searchInput.value.trim();
+            if (val) {
+                 fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=IN&limit=1`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.length > 0) {
+                            const item = data[0];
+                            map.flyTo([item.lat, item.lon], 15, { animate: true, duration: 1 });
+                            if (typeof showToast === 'function') showToast(`Showing results near ${item.display_name.split(',')[0]}`);
+                        }
+                    });
+            }
+        };
+
+        // Enter key support
+        searchInput.onkeypress = (e) => {
+            if (e.key === 'Enter') searchBtn.click();
+        };
+
+        // OpenStreetMap Autocomplete
+        if (resultsContainer) {
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                const query = e.target.value.trim();
+                if (query.length < 3) {
+                    resultsContainer.classList.add('hidden');
+                    return;
+                }
+                
+                debounceTimer = setTimeout(() => {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=IN&limit=5`)
+                        .then(res => res.json())
+                        .then(data => {
+                            resultsContainer.innerHTML = '';
+                            if (data.length === 0) {
+                                resultsContainer.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium">No locations found in India.</div>';
+                            } else {
+                                data.forEach(item => {
+                                    const div = document.createElement('div');
+                                    div.className = 'px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3';
+                                    div.innerHTML = `<span class="material-symbols-outlined text-slate-400 text-[18px]">location_on</span><span class="text-xs font-medium text-slate-700 truncate" title="${item.display_name}">${item.display_name}</span>`;
+                                    div.onclick = () => {
+                                        searchInput.value = item.display_name.split(',')[0];
+                                        resultsContainer.classList.add('hidden');
+                                        map.flyTo([item.lat, item.lon], 15, { animate: true, duration: 1 });
+                                        if (typeof showToast === 'function') showToast(`Showing results near ${item.display_name.split(',')[0]}`);
+                                    };
+                                    resultsContainer.appendChild(div);
+                                });
+                            }
+                            resultsContainer.classList.remove('hidden');
+                            resultsContainer.classList.add('flex');
+                        })
+                        .catch(err => console.error('Nominatim error:', err));
+                }, 300);
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.classList.add('hidden');
+                    resultsContainer.classList.remove('flex');
+                }
+            });
+        }
+    }
 }
 
 function initBuyerDetailsPage() {
@@ -1354,3 +1495,65 @@ function escHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ─── Global Navbar Search ─────────────────────────────────────────────────────
+document.querySelectorAll('input[placeholder="Search..."]').forEach(input => {
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const query = e.target.value.trim();
+            if (query) {
+                // If we are already on properties page, just fill the local search and trigger click
+                if (window.location.pathname.includes('properties.html')) {
+                    const pageSearch = document.getElementById('listing-search-input');
+                    const btn = document.getElementById('find-homes-btn');
+                    if (pageSearch && btn) {
+                        pageSearch.value = query;
+                        btn.click();
+                        return;
+                    }
+                }
+                // Otherwise navigate to properties page
+                navigateTo(`properties.html?q=${encodeURIComponent(query)}`);
+            }
+        }
+    });
+
+    // ── Global Buyer Welcome Modal ──
+    if (userRole === 'Buyer' && !isLoginPage) {
+        const showWelcome = localStorage.getItem('showWelcome');
+        if (showWelcome) {
+            // Clear immediately so it never appears again, even if user navigates away without clicking
+            localStorage.removeItem('showWelcome');
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-500';
+            modal.innerHTML = `
+                <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl transform scale-95 transition-transform duration-500 text-center">
+                    <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span class="material-symbols-outlined text-4xl">celebration</span>
+                    </div>
+                    <h2 class="text-3xl font-black text-slate-900 mb-2 tracking-tight">Welcome, ${showWelcome}!</h2>
+                    <p class="text-slate-500 mb-8 font-medium">Your buyer account is ready. Explore premium properties, save your favorites, and contact top brokers instantly.</p>
+                    <button id="close-welcome" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-[0.98]">
+                        Start Exploring
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Small delay so CSS transition plays correctly on first paint
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                    modal.querySelector('div').classList.remove('scale-95');
+                });
+            });
+
+            document.getElementById('close-welcome').onclick = () => {
+                modal.classList.add('opacity-0');
+                modal.querySelector('div').classList.add('scale-95');
+                setTimeout(() => modal.remove(), 400);
+            };
+        }
+    }
+});
