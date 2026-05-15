@@ -86,208 +86,119 @@ document.addEventListener('DOMContentLoaded', () => {
     // ══════════════════════════════════════════════
     //  LOGIN PAGE
     // ══════════════════════════════════════════════
+    // ── Login Page UI Logic ──
     if (isLoginPage) {
         const roleButtons = document.querySelectorAll('#role-tabs button');
-        const roleTabsContainer = document.getElementById('role-tabs');
-        const returnStandardBtn = document.getElementById('return-standard-btn');
-        const formTitle = document.getElementById('form-title');
-        const nameField = document.getElementById('broker-name-field');
-        let selectedRole = 'Broker';
+        const formTitle   = document.getElementById('form-title');
+        const nameField   = document.getElementById('broker-name-field');
+        let selectedRole  = 'Buyer';
 
         function resetRoleTabs() {
-            roleButtons.forEach(b => { b.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded role-tab-inactive hover:text-on-surface transition-colors'; });
+            roleButtons.forEach(b => {
+                b.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded role-tab-inactive hover:text-on-surface transition-colors';
+            });
         }
 
         function selectRole(role) {
             selectedRole = role;
-            if (formTitle) formTitle.textContent = selectedRole + ' Sign In';
-            if (nameField) nameField.style.display = selectedRole === 'Broker' ? 'block' : 'none';
-            
             resetRoleTabs();
-            roleButtons.forEach(btn => {
-                if (btn.textContent.trim() === role) {
-                    btn.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded role-tab-active transition-all';
-                }
-            });
+            
+            const btn = Array.from(roleButtons).find(b => b.textContent.trim() === role);
+            if (btn) {
+                btn.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded bg-white text-slate-900 shadow-sm transition-all scale-105 font-bold';
+            }
 
-            const isStaff = ['Admin', 'Employee'].includes(role);
-            if (isStaff) {
-                roleTabsContainer?.classList.add('hidden');
-                roleTabsContainer?.classList.remove('flex');
-                returnStandardBtn?.classList.remove('hidden');
-                returnStandardBtn?.classList.add('flex');
-            } else {
-                roleTabsContainer?.classList.remove('hidden');
-                roleTabsContainer?.classList.add('flex');
-                returnStandardBtn?.classList.add('hidden');
-                returnStandardBtn?.classList.remove('flex');
+            if (formTitle) {
+                formTitle.textContent = `${role} Sign In`;
+            }
+
+            if (nameField) {
+                nameField.style.display = (role === 'Broker') ? 'block' : 'none';
             }
         }
 
-        // URL parameter support
+        roleButtons.forEach(btn => {
+            btn.onclick = () => selectRole(btn.textContent.trim());
+        });
+
+        // Handle URL parameters for role selection
         const urlParams = new URLSearchParams(window.location.search);
         const urlRole = urlParams.get('role');
         if (urlRole) selectRole(urlRole);
-
-        // Role tab switching
-        roleButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                selectRole(btn.textContent.trim());
-            });
-        });
-        
-        // Show name field by default since Broker is default active
-        if (!urlRole && nameField) nameField.style.display = 'block';
-
-        // Staff modal logic
-        const staffBtn = document.getElementById('staff-login-btn');
-        const staffModal = document.getElementById('staff-modal');
-        const closeStaffModal = document.getElementById('close-staff-modal');
-        const staffRoleBtns = document.querySelectorAll('.staff-role-btn');
-
-        if (staffBtn && staffModal) {
-            staffBtn.addEventListener('click', () => {
-                staffModal.classList.remove('hidden');
-                staffModal.classList.add('flex');
-            });
-        }
-        
-        if (closeStaffModal && staffModal) {
-            closeStaffModal.addEventListener('click', () => {
-                staffModal.classList.add('hidden');
-                staffModal.classList.remove('flex');
-            });
-        }
-
-        staffRoleBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const role = btn.querySelector('span').textContent.trim();
-                selectRole(role);
-                staffModal.classList.add('hidden');
-                staffModal.classList.remove('flex');
-            });
-        });
-
-        if (returnStandardBtn) {
-            returnStandardBtn.addEventListener('click', () => {
-                selectRole('Broker');
-            });
-        }
+        else selectRole('Buyer');
 
         // Sign In button
         const signInBtn = document.getElementById('sign-in-btn');
         if (signInBtn) {
-            signInBtn.addEventListener('click', (e) => {
+            signInBtn.onclick = (e) => {
                 e.preventDefault();
                 const name = document.getElementById('input-name')?.value?.trim() || '';
                 window.login(selectedRole, selectedRole === 'Broker' && name ? name : null);
-            });
+            };
         }
 
-        // "Just browsing? Enter as a Guest" button
+        // Guest button
         const guestBtn = document.getElementById('guest-btn');
         if (guestBtn) {
-            guestBtn.addEventListener('click', (e) => {
+            guestBtn.onclick = (e) => {
                 e.preventDefault();
                 window.login('Guest');
-            });
+            };
         }
 
-        return; // Nothing else to do on login page
+        return;
     }
 
-    // ══════════════════════════════════════════════
-    //  ALL OTHER PAGES
-    // ══════════════════════════════════════════════
-
-    // ── Find trailing actions reliably via account_circle button ──
-    const accountCircleBtn = Array.from(document.querySelectorAll('button')).find(b =>
-        b.querySelector('span.material-symbols-outlined')?.textContent.trim() === 'account_circle'
-    );
-    const trailingActions = accountCircleBtn?.parentElement || null;
-
-    // account_circle → logout
-    if (accountCircleBtn) {
-        const displayRole = userRole === 'Guest' ? 'Guest' : userRole;
-        accountCircleBtn.title = `Signed in as ${displayRole} — Click to sign out`;
-        accountCircleBtn.onclick = (e) => { e.preventDefault(); window.logout(); };
-    }
-
-    // ── Staff Login Icon & Modal ──
-    const staffLoginIcon = document.createElement('button');
-    staffLoginIcon.className = 'text-slate-400 hover:text-slate-900 transition-colors p-2 rounded-full hover:bg-slate-50';
-    staffLoginIcon.title = 'Staff Portal Access';
-    staffLoginIcon.innerHTML = '<span class="material-symbols-outlined text-[24px]">admin_panel_settings</span>';
-    
-    // Create Staff Modal
-    const staffModal = document.createElement('div');
-    staffModal.id = 'header-staff-modal';
-    staffModal.className = 'hidden fixed inset-0 z-[200] items-center justify-center bg-black/50 backdrop-blur-sm';
-    staffModal.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden border border-slate-200">
-        <div class="px-6 py-6 text-center">
-          <div class="w-16 h-16 bg-slate-900 text-white rounded-full flex items-center justify-center mx-auto mb-4">
-            <span class="material-symbols-outlined text-[32px]">shield_person</span>
-          </div>
-          <h3 class="text-xl font-bold text-slate-900 mb-2">Staff Access</h3>
-          <p class="text-sm text-slate-500 mb-6">Choose your portal to continue to secure login.</p>
-          <div class="space-y-3">
-            <button onclick="window.location.href=toAppUrl('login.html?role=Admin')" class="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined">security</span> Login as Admin
-            </button>
-            <button onclick="window.location.href=toAppUrl('login.html?role=Employee')" class="w-full border border-slate-200 text-slate-900 py-3 rounded-xl font-semibold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2">
-              <span class="material-symbols-outlined">badge</span> Login as Employee
-            </button>
-          </div>
-          <button id="close-header-staff-modal" class="mt-6 text-sm text-slate-400 hover:text-slate-600 transition-colors">Close</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(staffModal);
-    
-    staffLoginIcon.onclick = () => {
-        staffModal.classList.remove('hidden');
-        staffModal.classList.add('flex');
-    };
-    
-    const closeBtn = staffModal.querySelector('#close-header-staff-modal');
-    if (closeBtn) closeBtn.onclick = () => {
-        staffModal.classList.add('hidden');
-        staffModal.classList.remove('flex');
-    };
-    staffModal.onclick = (e) => { if (e.target === staffModal) closeBtn.click(); };
-
-    if (trailingActions) {
-        // Remove existing staff icons if any
-        trailingActions.querySelector('[title="Staff Portal Access"]')?.remove();
-        // Insert before account icon
-        trailingActions.insertBefore(staffLoginIcon, accountCircleBtn);
-    }
-
-    // ── Hide 'Invest' and 'Agents' nav links for mass majority (Buyers/Guests) ──
-    const isStaff = ['Admin', 'Employee', 'Broker'].includes(userRole);
-    if (!isStaff) {
-        document.querySelectorAll('nav a, header nav a').forEach(link => {
-            const text = link.textContent.trim();
-            if (text === 'Invest' || text === 'Agents') {
-                link.style.display = 'none';
+    // ── Global Header Visibility ──
+    function updateHeaderVisibility() {
+        const isStaff = ['Admin', 'Employee', 'Broker'].includes(userRole);
+        
+        // ── Auth / Navigation Logic ──
+        document.querySelectorAll('a, button').forEach(el => {
+            const text = el.textContent.trim();
+            
+            // Dashboard button: show only for staff
+            if (text === 'Dashboard') {
+                el.style.display = isStaff ? 'flex' : 'none';
+                if (isStaff) {
+                    el.href = toAppUrl(roleHomePage[userRole] || 'index.html');
+                }
+            }
+            
+            // Filter other staff-only links if they exist
+            if (text === 'Agents' || text === 'Invest') {
+                // If it's a top nav link, we might want to keep it for Buyers but hide for Guest if requested
+                // For now, follow the prompt: "Dashboard button is hidden for Buyers and Guests"
             }
         });
+
+        // Account icon logic
+        const accountBtn = Array.from(document.querySelectorAll('button, a')).find(b => 
+            b.querySelector('.material-symbols-outlined')?.textContent.trim() === 'account_circle' || 
+            b.textContent.trim() === 'account_circle'
+        );
+
+        if (accountBtn) {
+            const isGuest = userRole === 'Guest' || !userRole;
+            const statusText = isGuest ? 'Browsing as Guest — Click to sign in' : `Signed in as ${userRole} — Click to sign out`;
+            accountBtn.title = statusText;
+            
+            // Add a tooltip-like behavior if title isn't enough, but title is standard
+            accountBtn.onclick = (e) => {
+                e.preventDefault();
+                if (userRole && userRole !== 'Guest') {
+                    if (confirm('Are you sure you want to sign out?')) {
+                        window.logout();
+                    }
+                } else {
+                    window.logout(); // Guest logout is just returning to login
+                }
+            };
+        }
     }
 
-    // ── Dashboard button: show only for staff ──
-    document.querySelectorAll('button, a').forEach(btn => {
-        if (btn.textContent.trim() === 'Dashboard') {
-            if (!isStaff) {
-                btn.style.display = 'none';
-            } else {
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    window.location.href = roleHomePage[userRole];
-                };
-            }
-        }
-    });
+    updateHeaderVisibility();
+
 
     // ── Logout handled via account circle click ──
 
@@ -409,12 +320,12 @@ document.addEventListener('DOMContentLoaded', () => {
         initInquiriesManager();
     }
 
-    // ── Buyer Property Details: chat with broker ──
-    if ((userRole === 'Buyer' || userRole === 'Guest') && currentPage === 'property-details.html') {
-        initBuyerBrokerChat();
+    // ── Buyer Property Details ──
+    if (currentPage === 'property-details.html') {
+        // Handled in initBuyerPageInteractions
     }
 
-    if (userRole === 'Buyer' || userRole === 'Guest') {
+    if (buyerPages.includes(currentPage)) {
         initBuyerPageInteractions();
     }
 
@@ -474,10 +385,10 @@ function generateListingsHTML(listings, showViews) {
     if (!listings.length) return '<tr><td colspan="5" class="p-8 text-center text-slate-400">No listings found. Click "Add Listing" to start.</td></tr>';
     
     return listings.map(l => `
-        <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors group" data-id="${l.id}">
+        <tr class="border-b border-surface-variant hover:bg-surface-container transition-colors group" data-id="${l.id}">
           <td class="p-4">
             <div class="flex items-center gap-3">
-              <img src="${l.img || 'https://via.placeholder.com/48?text=House'}" alt="Property" class="w-12 h-12 rounded object-cover shadow-sm border border-slate-200">
+              <img src="${l.img || 'https://via.placeholder.com/48?text=House'}" alt="Property" class="w-12 h-12 rounded object-cover shadow-sm border border-outline-variant">
               <div>
                 <p class="font-medium text-primary">${escHtml(l.title)}</p>
                 <p class="text-on-surface-variant text-xs">${escHtml(l.location)}</p>
@@ -485,7 +396,7 @@ function generateListingsHTML(listings, showViews) {
             </div>
           </td>
           <td class="p-4">
-            <span class="${l.status === 'Active' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container-high text-on-surface-variant'} px-2 py-1 rounded-full text-xs font-medium">${l.status}</span>
+            <span class="${l.status === 'Active' ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 'bg-surface-container-high text-on-surface-variant'} px-2 py-1 rounded-full text-xs font-medium">${l.status}</span>
           </td>
           <td class="p-4 font-medium">${escHtml(l.price)}</td>
           ${showViews ? `<td class="p-4">${l.views.toLocaleString()}</td>` : ''}
@@ -555,7 +466,7 @@ function saveListingForm() {
         listings = listings.map(l => l.id == id ? { ...l, title, location, price, status, views } : l);
     } else {
         const newId = Date.now();
-        listings.push({ id: newId, title, location, price, status, views });
+        listings.push({ id: newId, title, location, price, status, views, img: '' });
     }
 
     saveListings(listings);
@@ -572,9 +483,9 @@ function injectListingModal() {
     modal.id = 'listing-modal';
     modal.className = 'hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm';
     modal.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-          <h3 id="modal-title" class="text-lg font-bold text-slate-900">Add New Listing</h3>
+      <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-outline-variant">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+          <h3 id="modal-title" class="font-h3 text-h3 text-primary">Add New Listing</h3>
           <button onclick="closeListingModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
             <span class="material-symbols-outlined text-[24px]">close</span>
           </button>
@@ -583,20 +494,20 @@ function injectListingModal() {
           <input type="hidden" id="modal-id"/>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Title *</label>
-            <input id="modal-prop-title" type="text" placeholder="e.g. 12 Marine Drive, Penthouse" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"/>
+            <input id="modal-prop-title" type="text" placeholder="e.g. 12 Marine Drive, Penthouse" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Location *</label>
-            <input id="modal-location" type="text" placeholder="e.g. Bandra West, Mumbai" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"/>
+            <input id="modal-location" type="text" placeholder="e.g. Bandra West, Mumbai" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
           </div>
           <div class="flex gap-4">
             <div class="flex-1">
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price *</label>
-              <input id="modal-price" type="text" placeholder="e.g. ₹12.5 Cr" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"/>
+              <input id="modal-price" type="text" placeholder="e.g. ₹12.5 Cr" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
             </div>
             <div class="flex-1">
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
-              <select id="modal-status" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+              <select id="modal-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
                 <option value="Active">Active</option>
                 <option value="Pending">Pending</option>
                 <option value="Sold">Sold</option>
@@ -605,12 +516,12 @@ function injectListingModal() {
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Views</label>
-            <input id="modal-views" type="number" placeholder="0" class="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"/>
+            <input id="modal-views" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
           </div>
         </div>
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-          <button onclick="closeListingModal()" class="px-5 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-100 transition-colors">Cancel</button>
-          <button onclick="saveListingForm()" class="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity">Save Listing</button>
+        <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+          <button onclick="closeListingModal()" class="px-5 py-2 rounded-lg border border-outline-variant text-on-surface-variant text-sm font-medium hover:bg-surface-container transition-colors">Cancel</button>
+          <button onclick="saveListingForm()" class="px-5 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 transition-opacity">Save Listing</button>
         </div>
       </div>
     `;
@@ -666,7 +577,7 @@ function renderInquiries() {
     }
 
     const html = inquiries.length ? inquiries.map(i => `
-        <div onclick="openInquiry(${i.id})" class="p-3 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors border-b border-slate-100 last:border-0 relative ${!i.read ? 'bg-primary-fixed/5' : ''}">
+        <div onclick="openInquiry(${i.id})" class="p-3 hover:bg-surface-container rounded-lg cursor-pointer transition-colors border-b border-surface-variant last:border-0 relative ${!i.read ? 'bg-primary-fixed/5' : ''}">
           ${!i.read ? '<div class="absolute left-2 top-4 w-2 h-2 rounded-full bg-primary animate-pulse"></div>' : ''}
           <div class="ml-4">
             <div class="flex justify-between items-start mb-1">
@@ -736,9 +647,9 @@ function injectInquiryModal() {
     modal.id = 'inquiry-details-modal';
     modal.className = 'hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm';
     modal.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-          <h3 class="text-lg font-bold text-slate-900">Inquiry Details</h3>
+      <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-outline-variant">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+          <h3 class="font-h3 text-h3 text-primary">Inquiry Details</h3>
           <button onclick="closeInquiryModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
             <span class="material-symbols-outlined text-[24px]">close</span>
           </button>
@@ -751,16 +662,16 @@ function injectInquiryModal() {
             </div>
             <span id="inquiry-modal-time" class="text-xs text-slate-400">10:42 AM</span>
           </div>
-          <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant">
             <p id="inquiry-modal-message" class="text-sm text-slate-700 leading-relaxed italic">"Interested in viewing 123 Luxury Lane this weekend if possible."</p>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Reply Message</label>
-            <textarea id="inquiry-modal-reply" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary" rows="3" placeholder="Type broker reply..."></textarea>
+            <textarea id="inquiry-modal-reply" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed" rows="3" placeholder="Type broker reply..."></textarea>
           </div>
           <div class="flex flex-col gap-2 pt-2">
-            <button id="reply-inquiry-btn" class="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity">Send Reply</button>
-            <button id="schedule-viewing-btn" class="w-full border border-slate-200 text-slate-600 py-2.5 rounded-lg font-semibold hover:bg-slate-50 transition-colors">Schedule Viewing</button>
+            <button id="reply-inquiry-btn" class="w-full bg-primary text-on-primary py-2.5 rounded-lg font-semibold hover:opacity-90 transition-opacity">Send Reply</button>
+            <button id="schedule-viewing-btn" class="w-full border border-outline-variant text-on-surface-variant py-2.5 rounded-lg font-semibold hover:bg-surface-container transition-colors">Schedule Viewing</button>
           </div>
         </div>
       </div>
@@ -791,44 +702,6 @@ function injectInquiryModal() {
     }
 }
 
-function initBuyerBrokerChat() {
-    const chatBtn = document.getElementById('contact-agent-btn');
-    const form = document.getElementById('buyer-inquiry-form');
-    if (!chatBtn || !form) return;
-
-    chatBtn.addEventListener('click', () => {
-        const firstName = document.getElementById('buyer-first-name')?.value?.trim();
-        const lastName = document.getElementById('buyer-last-name')?.value?.trim();
-        const email = document.getElementById('buyer-email')?.value?.trim();
-        const phone = document.getElementById('buyer-phone')?.value?.trim();
-        const type = document.getElementById('inquiry-type')?.value?.trim() || 'Chat';
-        const message = document.getElementById('buyer-message')?.value?.trim();
-
-        if (!firstName || !email || !message) {
-            showToast('Add name, email, and message to chat.');
-            return;
-        }
-
-        const fullName = `${firstName} ${lastName || ''}`.trim();
-        const channelDetails = [email, phone].filter(Boolean).join(' | ');
-        const finalMessage = `${message}${channelDetails ? ` (${channelDetails})` : ''}`;
-
-        const inquiries = getInquiries();
-        inquiries.unshift({
-            id: Date.now(),
-            name: fullName,
-            time: formatTimeLabel(),
-            message: finalMessage,
-            type,
-            read: false,
-            brokerReply: ''
-        });
-        saveInquiries(inquiries);
-
-        form.reset();
-        showToast('Message sent to broker. They can now reply in Leads.');
-    });
-}
 
 function initBuyerPageInteractions() {
     wireCommonLinks();
@@ -848,17 +721,17 @@ function initBuyerPageInteractions() {
 
 function wireCommonLinks() {
     const navMap = {
-        'About Us': '/index.html',
-        'Terms of Service': '/terms.html',
-        'Privacy Policy': '/privacy.html',
-        'Cookie Settings': '/privacy.html',
-        'Contact Support': '/login.html',
-        'Sitemap': '/index.html'
+        'About Us': 'index.html',
+        'Terms of Service': 'terms.html',
+        'Privacy Policy': 'privacy.html',
+        'Cookie Settings': 'privacy.html',
+        'Contact Support': 'login.html',
+        'Sitemap': 'index.html'
     };
 
     document.querySelectorAll('a').forEach((a) => {
         const label = a.textContent.trim();
-        if (navMap[label]) a.setAttribute('href', navMap[label]);
+        if (navMap[label]) a.setAttribute('href', toAppUrl(navMap[label]));
     });
 }
 
@@ -874,110 +747,560 @@ function normalizeInternalLinks() {
 }
 
 function initBuyerHomePage() {
-    const searchButtons = Array.from(document.querySelectorAll('button')).filter((b) => b.textContent.includes('Search'));
-    searchButtons.forEach((btn) => {
-        btn.addEventListener('click', () => navigateTo('properties.html'));
-    });
+    // ── [Search Bar Navigation] ──
+    const searchInput = document.getElementById('location-search');
+    const searchBtn = document.getElementById('search-btn');
+    const resultsContainer = document.getElementById('search-results');
+    let debounceTimer;
 
+    if (searchBtn && searchInput) {
+        searchBtn.onclick = () => {
+            const val = searchInput.value.trim();
+            navigateTo(`map.html${val ? `?q=${encodeURIComponent(val)}` : ''}`);
+        };
+
+        // Enter key support
+        searchInput.onkeypress = (e) => {
+            if (e.key === 'Enter') searchBtn.click();
+        };
+
+        // OpenStreetMap Autocomplete
+        if (resultsContainer) {
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                const query = e.target.value.trim();
+                if (query.length < 3) {
+                    resultsContainer.classList.add('hidden');
+                    return;
+                }
+                
+                debounceTimer = setTimeout(() => {
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=IN&limit=5`)
+                        .then(res => res.json())
+                        .then(data => {
+                            resultsContainer.innerHTML = '';
+                            if (data.length === 0) {
+                                resultsContainer.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium">No locations found in India.</div>';
+                            } else {
+                                data.forEach(item => {
+                                    const div = document.createElement('div');
+                                    div.className = 'px-6 py-4 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3';
+                                    div.innerHTML = `<span class="material-symbols-outlined text-slate-400 text-[20px]">location_on</span><span class="text-sm font-medium text-slate-700 truncate" title="${item.display_name}">${item.display_name}</span>`;
+                                    div.onclick = () => {
+                                        searchInput.value = item.display_name.split(',')[0];
+                                        resultsContainer.classList.add('hidden');
+                                        navigateTo(`map.html?lat=${item.lat}&lng=${item.lon}&q=${encodeURIComponent(item.display_name)}`);
+                                    };
+                                    resultsContainer.appendChild(div);
+                                });
+                            }
+                            resultsContainer.classList.remove('hidden');
+                            resultsContainer.classList.add('flex');
+                        })
+                        .catch(err => console.error('Nominatim error:', err));
+                }, 300);
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.classList.add('hidden');
+                    resultsContainer.classList.remove('flex');
+                }
+            });
+        }
+    }
+
+    // ── [Featured Cards Navigation] ──
     document.querySelectorAll('article, section .group.cursor-pointer').forEach((card) => {
         card.addEventListener('click', () => navigateTo('property-details.html'));
     });
 }
 
 function initBuyerListingsPage() {
-    const listingCards = document.querySelectorAll('main .group.cursor-pointer');
-    listingCards.forEach((card) => {
+    // ── [Data Initialization] ──
+    let savedProperties = [];
+    try {
+        savedProperties = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+    } catch (e) { savedProperties = []; }
+
+    const propertyGrid = document.getElementById('property-grid');
+    const cards = Array.from(document.querySelectorAll('.property-card'));
+    const countText = document.getElementById('listings-count-text');
+
+    // ── [Helper: Update Visible Count] ──
+    const updateCount = () => {
+        const visibleCount = cards.filter(c => c.style.display !== 'none').length;
+        if (countText) countText.textContent = `Showing ${visibleCount} exceptional listings in Mumbai & Delhi`;
+    };
+
+    // ── [Helper: Load Saved State] ──
+    const syncSavedHearts = () => {
+        cards.forEach(card => {
+            const id = card.dataset.id;
+            const btn = card.querySelector('.save-property-btn');
+            const icon = btn?.querySelector('.material-symbols-outlined');
+            if (savedProperties.includes(id)) {
+                if (icon) icon.style.fontVariationSettings = "'FILL' 1";
+                btn?.classList.add('text-error');
+            } else {
+                if (icon) icon.style.fontVariationSettings = "'FILL' 0";
+                btn?.classList.remove('text-error');
+            }
+        });
+    };
+    syncSavedHearts();
+
+    // ── [Search & Filter Logic] ──
+    const applyFilters = () => {
+        const query = document.getElementById('listing-search-input')?.value.toLowerCase() || '';
+        const selectedTypes = Array.from(document.querySelectorAll('input[name="type"]:checked')).map(i => i.value);
+        const minPrice = parseFloat(document.getElementById('price-min')?.value) || 0;
+        const maxPrice = parseFloat(document.getElementById('price-max')?.value) || Infinity;
+        
+        const activeBeds = document.querySelector('button[data-filter="beds"].bg-primary')?.dataset.value || 0;
+        const activeBaths = document.querySelector('button[data-filter="baths"].bg-primary')?.dataset.value || 0;
+
+        cards.forEach(card => {
+            const title = card.dataset.title.toLowerCase();
+            const location = card.dataset.location.toLowerCase();
+            const type = card.dataset.type;
+            const beds = parseFloat(card.dataset.beds);
+            const baths = parseFloat(card.dataset.baths);
+            const price = parseFloat(card.dataset.price);
+
+            const matchesSearch = !query || title.includes(query) || location.includes(query);
+            const matchesType = selectedTypes.length === 0 || selectedTypes.includes(type);
+            const matchesBeds = beds >= parseFloat(activeBeds);
+            const matchesBaths = baths >= parseFloat(activeBaths);
+            const matchesPrice = price >= minPrice && price <= maxPrice;
+
+            if (matchesSearch && matchesType && matchesBeds && matchesBaths && matchesPrice) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        updateCount();
+    };
+
+    // ── [Sort Logic] ──
+    const sortCards = () => {
+        const sortVal = document.getElementById('sort-dropdown')?.value;
+        const sortedCards = [...cards].sort((a, b) => {
+            if (sortVal === 'price-low') return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+            if (sortVal === 'price-high') return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+            if (sortVal === 'newest') return new Date(b.dataset.date) - new Date(a.dataset.date);
+            return 0; // recommended/default
+        });
+        
+        if (propertyGrid) {
+            propertyGrid.innerHTML = '';
+            sortedCards.forEach(c => propertyGrid.appendChild(c));
+        }
+    };
+
+    // ── [Event Listeners] ──
+    document.getElementById('find-homes-btn')?.addEventListener('click', applyFilters);
+    document.getElementById('listing-search-input')?.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') applyFilters();
+    });
+
+    document.querySelectorAll('input[name="type"], #price-min, #price-max').forEach(el => {
+        el.addEventListener('change', applyFilters);
+    });
+
+    document.querySelectorAll('button[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const filterType = btn.dataset.filter;
+            document.querySelectorAll(`button[data-filter="${filterType}"]`).forEach(b => {
+                b.classList.remove('bg-primary', 'text-on-primary');
+            });
+            btn.classList.add('bg-primary', 'text-on-primary');
+            applyFilters();
+        });
+    });
+
+    document.getElementById('clear-all-filters')?.addEventListener('click', () => {
+        document.getElementById('listing-search-input').value = '';
+        document.querySelectorAll('input[name="type"]').forEach(i => i.checked = false);
+        document.getElementById('price-min').value = '';
+        document.getElementById('price-max').value = '';
+        document.querySelectorAll('button[data-filter]').forEach(b => b.classList.remove('bg-primary', 'text-on-primary'));
+        applyFilters();
+        showToast('All filters cleared.');
+    });
+
+    document.getElementById('sort-dropdown')?.addEventListener('change', sortCards);
+
+    // ── [Grid/List Toggle] ──
+    const gridBtn = document.getElementById('view-grid');
+    const listBtn = document.getElementById('view-list');
+    if (gridBtn && listBtn && propertyGrid) {
+        gridBtn.onclick = () => {
+            propertyGrid.className = 'grid grid-cols-1 md:grid-cols-2 gap-10';
+            gridBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+            listBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+            cards.forEach(c => c.classList.remove('flex', 'gap-6', 'items-center'));
+            showToast('Switched to Grid View');
+        };
+        listBtn.onclick = () => {
+            propertyGrid.className = 'grid grid-cols-1 gap-8';
+            listBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+            gridBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+            cards.forEach(c => c.classList.add('flex', 'gap-6', 'items-center'));
+            showToast('Switched to List View');
+        };
+    }
+
+    // ── [Card Interactions] ──
+    cards.forEach(card => {
         card.addEventListener('click', (e) => {
-            if (e.target.closest('button[aria-label="Save Property"]')) return;
+            if (e.target.closest('.save-property-btn')) return;
             navigateTo('property-details.html');
         });
-    });
 
-    document.querySelectorAll('button[aria-label="Save Property"]').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
+        const saveBtn = card.querySelector('.save-property-btn');
+        saveBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
-            const icon = btn.querySelector('.material-symbols-outlined');
-            const isSaved = icon?.style?.fontVariationSettings?.includes("'FILL' 1");
-            if (icon) {
-                icon.style.fontVariationSettings = isSaved ? "'FILL' 0" : "'FILL' 1";
+            const id = card.dataset.id;
+            const index = savedProperties.indexOf(id);
+            if (index > -1) {
+                savedProperties.splice(index, 1);
+                showToast('Removed from saved properties.');
+            } else {
+                savedProperties.push(id);
+                showToast('Property saved to your favorites.');
             }
-            btn.classList.toggle('text-error', !isSaved);
-            showToast(isSaved ? 'Removed from saved properties.' : 'Saved property.');
+            localStorage.setItem('savedProperties', JSON.stringify(savedProperties));
+            syncSavedHearts();
         });
     });
 
-    const searchBtn = Array.from(document.querySelectorAll('button')).find((b) => ['Search', 'Apply Filters'].includes(b.textContent.trim()));
-    if (searchBtn) searchBtn.addEventListener('click', () => showToast('Search filters applied.'));
+    // ── [Pagination] ──
+    document.querySelectorAll('.pagination-btn').forEach(btn => {
+        btn.onclick = () => showToast('Pagination is demo-only in this build.');
+    });
 
-    const clearBtn = Array.from(document.querySelectorAll('button')).find((b) => b.textContent.trim() === 'Clear All');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            document.querySelectorAll('aside input').forEach((input) => {
-                if (input.type === 'checkbox') input.checked = false;
-                else input.value = '';
-            });
-            document.querySelectorAll('aside select').forEach((sel) => { sel.selectedIndex = 0; });
-            showToast('Filters cleared.');
-        });
-    }
-
-    const sortSelect = document.querySelector('main select');
-    if (sortSelect) sortSelect.addEventListener('change', () => showToast(`Sorted: ${sortSelect.value.replace('Sort by: ', '')}`));
-
-    const gridBtn = document.querySelector('button[aria-label="Grid View"]');
-    const listBtn = document.querySelector('button[aria-label="List View"]');
-    const grid = document.querySelector('main .grid');
-    if (gridBtn && listBtn && grid) {
-        gridBtn.addEventListener('click', () => {
-            grid.className = 'flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-gutter';
-            gridBtn.classList.add('bg-surface-container-lowest', 'text-primary');
-            listBtn.classList.remove('bg-surface-container-lowest', 'text-primary');
-            showToast('Grid view enabled.');
-        });
-        listBtn.addEventListener('click', () => {
-            grid.className = 'flex-1 grid grid-cols-1 gap-gutter';
-            listBtn.classList.add('bg-surface-container-lowest', 'text-primary');
-            gridBtn.classList.remove('bg-surface-container-lowest', 'text-primary');
-            showToast('List view enabled.');
-        });
-    }
-
-    document.querySelectorAll('nav button').forEach((btn) => {
-        if (btn.textContent.trim().match(/^\d+$/) || btn.querySelector('.material-symbols-outlined')) {
-            btn.addEventListener('click', () => showToast('Pagination is demo-only in this build.'));
+    // Handle initial search from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const q = urlParams.get('q');
+    if (q) {
+        const input = document.getElementById('listing-search-input');
+        if (input) {
+            input.value = q;
+            applyFilters();
         }
-    });
+    }
 }
 
 function initBuyerMapPage() {
-    document.querySelectorAll('article, main .group').forEach((card) => {
-        card.addEventListener('click', (e) => {
-            if (e.target.closest('button')) return;
-            navigateTo('property-details.html');
-        });
+    console.log('Initializing Map with India bounds...');
+    if (typeof L === 'undefined') {
+        console.error('Leaflet is not loaded!');
+        return;
+    }
+
+    const indiaBounds = L.latLngBounds(
+        L.latLng(6.5, 68.1), // Southwest
+        L.latLng(35.6, 97.4)  // Northeast
+    );
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const latParam = urlParams.get('lat');
+    const lngParam = urlParams.get('lng');
+    const qParam = urlParams.get('q');
+    
+    let initialCenter = [19.0760, 72.8777]; // Mumbai Center
+    let initialZoom = 13;
+
+    if (latParam && lngParam) {
+        initialCenter = [parseFloat(latParam), parseFloat(lngParam)];
+        initialZoom = 15;
+    }
+
+    const map = L.map('map', {
+        center: initialCenter,
+        zoom: initialZoom,
+        maxBounds: indiaBounds,
+        maxBoundsViscosity: 1.0, 
+        zoomControl: false
+    });
+    
+    // Toast the searched location if available
+    if (qParam) {
+        setTimeout(() => {
+            if (typeof showToast === 'function') showToast(`Showing results near ${escHtml(qParam.split(',')[0])}`);
+        }, 800);
+    }
+    
+    // Set dynamic minZoom so user cannot zoom out larger than India
+    map.setMinZoom(map.getBoundsZoom(indiaBounds));
+
+    // Add Zoom Control to bottom-right
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Add Tile Layer (Limited to India bounds)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; EstatePro India',
+        subdomains: 'abcd',
+        maxZoom: 18,
+        bounds: indiaBounds // This prevents loading tiles outside India bounds
+    }).addTo(map);
+
+    // Set map background to match the "empty" areas
+    document.getElementById('map').style.background = '#ebebeb'; // Typical map gray
+
+
+
+    // Load Listings from localStorage
+    const listings = typeof getListings === 'function' ? getListings() : [];
+    
+    // Assign fake lat/lng to listings based on location for demo purposes
+    // (In a real app, these would come from geocoding)
+    const markersData = listings.map(l => {
+        let lat = 19.0760 + (Math.random() - 0.5) * 0.1;
+        let lng = 72.8777 + (Math.random() - 0.5) * 0.1;
+        if (l.location && l.location.toLowerCase().includes('delhi')) {
+            lat = 28.6139 + (Math.random() - 0.5) * 0.1;
+            lng = 77.2090 + (Math.random() - 0.5) * 0.1;
+        }
+        return { ...l, lat, lng };
     });
 
-    document.querySelectorAll('section button').forEach((btn) => {
-        const txt = btn.textContent.trim();
-        if (txt.includes('₹') || txt.includes('Price') || txt.includes('Beds') || txt.includes('Home Type') || txt.includes('Draw')) {
-            btn.addEventListener('click', () => showToast('Map filter updated.'));
+    const markers = [];
+    let activeListingId = null;
+    let isProgrammaticMove = false; // to prevent updateSidebar on flyTo
+
+    function selectListing(id, fromMap = false) {
+        activeListingId = id;
+        
+        const markerObj = markers.find(m => m.data.id == id);
+        
+        if (!fromMap && markerObj) {
+            isProgrammaticMove = true;
+            map.flyTo([markerObj.data.lat, markerObj.data.lng], 15, { animate: true, duration: 0.5 });
+            markerObj.marker.openPopup();
+            setTimeout(() => { isProgrammaticMove = false; }, 600); // Wait for flyTo
         }
+
+        updateSidebar(); // Re-render sidebar to apply active styles
+        
+        // Highlight active pin
+        document.querySelectorAll('.custom-price-pin').forEach(el => el.classList.remove('active-pin'));
+        const pinEl = document.getElementById(`pin-${id}`);
+        if (pinEl) pinEl.classList.add('active-pin');
+
+        if (fromMap) {
+            setTimeout(() => {
+                const cardEl = document.getElementById(`card-${id}`);
+                if (cardEl) {
+                    cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 100);
+        }
+    }
+
+    markersData.forEach(p => {
+        // Beds and baths logic
+        const beds = p.beds || Math.floor(Math.random()*3)+2;
+        const baths = p.baths || Math.floor(Math.random()*3)+1;
+        p.beds = beds; 
+        p.baths = baths;
+
+        const icon = L.divIcon({
+            className: 'bg-transparent border-none', // Leaflet container
+            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${p.id}">${escHtml(p.price)}</div>`,
+            iconSize: [0, 0],
+            iconAnchor: [0, 0]
+        });
+
+        const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+        
+        marker.bindPopup(`
+            <div class="p-2 min-w-[150px]">
+                <h4 class="font-bold text-sm text-slate-900">${escHtml(p.price)}/mo</h4>
+                <p class="text-xs font-medium text-slate-500 mt-0.5">${escHtml(p.title)}</p>
+                <div class="flex items-center gap-2 mt-2 text-slate-600 text-[10px] font-bold">
+                    <span>${beds} BEDS</span> &bull; <span>${baths} BATHS</span>
+                </div>
+                <button onclick="window.location.href='property-details.html?id=${p.id}'" class="mt-3 w-full bg-slate-900 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold hover:bg-slate-800 transition-colors">View Details</button>
+            </div>
+        `, { closeButton: false, offset: [0, -35] });
+
+        marker.on('click', () => {
+            selectListing(p.id, true);
+        });
+
+        markers.push({ marker, data: p });
     });
+
+    const sidebarContainer = document.querySelector('.overflow-y-auto.p-6');
+    const matchesCountEl = document.querySelector('h2 + p');
+
+    window.toggleMapFavorite = function(e, id) {
+        e.stopPropagation(); // prevent card click
+        let saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+        if (saved.includes(id)) {
+            saved = saved.filter(savedId => savedId != id);
+            showToast('Removed from favorites');
+        } else {
+            saved.push(id);
+            showToast('Added to favorites');
+        }
+        localStorage.setItem('savedProperties', JSON.stringify(saved));
+        updateSidebar(); 
+    };
+
+    window.clickSidebarCard = function(id) {
+        selectListing(id, false);
+    };
+
+    function updateSidebar() {
+        if (isProgrammaticMove) return;
+
+        const bounds = map.getBounds();
+        const visibleListings = markersData.filter(p => bounds.contains([p.lat, p.lng]));
+        
+        if (matchesCountEl) {
+            matchesCountEl.textContent = `${visibleListings.length} MATCHES FOUND`;
+        }
+
+        if (!sidebarContainer) return;
+
+        if (visibleListings.length === 0) {
+            sidebarContainer.innerHTML = '<p class="text-slate-500 text-center mt-10">No properties found in this map area. Zoom out or pan to see more.</p>';
+            return;
+        }
+
+        let saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
+
+        sidebarContainer.innerHTML = visibleListings.map(l => {
+            const isSaved = saved.includes(l.id);
+            const isActive = activeListingId == l.id;
+            const activeClasses = isActive ? 'ring-4 ring-slate-900 shadow-2xl scale-[1.02]' : 'border-slate-100 hover:shadow-xl';
+            
+            return `
+            <div id="card-${l.id}" class="listing-card cursor-pointer bg-white rounded-3xl border ${activeClasses} overflow-hidden transition-all duration-300" onclick="clickSidebarCard(${l.id})">
+              <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
+                <img loading="lazy" src="${l.img || 'https://via.placeholder.com/400x225?text=House'}" class="w-full h-full object-cover transition-transform duration-700 ${isActive ? '' : 'group-hover:scale-105'}">
+                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${escHtml(l.status)}</div>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-start mb-1">
+                  <h3 class="text-xl font-black text-slate-900">${escHtml(l.price)}<span class="text-sm font-normal text-slate-500"> /mo</span></h3>
+                  <button class="transition-colors ${isSaved ? 'text-red-500' : 'text-slate-200 hover:text-red-500'}" onclick="toggleMapFavorite(event, ${l.id})">
+                    <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">favorite</span>
+                  </button>
+                </div>
+                <p class="text-slate-500 text-sm font-medium mb-4 truncate">${escHtml(l.title)}, ${escHtml(l.location)}</p>
+                <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[18px]">bed</span>
+                    <span class="text-xs font-black text-slate-900">${l.beds}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[18px]">bathtub</span>
+                    <span class="text-xs font-black text-slate-900">${l.baths}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[18px]">square_foot</span>
+                    <span class="text-xs font-black text-slate-900">${Math.floor(Math.random()*2000)+1000} <span class="font-normal text-slate-400">sqft</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            `;
+        }).join('');
+
+        // Apply active pin class safely
+        document.querySelectorAll('.custom-price-pin').forEach(el => el.classList.remove('active-pin'));
+        if (activeListingId) {
+            const pinEl = document.getElementById(`pin-${activeListingId}`);
+            if (pinEl) pinEl.classList.add('active-pin');
+        }
+    }
+
+    map.on('moveend', updateSidebar);
+    
+    // Deselect if clicking on empty map area
+    map.on('click', (e) => {
+        // if user clicked on a marker, the click event on the marker fires, but we don't want this map click to override it
+        // Leaflet fires marker click, then map click usually if not stopped. 
+        // We handle that by checking event target or just relying on marker click stopping propagation.
+    });
+    
+    setTimeout(updateSidebar, 100);
 }
 
 function initBuyerDetailsPage() {
-    const photoBtn = Array.from(document.querySelectorAll('span')).find((s) => s.textContent.includes('View All 24 Photos'))?.closest('div');
-    if (photoBtn) photoBtn.addEventListener('click', () => showToast('Full photo gallery will open in next iteration.'));
+    // ── [Photo Overlay Toast] ──
+    const photoBtn = Array.from(document.querySelectorAll('span, div')).find((s) => s.textContent.includes('View All 24 Photos'))?.closest('div');
+    if (photoBtn) {
+        photoBtn.classList.add('cursor-pointer');
+        photoBtn.addEventListener('click', () => showToast('Pagination is demo-only in this build.'));
+    }
+
+    // Inquiry form validation and submission
+    const form = document.getElementById('buyer-inquiry-form');
+    const submitBtn = document.getElementById('contact-agent-btn');
+    
+    if (form && submitBtn) {
+        submitBtn.onclick = (e) => {
+            e.preventDefault();
+            const firstName = document.getElementById('buyer-first-name')?.value?.trim();
+            const email = document.getElementById('buyer-email')?.value?.trim();
+            const message = document.getElementById('buyer-message')?.value?.trim();
+
+            if (!firstName || !email || !message) {
+                showToast('Please fill in required fields: First Name, Email, and Message.');
+                return;
+            }
+
+            const phone = document.getElementById('buyer-phone')?.value?.trim();
+            const fullName = `${firstName} ${document.getElementById('buyer-last-name')?.value || ''}`.trim();
+            const type = document.getElementById('inquiry-type')?.value || 'Inquiry';
+            
+            // Consolidate message with phone if provided
+            const finalMessage = phone ? `${message} (Contact: ${phone})` : message;
+
+            // Save to localStorage
+            const inquiries = getInquiries();
+            inquiries.unshift({
+                id: Date.now(),
+                name: fullName,
+                time: formatTimeLabel(),
+                message: finalMessage,
+                type: type,
+                read: false,
+                brokerReply: ''
+            });
+            saveInquiries(inquiries);
+
+            showToast('Inquiry submitted successfully. Broker will contact you soon.');
+            form.reset();
+        };
+    }
 }
 
 function initSellPage() {
-    const form = document.querySelector('form');
+    const form = document.getElementById('valuation-form');
     if (!form) return;
-    form.addEventListener('submit', (e) => {
+
+    form.onsubmit = (e) => {
         e.preventDefault();
+        const name = document.getElementById('val-name')?.value?.trim();
+        const email = document.getElementById('val-email')?.value?.trim();
+        const address = document.getElementById('val-address')?.value?.trim();
+
+        if (!name || !email || !address) {
+            showToast('Please fill in all required fields.');
+            return;
+        }
+
+        showToast('Valuation request submitted. Our team will contact you within 24 hours.');
         form.reset();
-        showToast('Valuation request submitted.');
-    });
+    };
 }
 
 function initAdminPanelInteractions() {
