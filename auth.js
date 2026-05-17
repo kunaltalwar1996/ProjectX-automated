@@ -1,3 +1,5 @@
+import { supabase } from './lib/supabase.js';
+
 const currentPath = window.location.pathname;
 let currentPage = currentPath.split('/').pop() || 'index.html';
 if (!currentPage.includes('.')) currentPage += '.html'; // Handle Vite-style paths without extensions
@@ -51,31 +53,60 @@ const roleAllowedPages = {
 
 // ─── Global Auth Guard (synchronous) ──────────────────────────────────────────
 
+// ─── Global Auth Guard (asynchronous) ──────────────────────────────────────────
+
 const isLoginPage = currentPage === 'login.html' || currentPage === 'staff-login.html';
 
-if (!isLoginPage) {
-    if (!userRole) {
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    // For Guest access, we check if they have a 'Guest' role in localStorage
+    // or if they are on a guest-allowed page.
+    const localRole = localStorage.getItem('role');
+
+    if (!session && localRole !== 'Guest' && !isLoginPage) {
         navigateTo('login.html');
-    } else {
-        const allowed = roleAllowedPages[userRole];
+        return;
+    }
+
+    let role = localRole;
+    if (session) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if (profile) {
+            role = profile.role;
+            localStorage.setItem('role', role); // Sync for sync checks
+        }
+    }
+
+    if (!isLoginPage) {
+        const allowed = roleAllowedPages[role || 'Guest'];
         if (allowed && !allowed.includes(currentPage)) {
-            navigateTo(roleHomePage[userRole]);
+            navigateTo(roleHomePage[role || 'Guest']);
         }
     }
 }
 
+checkAuth();
+
 // ─── Exported functions ───────────────────────────────────────────────────────
 
-window.login = function(role, name) {
+window.login = async function(role, name) {
+    if (role === 'Guest') {
+        localStorage.setItem('role', 'Guest');
+        navigateTo(roleHomePage['Guest']);
+        return;
+    }
+    // For other roles, we expect Supabase session to handle it
+    // But we'll keep the role in localStorage for synchronous checks if needed
     localStorage.setItem('role', role);
     if (name) localStorage.setItem('userName', name);
     navigateTo(roleHomePage[role] || 'index.html');
 };
 
-window.logout = function() {
+window.logout = async function() {
+    await supabase.auth.signOut();
     localStorage.removeItem('role');
     localStorage.removeItem('userName');
-    // Keep listings in localStorage so they persist across logins unless explicitly cleared
     navigateTo('login.html');
 };
 
@@ -123,8 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     nameField.style.display = 'block';
                     if (nameLabel) nameLabel.textContent = selectedRole === 'Broker' ? 'Company/Full Name' : 'Full Name';
                 } else {
-                    nameField.style.display = (selectedRole === 'Broker') ? 'block' : 'none';
-                    if (nameLabel) nameLabel.textContent = 'Company/Full Name';
+                    nameField.style.display = 'none';
                 }
             }
         }
@@ -168,24 +198,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sign In button
         if (signInBtn) {
-            signInBtn.onclick = (e) => {
+            signInBtn.onclick = async (e) => {
                 e.preventDefault();
+                const email = document.getElementById('input-email')?.value?.trim();
+                const password = document.getElementById('input-password')?.value?.trim();
                 const name = document.getElementById('input-name')?.value?.trim() || '';
                 
+                if (!email || !password) {
+                    showToast('Please enter both email and password.');
+                    return;
+                }
+
                 if (isSignUp && !name) {
                     showToast('Please enter your name to create an account.');
                     return;
                 }
-                
-                if (isSignUp) {
-                    if (selectedRole === 'Buyer') {
-                        localStorage.setItem('showWelcome', name);
-                    } else {
+
+                signInBtn.disabled = true;
+                signInBtn.textContent = 'Processing...';
+
+                try {
+                    if (isSignUp) {
+                        const { data, error } = await supabase.auth.signUp({
+                            email,
+                            password,
+                        });
+                        if (error) throw error;
+                        
+                        if (data.user) {
+                            // Create profile
+                            const { error: profileError } = await supabase.from('profiles').insert({
+                                id: data.user.id,
+                                full_name: name,
+                                role: selectedRole
+                            });
+                            if (profileError) throw profileError;
+                        }
+
                         showToast('Account created successfully!');
+                        isSignUp = false;
+                        updateUI();
+                    } else {
+                        const { data, error } = await supabase.auth.signInWithPassword({
+                            email,
+                            password
+                        });
+                        if (error) throw error;
+
+                        // Fetch profile to get role
+                        const { data: profile, error: profileError } = await supabase
+                            .from('profiles')
+                            .select('role, full_name')
+                            .eq('id', data.user.id)
+                            .single();
+                        
+                        if (profileError) throw profileError;
+
+                        if (profile.role !== selectedRole) {
+                            await supabase.auth.signOut();
+                            throw new Error(`This account is registered as a ${profile.role}. Please select the correct role above.`);
+                        }
+
+                        window.login(profile.role, profile.full_name);
                     }
+                } catch (err) {
+                    console.error('Authentication error:', err);
+                    // Detailed error message if available
+                    let msg = err.message || 'Authentication failed.';
+                    if (err.status === 400 && msg.toLowerCase().includes('invalid')) {
+                        msg = 'Invalid email or password format. Please check your details.';
+                    }
+                    showToast(msg);
+                } finally {
+                    signInBtn.disabled = false;
+                    signInBtn.textContent = isSignUp ? 'Create Account' : 'Sign In';
                 }
-                
-                window.login(selectedRole, name ? name : null);
             };
         }
 
@@ -299,14 +386,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Hide all tabs
                     document.querySelectorAll('.tab-content').forEach(tab => {
                         tab.classList.add('hidden');
-                        tab.classList.remove('block');
+                        tab.classList.remove('block', 'flex');
                     });
                     
                     // Show target tab
                     const targetEl = document.getElementById(targetId);
                     if (targetEl) {
                         targetEl.classList.remove('hidden');
-                        targetEl.classList.add('block');
+                        if (targetId === 'tab-messages') {
+                            targetEl.classList.add('flex');
+                            if (typeof initBrokerChat === 'function') initBrokerChat();
+                        } else {
+                            targetEl.classList.add('block');
+                        }
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                 }
@@ -398,31 +490,26 @@ document.addEventListener('DOMContentLoaded', () => {
 //  BROKER LISTINGS MANAGER (localStorage-based CRUD)
 // ══════════════════════════════════════════════════════
 
-function getListings() {
-    try {
-        return JSON.parse(localStorage.getItem('brokerListings') || '[]');
-    } catch { return []; }
-}
-
-function saveListings(listings) {
-    localStorage.setItem('brokerListings', JSON.stringify(listings));
-}
-
-function initListingsManager() {
-    const existing = getListings();
-    if (existing.length === 0) {
-        saveListings([
-            { id: 1, title: '123 Luxury Lane',      location: 'Bandra West, Mumbai', status: 'Active',  price: '₹45.0 Cr', views: 12405, img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtFpQYRSppJ6sqbxs8Iu94YSglHE4Q1LlZz9YaFu6_cn7m6z1b00jN5PpD5V3pXuYgIk5kmQkpnz4S8tkKYlDb0gmKN12JVv7DtRv_etOI2W5F9-V3kHJKYLJCUPBCiXuxd5j0kSxbDfkI4pHhD3oW5kxlUTZoelrGCPVRn-Ro7s8FeSUuN8X8CUUP82do2Y7QDz10DmZOUH_HP_74py6RfyCBYd5ZyAT7b_cwk4Q9jwG0P7gucpzHE12poCfoKKFeX3FcJk-H-IuT' },
-            { id: 2, title: '456 Downtown Penthouse', location: 'Worli, Mumbai',       status: 'Pending', price: '₹12.5 Cr', views: 8192,  img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD5PH9zTdt7fBHB5wWdbe5T0WqRZXy3xFhVsGM9HKVjeZjnqowJ9Kh11c_xySKcB0_XN7C-5DIUC25R0GV6MBNzEe4cLypRdBl5pzrXpOEC4er6AQd7LUHmFBeROO0hToj1s8guJS75UAd93b8c0SgIA-CHKe27-RV0QW1fv54c1sZOieuqffxJxx3A5OngPYfxZcr523sx57MQ3ssTAgGbH3mM_KQK80bgPoLl-pZHLhYCLzUAsGCyvOsSCwpre9H0548OVDvJ9nmX' },
-            { id: 3, title: '789 Suburban Retreat',  location: 'Vasant Vihar, Delhi', status: 'Active',  price: '₹8.5 Cr',  views: 3420,   img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBDsIh_VGkTjkLZ8bYOomQOE0dPfDiyLuwJofgAcFlqe10PUbL4FdEASejD_hskf2MTiqvfzliArLCipWWKrKiiqaC16IL6aa2Qj-fItCrhIcV6vWksyPGXls9uWgy9_cd_em9YinsPh5msJb8bW257V9HzvSpmkgyuMpzJFhBUDjUVYa1ELzc6Y4n7Bb8pbxPT8q_JaHzwyqsHsAeK-_YiNxqh1pPWBt8ZN8bZj9lKsrcm2fx1AEebFfrV0D7VOBGKpWyCX8apt1OY' }
-        ]);
+async function getListings() {
+    const { data, error } = await supabase.from('listings').select('*').order('created_at', { ascending: false });
+    if (error) {
+        console.error('Error fetching listings:', error);
+        return [];
     }
-    renderListings();
+    return data;
+}
+
+async function saveListings(listings) {
+    // This function is no longer needed in its old form as we save individual items
+}
+
+async function initListingsManager() {
+    await renderListings();
     injectListingModal();
 }
 
-function renderListings() {
-    const listings = getListings();
+async function renderListings() {
+    const listings = await getListings();
     
     // Render widget (max 3)
     const tbodyWidget = document.getElementById('listings-tbody-widget');
@@ -455,7 +542,7 @@ function generateListingsHTML(listings, showViews) {
             <span class="${l.status === 'Active' ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 'bg-surface-container-high text-on-surface-variant'} px-2 py-1 rounded-full text-xs font-medium">${l.status}</span>
           </td>
           <td class="p-4 font-medium">${escHtml(l.price)}</td>
-          ${showViews ? `<td class="p-4">${l.views.toLocaleString()}</td>` : ''}
+          ${showViews ? `<td class="p-4">${(l.views || 0).toLocaleString()}</td>` : ''}
           <td class="p-4 text-right">
             <div class="flex justify-end gap-2">
               <button onclick="shareListing(${l.id})" class="p-1.5 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container" title="Share">
@@ -473,10 +560,15 @@ function generateListingsHTML(listings, showViews) {
     `).join('');
 }
 
-function deleteListing(id) {
+async function deleteListing(id) {
     if (!confirm('Delete this listing?')) return;
-    saveListings(getListings().filter(l => l.id !== id));
-    renderListings();
+    const { error } = await supabase.from('listings').delete().eq('id', id);
+    if (error) {
+        showToast('Error deleting listing: ' + error.message);
+    } else {
+        showToast('Listing deleted.');
+        await renderListings();
+    }
 }
 
 window.deleteListing = deleteListing;
@@ -492,17 +584,32 @@ function shareListing(id) {
 
 window.shareListing = shareListing;
 
-function openListingModal(id) {
+async function openListingModal(id) {
     const modal = document.getElementById('listing-modal');
-    const listing = id ? getListings().find(l => l.id === id) : null;
+    let listing = null;
+    if (id) {
+        const { data, error } = await supabase.from('listings').select('*').eq('id', id).single();
+        if (error) {
+            showToast('Error fetching listing: ' + error.message);
+            return;
+        }
+        listing = data;
+    }
 
     document.getElementById('modal-title').textContent   = listing ? 'Edit Listing' : 'Add New Listing';
     document.getElementById('modal-id').value            = listing ? listing.id : '';
     document.getElementById('modal-prop-title').value    = listing ? listing.title    : '';
     document.getElementById('modal-location').value      = listing ? listing.location  : '';
     document.getElementById('modal-price').value         = listing ? listing.price     : '';
+    document.getElementById('modal-intent').value        = listing ? listing.intent    : 'Buy';
+    document.getElementById('modal-type').value          = listing ? listing.type      : 'Apartment';
     document.getElementById('modal-status').value        = listing ? listing.status    : 'Active';
+    document.getElementById('modal-beds').value          = listing ? listing.beds      : '0';
+    document.getElementById('modal-baths').value         = listing ? listing.baths     : '0';
+    document.getElementById('modal-sqft').value          = listing ? listing.sqft      : '0';
     document.getElementById('modal-views').value         = listing ? listing.views     : '0';
+    document.getElementById('modal-lat').value           = listing ? (listing.lat || '') : '';
+    document.getElementById('modal-lng').value           = listing ? (listing.lng || '') : '';
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -518,30 +625,46 @@ function closeListingModal() {
 
 window.closeListingModal = closeListingModal;
 
-function saveListingForm() {
+async function saveListingForm() {
     const id       = document.getElementById('modal-id').value;
     const title    = document.getElementById('modal-prop-title').value.trim();
     const location = document.getElementById('modal-location').value.trim();
-    const price    = document.getElementById('modal-price').value.trim();
+    const price    = parseFloat(document.getElementById('modal-price').value) || 0;
+    const intent   = document.getElementById('modal-intent').value;
+    const type     = document.getElementById('modal-type').value;
     const status   = document.getElementById('modal-status').value;
+    const beds     = parseInt(document.getElementById('modal-beds').value) || 0;
+    const baths    = parseFloat(document.getElementById('modal-baths').value) || 0;
+    const sqft     = parseInt(document.getElementById('modal-sqft').value) || 0;
     const views    = parseInt(document.getElementById('modal-views').value) || 0;
+    const lat      = parseFloat(document.getElementById('modal-lat').value) || null;
+    const lng      = parseFloat(document.getElementById('modal-lng').value) || null;
 
     if (!title || !location || !price) {
         alert('Please fill in all required fields.');
         return;
     }
 
-    let listings = getListings();
+    const { data: { user } } = await supabase.auth.getUser();
+    const listingData = { 
+        title, location, price, intent, type, status, beds, baths, sqft, views, lat, lng,
+        broker_id: user ? user.id : null
+    };
+
+    let result;
     if (id) {
-        listings = listings.map(l => l.id == id ? { ...l, title, location, price, status, views } : l);
+        result = await supabase.from('listings').update(listingData).eq('id', id);
     } else {
-        const newId = Date.now();
-        listings.push({ id: newId, title, location, price, status, views, img: '' });
+        result = await supabase.from('listings').insert([listingData]);
     }
 
-    saveListings(listings);
-    renderListings();
-    closeListingModal();
+    if (result.error) {
+        showToast('Error saving listing: ' + result.error.message);
+    } else {
+        showToast('Listing saved successfully.');
+        await renderListings();
+        closeListingModal();
+    }
 }
 
 window.saveListingForm = saveListingForm;
@@ -553,29 +676,45 @@ function injectListingModal() {
     modal.id = 'listing-modal';
     modal.className = 'hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm';
     modal.innerHTML = `
-      <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-outline-variant">
+      <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden border border-outline-variant">
         <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface-container-low">
           <h3 id="modal-title" class="font-h3 text-h3 text-primary">Add New Listing</h3>
           <button onclick="closeListingModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
             <span class="material-symbols-outlined text-[24px]">close</span>
           </button>
         </div>
-        <div class="p-6 space-y-4">
-          <input type="hidden" id="modal-id"/>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Title *</label>
-            <input id="modal-prop-title" type="text" placeholder="e.g. 12 Marine Drive, Penthouse" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Location *</label>
-            <input id="modal-location" type="text" placeholder="e.g. Bandra West, Mumbai" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
-          </div>
-          <div class="flex gap-4">
-            <div class="flex-1">
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price *</label>
-              <input id="modal-price" type="text" placeholder="e.g. ₹12.5 Cr" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="hidden" id="modal-id"/>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Title *</label>
+              <input id="modal-prop-title" type="text" placeholder="e.g. 12 Marine Drive, Penthouse" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
             </div>
-            <div class="flex-1">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Location *</label>
+              <input id="modal-location" type="text" placeholder="e.g. Bandra West, Mumbai" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price *</label>
+              <input id="modal-price" type="number" step="0.01" placeholder="e.g. 12.5" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Intent</label>
+              <select id="modal-intent" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                <option value="Buy">Buy</option>
+                <option value="Rent">Rent</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Type</label>
+              <select id="modal-type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Penthouse">Penthouse</option>
+                <option value="Office">Office</option>
+              </select>
+            </div>
+            <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
               <select id="modal-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
                 <option value="Active">Active</option>
@@ -583,10 +722,30 @@ function injectListingModal() {
                 <option value="Sold">Sold</option>
               </select>
             </div>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Views</label>
-            <input id="modal-views" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bedrooms</label>
+              <input id="modal-beds" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bathrooms</label>
+              <input id="modal-baths" type="number" step="0.5" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">SqFt</label>
+              <input id="modal-sqft" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Views</label>
+              <input id="modal-views" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude</label>
+              <input id="modal-lat" type="number" step="any" placeholder="19.0760" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude</label>
+              <input id="modal-lng" type="number" step="any" placeholder="72.8777" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
+            </div>
           </div>
         </div>
         <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
@@ -603,37 +762,22 @@ function injectListingModal() {
 //  BROKER INQUIRIES MANAGER
 // ══════════════════════════════════════════════════════
 
-function getInquiries() {
-    try {
-        return JSON.parse(localStorage.getItem('brokerInquiries') || '[]');
-    } catch { return []; }
-}
-
-function saveInquiries(inquiries) {
-    localStorage.setItem('brokerInquiries', JSON.stringify(inquiries));
-}
-
-function formatTimeLabel() {
-    const now = new Date();
-    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-function initInquiriesManager() {
-    const existing = getInquiries();
-    if (existing.length === 0) {
-        saveInquiries([
-            { id: 1, name: 'Sarah Jenkins', time: '10:42 AM', message: 'Interested in viewing 123 Luxury Lane this weekend.', type: 'Viewing Request', read: false, brokerReply: '' },
-            { id: 2, name: 'Michael Chen', time: 'Yesterday', message: 'Are there any similar properties in the downtown area?', type: 'Question', read: false, brokerReply: '' },
-            { id: 3, name: 'David & Emma Ross', time: 'Mon', message: 'We would like to make an offer on 789 Suburban Retreat.', type: 'Offer Intent', read: true, brokerReply: '' },
-            { id: 4, name: 'Jessica Alvarez', time: 'Nov 12', message: 'Thank you for the tour yesterday, we will think about it.', type: 'Follow-up', read: true, brokerReply: '' }
-        ]);
+async function getInquiries() {
+    const { data, error } = await supabase.from('inquiries').select('*').order('created_at', { ascending: false });
+    if (error) {
+        console.error('Error fetching inquiries:', error);
+        return [];
     }
-    renderInquiries();
+    return data;
+}
+
+async function initInquiriesManager() {
+    await renderInquiries();
     injectInquiryModal();
 }
 
-function renderInquiries() {
-    const inquiries = getInquiries();
+async function renderInquiries() {
+    const inquiries = await getInquiries();
     const unreadCount = inquiries.filter(i => !i.read).length;
     const badge = document.getElementById('new-inquiries-badge');
     
@@ -652,48 +796,38 @@ function renderInquiries() {
           <div class="ml-4">
             <div class="flex justify-between items-start mb-1">
               <h4 class="font-body-md text-body-md ${!i.read ? 'font-bold' : 'font-semibold'} text-primary">${escHtml(i.name)}</h4>
-              <span class="text-xs text-on-surface-variant">${escHtml(i.time)}</span>
+              <span class="text-xs text-on-surface-variant">${new Date(i.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
             <p class="font-body-sm text-body-sm text-on-surface-variant truncate mb-2">${escHtml(i.message)}</p>
-            ${i.brokerReply ? `<p class="font-body-sm text-[12px] text-secondary truncate mb-2">Broker: ${escHtml(i.brokerReply)}</p>` : ''}
+            ${i.broker_reply ? `<p class="font-body-sm text-[12px] text-secondary truncate mb-2">Broker: ${escHtml(i.broker_reply)}</p>` : ''}
             <div class="flex items-center gap-2">
-              <span class="text-[10px] font-bold uppercase tracking-wider ${i.type === 'Offer Intent' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant'} px-1.5 py-0.5 rounded">${i.type}</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider ${i.type === 'Offer Intent' ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 'bg-surface-container text-on-surface-variant'} px-1.5 py-0.5 rounded">${i.type}</span>
             </div>
           </div>
         </div>
     `).join('') : '<div class="p-8 text-center text-slate-400 text-sm">No inquiries yet.</div>';
     
-    // Render widget (max 3)
     const listWidget = document.getElementById('inquiries-list-widget');
-    if (listWidget) {
-        // Just slice the HTML string logic for simplicity since we want all in the widget too.
-        listWidget.innerHTML = html;
-    }
-    
-    // Render full
+    if (listWidget) listWidget.innerHTML = html;
     const listFull = document.getElementById('inquiries-list-full');
-    if (listFull) {
-        listFull.innerHTML = html;
-    }
+    if (listFull) listFull.innerHTML = html;
 }
 
-function openInquiry(id) {
-    let inquiries = getInquiries();
-    const inquiry = inquiries.find(i => i.id === id);
-    if (!inquiry) return;
+async function openInquiry(id) {
+    const { data: inquiry, error } = await supabase.from('inquiries').select('*').eq('id', id).single();
+    if (error || !inquiry) return;
 
-    // Mark as read
-    inquiries = inquiries.map(i => i.id === id ? { ...i, read: true } : i);
-    saveInquiries(inquiries);
-    renderInquiries();
+    if (!inquiry.read) {
+        await supabase.from('inquiries').update({ read: true }).eq('id', id);
+        await renderInquiries();
+    }
 
-    // Show modal
     const modal = document.getElementById('inquiry-details-modal');
     document.getElementById('inquiry-modal-name').textContent = inquiry.name;
     document.getElementById('inquiry-modal-type').textContent = inquiry.type;
     document.getElementById('inquiry-modal-message').textContent = inquiry.message;
-    document.getElementById('inquiry-modal-time').textContent = inquiry.time;
-    document.getElementById('inquiry-modal-reply').value = inquiry.brokerReply || '';
+    document.getElementById('inquiry-modal-time').textContent = new Date(inquiry.created_at).toLocaleTimeString();
+    document.getElementById('inquiry-modal-reply').value = inquiry.broker_reply || '';
     activeInquiryId = id;
 
     modal.classList.remove('hidden');
@@ -751,16 +885,19 @@ function injectInquiryModal() {
 
     const replyBtn = document.getElementById('reply-inquiry-btn');
     if (replyBtn) {
-        replyBtn.addEventListener('click', () => {
+        replyBtn.addEventListener('click', async () => {
             const reply = document.getElementById('inquiry-modal-reply')?.value?.trim();
             if (!activeInquiryId || !reply) {
                 showToast('Please enter a reply message.');
                 return;
             }
-            const updated = getInquiries().map(i => i.id === activeInquiryId ? { ...i, brokerReply: reply, read: true } : i);
-            saveInquiries(updated);
-            renderInquiries();
-            showToast('Reply sent to buyer.');
+            const { error } = await supabase.from('inquiries').update({ broker_reply: reply, read: true }).eq('id', activeInquiryId);
+            if (error) {
+                showToast('Error sending reply: ' + error.message);
+            } else {
+                await renderInquiries();
+                showToast('Reply sent to buyer.');
+            }
         });
     }
 
@@ -816,7 +953,7 @@ function normalizeInternalLinks() {
     });
 }
 
-function initBuyerHomePage() {
+async function initBuyerHomePage() {
     // ── [Search Bar Navigation] ──
     const searchInput = document.getElementById('location-search');
     const searchBtn = document.getElementById('search-btn');
@@ -828,34 +965,25 @@ function initBuyerHomePage() {
             const val = searchInput.value.trim();
             navigateTo(`map.html${val ? `?q=${encodeURIComponent(val)}` : ''}`);
         };
+        searchInput.onkeypress = (e) => { if (e.key === 'Enter') searchBtn.click(); };
 
-        // Enter key support
-        searchInput.onkeypress = (e) => {
-            if (e.key === 'Enter') searchBtn.click();
-        };
-
-        // OpenStreetMap Autocomplete
         if (resultsContainer) {
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(debounceTimer);
                 const query = e.target.value.trim();
-                if (query.length < 3) {
-                    resultsContainer.classList.add('hidden');
-                    return;
-                }
-                
+                if (query.length < 3) { resultsContainer.classList.add('hidden'); return; }
                 debounceTimer = setTimeout(() => {
                     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=IN&limit=5`)
                         .then(res => res.json())
                         .then(data => {
                             resultsContainer.innerHTML = '';
                             if (data.length === 0) {
-                                resultsContainer.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium">No locations found in India.</div>';
+                                resultsContainer.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium">No locations found.</div>';
                             } else {
                                 data.forEach(item => {
                                     const div = document.createElement('div');
-                                    div.className = 'px-6 py-4 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3';
-                                    div.innerHTML = `<span class="material-symbols-outlined text-slate-400 text-[20px]">location_on</span><span class="text-sm font-medium text-slate-700 truncate" title="${item.display_name}">${item.display_name}</span>`;
+                                    div.className = 'px-6 py-4 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 flex items-center gap-3';
+                                    div.innerHTML = `<span class="material-symbols-outlined text-slate-400 text-[20px]">location_on</span><span class="text-sm font-medium text-slate-700 truncate">${item.display_name}</span>`;
                                     div.onclick = () => {
                                         searchInput.value = item.display_name.split(',')[0];
                                         resultsContainer.classList.add('hidden');
@@ -866,35 +994,109 @@ function initBuyerHomePage() {
                             }
                             resultsContainer.classList.remove('hidden');
                             resultsContainer.classList.add('flex');
-                        })
-                        .catch(err => console.error('Nominatim error:', err));
+                        });
                 }, 300);
-            });
-
-            // Hide dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
-                    resultsContainer.classList.add('hidden');
-                    resultsContainer.classList.remove('flex');
-                }
             });
         }
     }
 
-    // ── [Featured Cards Navigation] ──
-    document.querySelectorAll('article, section .group.cursor-pointer').forEach((card) => {
-        card.addEventListener('click', () => navigateTo('property-details.html'));
-    });
+    // ── [Featured Cards from Supabase] ──
+    const featuredGrid = document.querySelector('section.py-20 .grid');
+    if (featuredGrid) {
+        const listings = await getListings();
+        const top3 = listings.slice(0, 3);
+        
+        if (top3.length > 0) {
+            featuredGrid.innerHTML = `
+                <!-- Main Featured (2 cols) -->
+                <div onclick="window.location.href='property-details.html?id=${top3[0].id}'"
+                     class="md:col-span-2 bg-white border border-slate-200 flex flex-col md:flex-row shadow-sm cursor-pointer hover:shadow-lg transition-all">
+                  <div class="w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden">
+                    <img src="${top3[0].img || 'https://via.placeholder.com/600x400?text=Luxury+Home'}" class="w-full h-full object-cover">
+                    <div class="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest">Just Listed</div>
+                  </div>
+                  <div class="w-full md:w-1/2 p-8 flex flex-col justify-center">
+                    <h3 class="text-2xl font-black text-slate-900 mb-2">₹${top3[0].price}${top3[0].intent === 'Rent' ? '' : ' Cr'}</h3>
+                    <p class="text-sm font-bold text-slate-500 mb-6">${escHtml(top3[0].title)}, ${escHtml(top3[0].location)}</p>
+                    <div class="flex items-center gap-6 pt-6 border-t border-slate-100">
+                      <div class="flex items-center gap-2 text-slate-400"><span class="material-symbols-outlined text-[18px]">bed</span><span class="text-xs font-black text-slate-900">${top3[0].beds}</span></div>
+                      <div class="flex items-center gap-2 text-slate-400"><span class="material-symbols-outlined text-[18px]">bathtub</span><span class="text-xs font-black text-slate-900">${top3[0].baths}</span></div>
+                      <div class="flex items-center gap-2 text-slate-400"><span class="material-symbols-outlined text-[18px]">square_foot</span><span class="text-xs font-black text-slate-900">${(top3[0].sqft || 0).toLocaleString()}</span></div>
+                    </div>
+                  </div>
+                </div>
+                ${top3.slice(1).map(l => `
+                <div onclick="window.location.href='property-details.html?id=${l.id}'"
+                     class="bg-white border border-slate-200 flex flex-col shadow-sm cursor-pointer hover:shadow-lg transition-all">
+                  <div class="h-48 relative overflow-hidden">
+                    <img src="${l.img || 'https://via.placeholder.com/400x250?text=Property'}" class="w-full h-full object-cover">
+                    <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest text-slate-900">${l.type}</div>
+                  </div>
+                  <div class="p-6 flex-1 flex flex-col">
+                    <h3 class="text-lg font-black text-slate-900 mb-1">₹${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</h3>
+                    <p class="text-xs font-bold text-slate-500 mb-4 truncate">${escHtml(l.title)}</p>
+                    <div class="flex items-center gap-4 mt-auto pt-4 border-t border-slate-50">
+                      <div class="flex items-center gap-1.5 text-slate-400"><span class="material-symbols-outlined text-[14px]">bed</span><span class="text-[10px] font-black text-slate-900">${l.beds}</span></div>
+                      <div class="flex items-center gap-1.5 text-slate-400"><span class="material-symbols-outlined text-[14px]">square_foot</span><span class="text-[10px] font-black text-slate-900">${(l.sqft || 0).toLocaleString()}</span></div>
+                    </div>
+                  </div>
+                </div>
+                `).join('')}
+                <!-- Dynamic Insight (keep as static design for aesthetics) -->
+                <div class="md:col-span-2 bg-slate-900 text-white p-10 relative overflow-hidden group min-h-[240px] flex items-center">
+                  <div class="relative z-10">
+                    <h3 class="text-3xl font-black mb-4">Data-Driven <span class="text-cyan-400">Insights.</span></h3>
+                    <p class="text-sm text-slate-400 mb-8 max-w-md">Our proprietary engine analyzes market trends across Mumbai & Delhi to identify high-yield opportunities.</p>
+                    <button onclick="window.location.href='map.html'" class="bg-cyan-500 text-slate-900 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-cyan-400 transition-colors">Explore Heatmap</button>
+                  </div>
+                  <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-[80px]"></div>
+                </div>
+            `;
+        }
+    }
 }
 
-function initBuyerListingsPage() {
+async function initBuyerListingsPage() {
+    const propertyGrid = document.getElementById('property-grid');
+    if (!propertyGrid) return;
+
+    // ── [Fetch & Render from Supabase] ──
+    const listings = await getListings();
+    
+    propertyGrid.innerHTML = listings.map(l => `
+        <div class="group cursor-pointer property-card bg-white rounded-3xl border border-slate-200 hover:shadow-xl overflow-hidden transition-all duration-300" 
+             data-id="${l.id}" data-title="${escHtml(l.title)}" data-location="${escHtml(l.location)}" 
+             data-type="${l.type}" data-beds="${l.beds}" data-baths="${l.baths}" data-price="${l.price}" data-date="${l.created_at}">
+          <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
+            <img loading="lazy" src="${l.img || 'https://via.placeholder.com/600x400?text=Property'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${l.intent}</div>
+            <button aria-label="Save Property" class="save-property-btn absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-error transition-colors">
+              <span class="material-symbols-outlined text-[20px]">favorite</span>
+            </button>
+            <button aria-label="Share Property" class="share-property-btn absolute top-4 right-[52px] w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-blue-500 transition-colors z-10" onclick="event.stopPropagation();">
+              <span class="material-symbols-outlined text-[20px]">share</span>
+            </button>
+          </div>
+          <div class="p-5">
+            <div class="flex justify-between items-start mb-1">
+              <h3 class="text-xl font-black text-slate-900">₹${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</h3>
+            </div>
+            <p class="text-slate-500 text-sm font-medium mb-4 truncate">${escHtml(l.title)}, ${escHtml(l.location)}</p>
+            <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
+              <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">bed</span><span class="text-xs font-black text-slate-900">${l.beds}</span></div>
+              <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">bathtub</span><span class="text-xs font-black text-slate-900">${l.baths}</span></div>
+              <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">square_foot</span><span class="text-xs font-black text-slate-900">${(l.sqft || 0).toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span></div>
+            </div>
+          </div>
+        </div>
+    `).join('');
+
     // ── [Data Initialization] ──
     let savedProperties = [];
     try {
         savedProperties = JSON.parse(localStorage.getItem('savedProperties') || '[]');
     } catch (e) { savedProperties = []; }
 
-    const propertyGrid = document.getElementById('property-grid');
     const cards = Array.from(document.querySelectorAll('.property-card'));
     const countText = document.getElementById('listings-count-text');
 
@@ -1036,7 +1238,7 @@ function initBuyerListingsPage() {
                 });
                 return;
             }
-            navigateTo('property-details.html');
+            navigateTo(`property-details.html?id=${card.dataset.id}`);
         });
 
         const saveBtn = card.querySelector('.save-property-btn');
@@ -1073,8 +1275,8 @@ function initBuyerListingsPage() {
     }
 }
 
-function initBuyerMapPage() {
-    console.log('Initializing Map with India bounds...');
+async function initBuyerMapPage() {
+    console.log('Initializing Map with Supabase data...');
     if (typeof L === 'undefined') {
         console.error('Leaflet is not loaded!');
         return;
@@ -1106,59 +1308,49 @@ function initBuyerMapPage() {
         zoomControl: false
     });
     
-    // Toast the searched location if available
     if (qParam) {
         setTimeout(() => {
             if (typeof showToast === 'function') showToast(`Showing results near ${escHtml(qParam.split(',')[0])}`);
         }, 800);
     }
     
-    // Set dynamic minZoom so user cannot zoom out larger than India
     map.setMinZoom(map.getBoundsZoom(indiaBounds));
-
-    // Add Zoom Control to bottom-right
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Add Tile Layer (Limited to India bounds)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; EstatePro India',
+        attribution: '&copy; ProjectX India',
         subdomains: 'abcd',
         maxZoom: 18,
-        bounds: indiaBounds // This prevents loading tiles outside India bounds
+        bounds: indiaBounds
     }).addTo(map);
 
-    // Set map background to match the "empty" areas
-    document.getElementById('map').style.background = '#ebebeb'; // Typical map gray
+    document.getElementById('map').style.background = '#ebebeb';
 
-
-
-    // Load Listings from DEMO_LISTINGS
-    const listings = window.DEMO_LISTINGS || [];
+    // Load Listings from Supabase
+    const listings = await getListings();
     
-    // Use coordinates from demo data
-    const markersData = listings.filter(l => l.coords).map(l => {
-        return { ...l, lat: l.coords[0], lng: l.coords[1] };
+    // Filter to those with coordinates
+    const markersData = listings.filter(l => l.lat && l.lng).map(l => {
+        return { ...l, lat: l.lat, lng: l.lng };
     });
 
     const markers = [];
     let activeListingId = null;
-    let isProgrammaticMove = false; // to prevent updateSidebar on flyTo
+    let isProgrammaticMove = false;
 
     function selectListing(id, fromMap = false) {
         activeListingId = id;
-        
         const markerObj = markers.find(m => m.data.id == id);
         
         if (!fromMap && markerObj) {
             isProgrammaticMove = true;
             map.flyTo([markerObj.data.lat, markerObj.data.lng], 15, { animate: true, duration: 0.5 });
             markerObj.marker.openPopup();
-            setTimeout(() => { isProgrammaticMove = false; }, 600); // Wait for flyTo
+            setTimeout(() => { isProgrammaticMove = false; }, 600);
         }
 
-        updateSidebar(); // Re-render sidebar to apply active styles
+        updateSidebar();
         
-        // Highlight active pin
         document.querySelectorAll('.custom-price-pin').forEach(el => el.classList.remove('active-pin'));
         const pinEl = document.getElementById(`pin-${id}`);
         if (pinEl) pinEl.classList.add('active-pin');
@@ -1175,8 +1367,8 @@ function initBuyerMapPage() {
 
     markersData.forEach(p => {
         const icon = L.divIcon({
-            className: 'bg-transparent border-none', // Leaflet container
-            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${p.id}">${escHtml(p.price)}${p.intent === 'Rent' ? '' : ' Cr'}</div>`,
+            className: 'bg-transparent border-none',
+            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${p.id}">${p.price}${p.intent === 'Rent' ? '' : ' Cr'}</div>`,
             iconSize: [0, 0],
             iconAnchor: [0, 0]
         });
@@ -1185,7 +1377,7 @@ function initBuyerMapPage() {
         
         marker.bindPopup(`
             <div class="p-2 min-w-[150px]">
-                <h4 class="font-bold text-sm text-slate-900">${window.formatPrice ? window.formatPrice(p.price, p.intent) : p.price}</h4>
+                <h4 class="font-bold text-sm text-slate-900">₹${p.price}${p.intent === 'Rent' ? '' : ' Cr'}</h4>
                 <p class="text-xs font-medium text-slate-500 mt-0.5">${escHtml(p.title)}</p>
                 <div class="flex items-center gap-2 mt-2 text-slate-600 text-[10px] font-bold">
                     <span>${p.beds} BEDS</span> &bull; <span>${p.baths} BATHS</span>
@@ -1194,10 +1386,7 @@ function initBuyerMapPage() {
             </div>
         `, { closeButton: false, offset: [0, -35] });
 
-        marker.on('click', () => {
-            selectListing(p.id, true);
-        });
-
+        marker.on('click', () => selectListing(p.id, true));
         markers.push({ marker, data: p });
     });
 
@@ -1205,14 +1394,14 @@ function initBuyerMapPage() {
     const matchesCountEl = document.querySelector('#map-listings-count');
 
     window.toggleMapFavorite = function(e, id) {
-        e.stopPropagation(); // prevent card click
+        e.stopPropagation();
         let saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
         if (saved.includes(id)) {
             saved = saved.filter(savedId => savedId != id);
-            if (typeof showToast === 'function') showToast('Removed from favorites');
+            showToast('Removed from favorites');
         } else {
             saved.push(id);
-            if (typeof showToast === 'function') showToast('Added to favorites');
+            showToast('Added to favorites');
         }
         localStorage.setItem('savedProperties', JSON.stringify(saved));
         updateSidebar(); 
@@ -1235,7 +1424,7 @@ function initBuyerMapPage() {
         if (!sidebarContainer) return;
 
         if (visibleListings.length === 0) {
-            sidebarContainer.innerHTML = '<p class="text-slate-500 text-center mt-10">No properties found in this map area. Zoom out or pan to see more.</p>';
+            sidebarContainer.innerHTML = '<p class="text-slate-500 text-center mt-10">No properties found in this area.</p>';
             return;
         }
 
@@ -1250,11 +1439,11 @@ function initBuyerMapPage() {
             <div id="card-${l.id}" class="listing-card cursor-pointer bg-white rounded-3xl border ${activeClasses} overflow-hidden transition-all duration-300" onclick="clickSidebarCard(${l.id})">
               <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
                 <img loading="lazy" src="${l.img || 'https://via.placeholder.com/400x225?text=House'}" class="w-full h-full object-cover transition-transform duration-700 ${isActive ? '' : 'group-hover:scale-105'}">
-                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${escHtml(l.badge || l.intent)}</div>
+                <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${escHtml(l.intent)}</div>
               </div>
               <div class="p-5">
                 <div class="flex justify-between items-start mb-1">
-                  <h3 class="text-xl font-black text-slate-900">${window.formatPrice ? window.formatPrice(l.price, l.intent) : l.price}</h3>
+                  <h3 class="text-xl font-black text-slate-900">₹${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</h3>
                   <button class="transition-colors ${isSaved ? 'text-red-500' : 'text-slate-200 hover:text-red-500'}" onclick="toggleMapFavorite(event, ${l.id})">
                     <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">favorite</span>
                   </button>
@@ -1271,7 +1460,7 @@ function initBuyerMapPage() {
                   </div>
                   <div class="flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-[18px]">square_foot</span>
-                    <span class="text-xs font-black text-slate-900">${l.sqft.toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span>
+                    <span class="text-xs font-black text-slate-900">${(l.sqft || 0).toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span>
                   </div>
                 </div>
               </div>
@@ -1279,7 +1468,6 @@ function initBuyerMapPage() {
             `;
         }).join('');
 
-        // Apply active pin class safely
         document.querySelectorAll('.custom-price-pin').forEach(el => el.classList.remove('active-pin'));
         if (activeListingId) {
             const pinEl = document.getElementById(`pin-${activeListingId}`);
@@ -1288,17 +1476,9 @@ function initBuyerMapPage() {
     }
 
     map.on('moveend', updateSidebar);
-    
-    // Deselect if clicking on empty map area
-    map.on('click', (e) => {
-        // if user clicked on a marker, the click event on the marker fires, but we don't want this map click to override it
-        // Leaflet fires marker click, then map click usually if not stopped. 
-        // We handle that by checking event target or just relying on marker click stopping propagation.
-    });
-    
     setTimeout(updateSidebar, 100);
 
-    // ── [Map Search Bar Navigation] ──
+    // Map Search
     const searchInput = document.getElementById('map-location-search');
     const searchBtn = document.getElementById('map-search-btn');
     const resultsContainer = document.getElementById('map-search-results');
@@ -1314,26 +1494,18 @@ function initBuyerMapPage() {
                         if (data.length > 0) {
                             const item = data[0];
                             map.flyTo([item.lat, item.lon], 15, { animate: true, duration: 1 });
-                            if (typeof showToast === 'function') showToast(`Showing results near ${item.display_name.split(',')[0]}`);
+                            showToast(`Showing results near ${item.display_name.split(',')[0]}`);
                         }
                     });
             }
         };
+        searchInput.onkeypress = (e) => { if (e.key === 'Enter') searchBtn.click(); };
 
-        // Enter key support
-        searchInput.onkeypress = (e) => {
-            if (e.key === 'Enter') searchBtn.click();
-        };
-
-        // OpenStreetMap Autocomplete
         if (resultsContainer) {
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(debounceTimer);
                 const query = e.target.value.trim();
-                if (query.length < 3) {
-                    resultsContainer.classList.add('hidden');
-                    return;
-                }
+                if (query.length < 3) { resultsContainer.classList.add('hidden'); return; }
                 
                 debounceTimer = setTimeout(() => {
                     fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=IN&limit=5`)
@@ -1341,7 +1513,7 @@ function initBuyerMapPage() {
                         .then(data => {
                             resultsContainer.innerHTML = '';
                             if (data.length === 0) {
-                                resultsContainer.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium">No locations found in India.</div>';
+                                resultsContainer.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium">No locations found.</div>';
                             } else {
                                 data.forEach(item => {
                                     const div = document.createElement('div');
@@ -1351,77 +1523,207 @@ function initBuyerMapPage() {
                                         searchInput.value = item.display_name.split(',')[0];
                                         resultsContainer.classList.add('hidden');
                                         map.flyTo([item.lat, item.lon], 15, { animate: true, duration: 1 });
-                                        if (typeof showToast === 'function') showToast(`Showing results near ${item.display_name.split(',')[0]}`);
+                                        showToast(`Showing results near ${item.display_name.split(',')[0]}`);
                                     };
                                     resultsContainer.appendChild(div);
                                 });
                             }
                             resultsContainer.classList.remove('hidden');
                             resultsContainer.classList.add('flex');
-                        })
-                        .catch(err => console.error('Nominatim error:', err));
+                        });
                 }, 300);
             });
-
-            // Hide dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
                     resultsContainer.classList.add('hidden');
-                    resultsContainer.classList.remove('flex');
                 }
             });
         }
     }
 }
 
-function initBuyerDetailsPage() {
+async function initBuyerDetailsPage() {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) return;
+
+    // Fetch from Supabase
+    const { data: l, error } = await supabase.from('listings').select('*').eq('id', id).single();
+    if (error || !l) {
+        showToast('Property not found.');
+        return;
+    }
+
+    // Update page title
+    document.title = `${l.title} — EstatePro`;
+
+    // Hero image
+    const heroImg = document.querySelector('.hero-img');
+    if (heroImg) heroImg.src = l.img || 'https://via.placeholder.com/1200x800?text=Luxury+Property';
+
+    // Price
+    const priceEl = document.getElementById('detail-price');
+    if (priceEl) priceEl.innerHTML = `₹${l.price}${l.intent === 'Rent' ? '' : ' Cr'}`;
+
+    // Title & address
+    const titleEl = document.getElementById('detail-title');
+    if (titleEl) titleEl.textContent = l.title;
+    const addrEl = document.getElementById('detail-address');
+    if (addrEl) addrEl.innerHTML = `<span class="material-symbols-outlined text-[20px]">location_on</span> ${l.location}`;
+
+    // Stats
+    const bedsEl = document.getElementById('detail-beds');
+    if (bedsEl) bedsEl.textContent = l.beds;
+    const bathsEl = document.getElementById('detail-baths');
+    if (bathsEl) bathsEl.textContent = l.baths;
+    const sqftEl = document.getElementById('detail-sqft');
+    if (sqftEl) sqftEl.textContent = (l.sqft || 0).toLocaleString();
+    const typeEl = document.getElementById('detail-type');
+    if (typeEl) typeEl.textContent = l.type;
+
+    // Description
+    const descEl = document.getElementById('detail-desc');
+    if (descEl) {
+        descEl.innerHTML = `<p>This exquisite ${l.type.toLowerCase()} located in ${l.location} offers a premium living experience with ${l.beds} spacious bedrooms and ${l.baths} modern bathrooms. Spanning ${(l.sqft || 0).toLocaleString()} sqft, the property features high-end finishes, abundant natural light, and breathtaking views.</p>
+        <p>Perfect for those seeking luxury and comfort, this home includes state-of-the-art amenities and is situated in a prime neighborhood with easy access to the city's best attractions.</p>`;
+    }
+
     // ── [Photo Overlay Toast] ──
     const photoBtn = Array.from(document.querySelectorAll('span, div')).find((s) => s.textContent.includes('View All 24 Photos'))?.closest('div');
     if (photoBtn) {
         photoBtn.classList.add('cursor-pointer');
-        photoBtn.addEventListener('click', () => showToast('Pagination is demo-only in this build.'));
+        photoBtn.addEventListener('click', () => showToast('Additional photos are demo-only in this build.'));
     }
 
-    // Inquiry form validation and submission
-    const form = document.getElementById('buyer-inquiry-form');
-    const submitBtn = document.getElementById('contact-agent-btn');
+    // Inquiry vs Chat logic
+    const { data: { user } } = await supabase.auth.getUser();
+    const role = localStorage.getItem('role');
     
-    if (form && submitBtn) {
-        submitBtn.onclick = (e) => {
-            e.preventDefault();
-            const firstName = document.getElementById('buyer-first-name')?.value?.trim();
-            const email = document.getElementById('buyer-email')?.value?.trim();
-            const message = document.getElementById('buyer-message')?.value?.trim();
+    const form = document.getElementById('buyer-inquiry-form');
+    const chatSection = document.getElementById('buyer-chat-section');
+    const submitBtn = document.getElementById('contact-agent-btn');
 
-            if (!firstName || !email || !message) {
-                showToast('Please fill in required fields: First Name, Email, and Message.');
-                return;
-            }
+    if (user && role === 'Buyer') {
+        if (form) form.classList.add('hidden');
+        if (chatSection) {
+            chatSection.classList.remove('hidden');
+            chatSection.classList.add('flex');
+            initBuyerChat(user.id, l.broker_id, l.id);
+        }
+    } else {
+        // Fallback to inquiry form for guests/others
+        if (form && submitBtn) {
+            submitBtn.onclick = async (e) => {
+                e.preventDefault();
+                const firstName = document.getElementById('buyer-first-name')?.value?.trim();
+                const email = document.getElementById('buyer-email')?.value?.trim();
+                const message = document.getElementById('buyer-message')?.value?.trim();
 
-            const phone = document.getElementById('buyer-phone')?.value?.trim();
-            const fullName = `${firstName} ${document.getElementById('buyer-last-name')?.value || ''}`.trim();
-            const type = document.getElementById('inquiry-type')?.value || 'Inquiry';
-            
-            // Consolidate message with phone if provided
-            const finalMessage = phone ? `${message} (Contact: ${phone})` : message;
+                if (!firstName || !email || !message) {
+                    showToast('Please fill in required fields: First Name, Email, and Message.');
+                    return;
+                }
 
-            // Save to localStorage
-            const inquiries = getInquiries();
-            inquiries.unshift({
-                id: Date.now(),
-                name: fullName,
-                time: formatTimeLabel(),
-                message: finalMessage,
-                type: type,
-                read: false,
-                brokerReply: ''
-            });
-            saveInquiries(inquiries);
+                const phone = document.getElementById('buyer-phone')?.value?.trim();
+                const fullName = `${firstName} ${document.getElementById('buyer-last-name')?.value || ''}`.trim();
+                const type = document.getElementById('inquiry-type')?.value || 'Inquiry';
+                const finalMessage = phone ? `${message} (Contact: ${phone})` : message;
 
-            showToast('Inquiry submitted successfully. Broker will contact you soon.');
-            form.reset();
-        };
+                const { error } = await supabase.from('inquiries').insert([{
+                    name: fullName,
+                    message: finalMessage,
+                    type: type,
+                    read: false,
+                    listing_id: l.id,
+                    broker_id: l.broker_id
+                }]);
+
+                if (error) {
+                    showToast('Error submitting inquiry: ' + error.message);
+                } else {
+                    showToast('Inquiry submitted successfully. Broker will contact you soon.');
+                    form.reset();
+                }
+            };
+        }
     }
+}
+
+let buyerChatChannel = null;
+async function initBuyerChat(buyerId, brokerId, listingId) {
+    const msgsEl = document.getElementById('buyer-chat-messages');
+    const input = document.getElementById('buyer-chat-input');
+    const sendBtn = document.getElementById('buyer-chat-send');
+
+    if (!msgsEl || !input || !sendBtn) return;
+
+    msgsEl.innerHTML = '<div class="text-center text-slate-500 my-auto">Loading...</div>';
+
+    const fetchMsgs = async () => {
+        const { data: msgs, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('buyer_id', buyerId)
+            .eq('broker_id', brokerId)
+            .eq('listing_id', listingId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            msgsEl.innerHTML = `<div class="text-error">${error.message}</div>`;
+            return;
+        }
+
+        msgsEl.innerHTML = '';
+        if (msgs.length === 0) {
+            msgsEl.innerHTML = '<div class="text-center text-slate-400 font-medium my-auto absolute inset-0 flex items-center justify-center">Start a conversation!</div>';
+        } else {
+            msgs.forEach(m => window.renderMessage(m, buyerId, msgsEl));
+            msgsEl.scrollTop = msgsEl.scrollHeight;
+        }
+    };
+
+    await fetchMsgs();
+
+    sendBtn.onclick = async () => {
+        const content = input.value.trim();
+        if (!content) return;
+        input.value = '';
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        const { error } = await supabase.from('messages').insert([{
+            buyer_id: buyerId,
+            broker_id: brokerId,
+            listing_id: listingId,
+            sender_id: buyerId,
+            content: content
+        }]);
+
+        if (error) showToast('Failed to send message: ' + error.message);
+
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+    };
+
+    input.onkeypress = (e) => {
+        if (e.key === 'Enter') sendBtn.click();
+    };
+
+    if (buyerChatChannel) supabase.removeChannel(buyerChatChannel);
+    buyerChatChannel = supabase.channel(`buyer_chat_${buyerId}_${brokerId}_${listingId}`)
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'messages',
+            filter: `listing_id=eq.${listingId}` 
+        }, payload => {
+            if (payload.new.buyer_id === buyerId && payload.new.broker_id === brokerId) {
+                if (msgsEl.innerHTML.includes('Start a conversation!')) msgsEl.innerHTML = '';
+                window.renderMessage(payload.new, buyerId, msgsEl);
+                msgsEl.scrollTop = msgsEl.scrollHeight;
+            }
+        })
+        .subscribe();
 }
 
 function initSellPage() {
@@ -1557,3 +1859,166 @@ document.querySelectorAll('input[placeholder="Search..."]').forEach(input => {
         }
     }
 });
+
+// ─── Realtime Chat Logic ─────────────────────────────────────────────────────
+let currentChatConversation = null;
+let chatChannel = null;
+
+window.initBrokerChat = async function initBrokerChat() {
+    const listEl = document.getElementById('chat-list');
+    if (!listEl) return;
+    listEl.innerHTML = '<div class="p-4 text-center text-slate-500 font-medium">Loading conversations...</div>';
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: messages, error } = await supabase
+        .from('messages')
+        .select('buyer_id, listing_id, created_at')
+        .eq('broker_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        listEl.innerHTML = `<div class="p-4 text-error">${error.message}</div>`;
+        return;
+    }
+
+    const uniqueMap = new Map();
+    messages?.forEach(m => {
+        const key = `${m.buyer_id}-${m.listing_id}`;
+        if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, m);
+        }
+    });
+
+    const uniqueConversations = Array.from(uniqueMap.values());
+
+    if (uniqueConversations.length === 0) {
+        listEl.innerHTML = '<div class="p-4 text-center text-slate-500 font-medium">No conversations yet.</div>';
+        return;
+    }
+
+    // Fetch listing titles and buyer profiles
+    const buyerIds = [...new Set(uniqueConversations.map(c => c.buyer_id))];
+    const listingIds = [...new Set(uniqueConversations.map(c => c.listing_id))];
+
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', buyerIds);
+    const { data: listings } = await supabase.from('listings').select('id, title').in('id', listingIds);
+
+    listEl.innerHTML = '';
+    uniqueConversations.forEach(c => {
+        const buyer = profiles?.find(p => p.id === c.buyer_id);
+        const listing = listings?.find(l => l.id === c.listing_id);
+        
+        const div = document.createElement('div');
+        div.className = 'p-4 border-b border-outline-variant hover:bg-slate-100 cursor-pointer transition-colors';
+        div.innerHTML = `
+            <div class="font-bold text-slate-800">${buyer?.full_name || 'Buyer'}</div>
+            <div class="text-xs text-primary font-medium mt-1 truncate">${listing?.title || 'Unknown Property'}</div>
+        `;
+        div.onclick = () => window.loadChatMessages(c.buyer_id, user.id, c.listing_id, buyer?.full_name || 'Buyer', listing?.title || 'Property');
+        listEl.appendChild(div);
+    });
+};
+
+window.loadChatMessages = async function loadChatMessages(buyerId, brokerId, listingId, buyerName, listingTitle) {
+    currentChatConversation = { buyerId, brokerId, listingId };
+    
+    document.getElementById('chat-header').innerHTML = `
+        <div>
+            <div class="text-lg font-bold">${buyerName}</div>
+            <div class="text-xs font-medium text-slate-500">${listingTitle}</div>
+        </div>
+    `;
+
+    const msgsEl = document.getElementById('chat-messages');
+    msgsEl.innerHTML = '<div class="text-center text-slate-500 mt-4 font-medium">Loading messages...</div>';
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const fetchMsgs = async () => {
+        const { data: msgs, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('buyer_id', buyerId)
+            .eq('broker_id', brokerId)
+            .eq('listing_id', listingId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            msgsEl.innerHTML = `<div class="text-error">Error: ${error.message}</div>`;
+            return;
+        }
+
+        msgsEl.innerHTML = '';
+        if (msgs.length === 0) {
+            msgsEl.innerHTML = '<div class="text-center text-slate-400 mt-10 font-medium">No messages yet. Say hi!</div>';
+        } else {
+            msgs.forEach(m => window.renderMessage(m, user.id, msgsEl));
+            msgsEl.scrollTop = msgsEl.scrollHeight;
+        }
+    };
+
+    await fetchMsgs();
+
+    // Enable input
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('chat-send-btn');
+    input.disabled = false;
+    sendBtn.disabled = false;
+
+    sendBtn.onclick = async () => {
+        const content = input.value.trim();
+        if (!content) return;
+        input.value = '';
+        input.disabled = true;
+        sendBtn.disabled = true;
+
+        const { error } = await supabase.from('messages').insert([{
+            buyer_id: buyerId,
+            broker_id: brokerId,
+            listing_id: listingId,
+            sender_id: user.id,
+            content: content
+        }]);
+
+        if (error) showToast('Failed to send message: ' + error.message);
+
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+    };
+
+    input.onkeypress = (e) => {
+        if (e.key === 'Enter') sendBtn.click();
+    };
+
+    // Set up real-time listener
+    if (chatChannel) supabase.removeChannel(chatChannel);
+
+    chatChannel = supabase.channel(`chat_${buyerId}_${brokerId}_${listingId}`)
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public', 
+            table: 'messages',
+            filter: `listing_id=eq.${listingId}` 
+        }, payload => {
+            // Need to make sure it belongs to this conversation
+            if (payload.new.buyer_id === buyerId && payload.new.broker_id === brokerId) {
+                // If it was the first message, clear the "No messages yet" text
+                if (msgsEl.innerHTML.includes('No messages yet')) msgsEl.innerHTML = '';
+                window.renderMessage(payload.new, user.id, msgsEl);
+                msgsEl.scrollTop = msgsEl.scrollHeight;
+            }
+        })
+        .subscribe();
+};
+
+window.renderMessage = function renderMessage(m, currentUserId, container) {
+    const isMe = m.sender_id === currentUserId;
+    const div = document.createElement('div');
+    div.className = `max-w-[70%] p-3 rounded-xl text-sm ${isMe ? 'bg-primary text-on-primary self-end rounded-tr-none' : 'bg-white border border-outline-variant text-slate-800 self-start rounded-tl-none shadow-sm'}`;
+    div.textContent = m.content;
+    container.appendChild(div);
+};
+

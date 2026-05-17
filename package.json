@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/vite": "^4.2.4",
     "pptxgenjs": "^4.0.1",
     "tailwindcss": "^4.2.4",
