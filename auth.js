@@ -64,12 +64,23 @@ async function checkAuth() {
     // or if they are on a guest-allowed page.
     const localRole = localStorage.getItem('role');
 
+    const isGuestPage = guestPages.includes(currentPage);
+
     if (!session && localRole !== 'Guest' && !isLoginPage) {
-        navigateTo('login.html');
-        return;
+        if (isGuestPage) {
+            localStorage.setItem('role', 'Guest');
+        } else {
+            navigateTo('login.html');
+            return;
+        }
     }
 
     let role = localRole;
+    if (!session && isGuestPage) {
+        role = 'Guest';
+        localStorage.setItem('role', 'Guest');
+    }
+
     if (session) {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
         if (profile) {
@@ -78,10 +89,18 @@ async function checkAuth() {
         }
     }
 
-    if (!isLoginPage) {
+    if (isLoginPage) {
+        if (session && role) {
+            navigateTo(roleHomePage[role] || 'index.html');
+        }
+    } else {
         const allowed = roleAllowedPages[role || 'Guest'];
         if (allowed && !allowed.includes(currentPage)) {
             navigateTo(roleHomePage[role || 'Guest']);
+        } else {
+            if (typeof updateHeaderVisibility === 'function') {
+                updateHeaderVisibility();
+            }
         }
     }
 }
@@ -128,7 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const toggleBtn   = document.getElementById('toggle-mode-btn');
         const signInBtn   = document.getElementById('sign-in-btn');
         let selectedRole  = 'Buyer';
-        let isSignUp      = false;
+        const urlParams   = new URLSearchParams(window.location.search);
+        let isSignUp      = urlParams.get('mode') === 'signup';
 
         function updateUI() {
             if (formTitle) {
@@ -191,10 +211,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Handle URL parameters for role selection
-        const urlParams = new URLSearchParams(window.location.search);
         const urlRole = urlParams.get('role');
         if (urlRole) selectRole(urlRole);
         else selectRole(currentPage === 'staff-login.html' ? 'Admin' : 'Buyer');
+
+        // Handle Enter key in form
+        const authForm = document.querySelector('form');
+        if (authForm) {
+            authForm.onsubmit = (e) => {
+                e.preventDefault();
+                if (signInBtn && !signInBtn.disabled) signInBtn.click();
+            };
+        }
 
         // Sign In button
         if (signInBtn) {
@@ -236,6 +264,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
 
                         showToast('Account created successfully!');
+                        
+                        if (data.session) {
+                            // Automatically sign in if email confirmation is disabled
+                            window.login(selectedRole, name);
+                            return;
+                        }
+
                         isSignUp = false;
                         updateUI();
                     } else {
@@ -290,52 +325,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Global Header Visibility ──
     function updateHeaderVisibility() {
-        const isStaff = ['Admin', 'Employee', 'Broker'].includes(userRole);
+        const currentRole = localStorage.getItem('role') || 'Guest';
+        const isStaff = ['Admin', 'Employee', 'Broker'].includes(currentRole);
         
-        // ── Auth / Navigation Logic ──
-        document.querySelectorAll('a, button').forEach(el => {
-            const text = el.textContent.trim();
-            
-            // Dashboard button: show only for staff
-            if (text === 'Dashboard') {
-                el.style.display = isStaff ? 'flex' : 'none';
-                if (isStaff) {
-                    el.href = toAppUrl(roleHomePage[userRole] || 'index.html');
-                }
-            }
-            
-            // Filter other staff-only links if they exist
-            if (text === 'Agents' || text === 'Invest') {
-                // If it's a top nav link, we might want to keep it for Buyers but hide for Guest if requested
-                // For now, follow the prompt: "Dashboard button is hidden for Buyers and Guests"
-            }
-        });
-
-        // Account icon logic
-        const accountBtn = Array.from(document.querySelectorAll('button, a')).find(b => 
-            b.querySelector('.material-symbols-outlined')?.textContent.trim() === 'account_circle' || 
-            b.textContent.trim() === 'account_circle'
+        // Find the trailing actions container by looking for the standard navigation items
+        const accountIcon = Array.from(document.querySelectorAll('.material-symbols-outlined')).find(el => 
+            el.textContent.trim() === 'account_circle' || 
+            el.textContent.trim() === 'logout'
         );
+        let container = accountIcon ? accountIcon.closest('.flex.items-center.gap-4') : null;
+        
+        // Fallback query if standard icon isn't found (e.g. already replaced with Sign In button)
+        if (!container) {
+            const signInBtn = Array.from(document.querySelectorAll('button, a')).find(el => 
+                el.textContent.trim().includes('Sign In') || el.textContent.trim().includes('Sign Up')
+            );
+            if (signInBtn) {
+                container = signInBtn.closest('.flex.items-center.gap-4');
+            }
+        }
 
-        if (accountBtn) {
-            const isGuest = userRole === 'Guest' || !userRole;
-            
-            // Re-style the button based on state
-            if (isGuest) {
-                accountBtn.innerHTML = '<span class="font-bold text-xs uppercase tracking-wider px-2">Sign In</span>';
-                accountBtn.title = 'Sign In to EstatePro';
-                accountBtn.onclick = (e) => { e.preventDefault(); navigateTo('login.html'); };
-            } else if (userRole === 'Buyer') {
-                accountBtn.innerHTML = '<span class="material-symbols-outlined text-[24px]">account_circle</span>';
-                accountBtn.title = `Signed in as ${userRole} — Go to Profile`;
-                accountBtn.onclick = (e) => { e.preventDefault(); navigateTo('profile.html'); };
+        if (container) {
+            if (currentRole === 'Guest') {
+                container.innerHTML = `
+                    <button onclick="window.location.href=window.toAppUrl('login.html')" class="text-slate-600 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider px-3 py-2">
+                        Sign In
+                    </button>
+                    <button onclick="window.location.href=window.toAppUrl('login.html?mode=signup')" class="bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider shadow-sm ml-2">
+                        Sign Up
+                    </button>
+                `;
+            } else if (currentRole === 'Buyer') {
+                container.innerHTML = `
+                    <button onclick="window.location.href=window.toAppUrl('profile.html')" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center" title="Signed in as Buyer — Go to Profile">
+                        <span class="material-symbols-outlined text-[24px]">account_circle</span>
+                    </button>
+                    <button onclick="if(confirm('Are you sure you want to sign out?')) window.logout()" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center ml-2" title="Sign Out">
+                        <span class="material-symbols-outlined text-[24px]">logout</span>
+                    </button>
+                `;
             } else {
-                accountBtn.innerHTML = '<span class="material-symbols-outlined text-[24px]">logout</span>';
-                accountBtn.title = `Signed in as ${userRole} — Click to sign out`;
-                accountBtn.onclick = (e) => {
-                    e.preventDefault();
-                    if (confirm('Are you sure you want to sign out?')) window.logout();
-                };
+                container.innerHTML = `
+                    <a href="${window.toAppUrl(roleHomePage[currentRole] || 'index.html')}" class="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider shadow-sm mr-2 flex items-center">
+                        Dashboard
+                    </a>
+                    <button onclick="if(confirm('Are you sure you want to sign out?')) window.logout()" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center" title="Signed in as ${currentRole} — Sign Out">
+                        <span class="material-symbols-outlined text-[24px]">logout</span>
+                    </button>
+                `;
             }
         }
     }
@@ -531,7 +568,7 @@ function generateListingsHTML(listings, showViews) {
         <tr class="border-b border-surface-variant hover:bg-surface-container transition-colors group" data-id="${l.id}">
           <td class="p-4">
             <div class="flex items-center gap-3">
-              <img src="${l.img || 'https://via.placeholder.com/48?text=House'}" alt="Property" class="w-12 h-12 rounded object-cover shadow-sm border border-outline-variant">
+              <img src="${l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'}" alt="Property" class="w-12 h-12 rounded object-cover shadow-sm border border-outline-variant">
               <div>
                 <p class="font-medium text-primary">${escHtml(l.title)}</p>
                 <p class="text-on-surface-variant text-xs">${escHtml(l.location)}</p>
@@ -1012,7 +1049,7 @@ async function initBuyerHomePage() {
                 <div onclick="window.location.href='property-details.html?id=${top3[0].id}'"
                      class="md:col-span-2 bg-white border border-slate-200 flex flex-col md:flex-row shadow-sm cursor-pointer hover:shadow-lg transition-all">
                   <div class="w-full md:w-1/2 h-64 md:h-auto relative overflow-hidden">
-                    <img src="${top3[0].img || 'https://via.placeholder.com/600x400?text=Luxury+Home'}" class="w-full h-full object-cover">
+                    <img src="${top3[0].img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'}" class="w-full h-full object-cover">
                     <div class="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest">Just Listed</div>
                   </div>
                   <div class="w-full md:w-1/2 p-8 flex flex-col justify-center">
@@ -1029,7 +1066,7 @@ async function initBuyerHomePage() {
                 <div onclick="window.location.href='property-details.html?id=${l.id}'"
                      class="bg-white border border-slate-200 flex flex-col shadow-sm cursor-pointer hover:shadow-lg transition-all">
                   <div class="h-48 relative overflow-hidden">
-                    <img src="${l.img || 'https://via.placeholder.com/400x250?text=Property'}" class="w-full h-full object-cover">
+                    <img src="${l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'}" class="w-full h-full object-cover">
                     <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest text-slate-900">${l.type}</div>
                   </div>
                   <div class="p-6 flex-1 flex flex-col">
@@ -1068,7 +1105,7 @@ async function initBuyerListingsPage() {
              data-id="${l.id}" data-title="${escHtml(l.title)}" data-location="${escHtml(l.location)}" 
              data-type="${l.type}" data-beds="${l.beds}" data-baths="${l.baths}" data-price="${l.price}" data-date="${l.created_at}">
           <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-            <img loading="lazy" src="${l.img || 'https://via.placeholder.com/600x400?text=Property'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+            <img loading="lazy" src="${l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
             <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${l.intent}</div>
             <button aria-label="Save Property" class="save-property-btn absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-error transition-colors">
               <span class="material-symbols-outlined text-[20px]">favorite</span>
@@ -1438,7 +1475,7 @@ async function initBuyerMapPage() {
             return `
             <div id="card-${l.id}" class="listing-card cursor-pointer bg-white rounded-3xl border ${activeClasses} overflow-hidden transition-all duration-300" onclick="clickSidebarCard(${l.id})">
               <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-                <img loading="lazy" src="${l.img || 'https://via.placeholder.com/400x225?text=House'}" class="w-full h-full object-cover transition-transform duration-700 ${isActive ? '' : 'group-hover:scale-105'}">
+                <img loading="lazy" src="${l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80'}" class="w-full h-full object-cover transition-transform duration-700 ${isActive ? '' : 'group-hover:scale-105'}">
                 <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">${escHtml(l.intent)}</div>
               </div>
               <div class="p-5">
@@ -1558,7 +1595,7 @@ async function initBuyerDetailsPage() {
 
     // Hero image
     const heroImg = document.querySelector('.hero-img');
-    if (heroImg) heroImg.src = l.img || 'https://via.placeholder.com/1200x800?text=Luxury+Property';
+    if (heroImg) heroImg.src = l.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80';
 
     // Price
     const priceEl = document.getElementById('detail-price');
@@ -1655,6 +1692,13 @@ async function initBuyerChat(buyerId, brokerId, listingId) {
     const sendBtn = document.getElementById('buyer-chat-send');
 
     if (!msgsEl || !input || !sendBtn) return;
+
+    if (!buyerId || !brokerId || !listingId) {
+        msgsEl.innerHTML = '<div class="text-center text-slate-400 font-medium my-auto absolute inset-0 flex items-center justify-center">Chat is unavailable for this listing (missing broker/buyer details).</div>';
+        input.disabled = true;
+        sendBtn.disabled = true;
+        return;
+    }
 
     msgsEl.innerHTML = '<div class="text-center text-slate-500 my-auto">Loading...</div>';
 
@@ -1932,6 +1976,12 @@ window.loadChatMessages = async function loadChatMessages(buyerId, brokerId, lis
     `;
 
     const msgsEl = document.getElementById('chat-messages');
+
+    if (!buyerId || !brokerId || !listingId) {
+        msgsEl.innerHTML = '<div class="text-center text-error mt-4 font-medium">Invalid chat details (missing broker or buyer).</div>';
+        return;
+    }
+
     msgsEl.innerHTML = '<div class="text-center text-slate-500 mt-4 font-medium">Loading messages...</div>';
 
     const { data: { user } } = await supabase.auth.getUser();

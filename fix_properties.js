@@ -61,33 +61,33 @@ content = content.replace('<body class="estate-admin-theme bg-background text-on
 
 // Global Replacements for design tokens
 const tokenMap = {
-    'bg-surface-container-low': 'bg-white',
-    'bg-surface-container-lowest': 'bg-slate-50',
-    'bg-surface-container': 'bg-white',
-    'border-outline-variant': 'border-slate-200',
-    'text-on-surface-variant': 'text-slate-500',
-    'text-on-surface': 'text-slate-900',
-    'text-on-background': 'text-slate-900',
-    'text-primary': 'text-slate-900',
-    'bg-primary': 'bg-slate-900',
-    'text-on-primary': 'text-white',
-    'focus:ring-primary-fixed': 'focus:ring-slate-900',
-    'hover:border-primary': 'hover:border-slate-900',
-    'hover:text-primary': 'hover:text-slate-900'
+  'bg-surface-container-low': 'bg-white',
+  'bg-surface-container-lowest': 'bg-slate-50',
+  'bg-surface-container': 'bg-white',
+  'border-outline-variant': 'border-slate-200',
+  'text-on-surface-variant': 'text-slate-500',
+  'text-on-surface': 'text-slate-900',
+  'text-on-background': 'text-slate-900',
+  'text-primary': 'text-slate-900',
+  'bg-primary': 'bg-slate-900',
+  'text-on-primary': 'text-white',
+  'focus:ring-primary-fixed': 'focus:ring-slate-900',
+  'hover:border-primary': 'hover:border-slate-900',
+  'hover:text-primary': 'hover:text-slate-900'
 };
 
 for (const [oldToken, newToken] of Object.entries(tokenMap)) {
-    content = content.split(oldToken).join(newToken);
+  content = content.split(oldToken).join(newToken);
 }
 
 // Fix Property Cards to match Map style
 // We'll just replace the cards HTML block since it's hard to regex properly
 const newCards = `
-          <div id="property-grid" class="grid grid-cols-1 md:grid-cols-2 gap-10">
+          <div id="property-grid" class="grid grid-cols-0.5 md:grid-cols-2 gap-10">
             <!-- Listing 1 -->
             <div class="group cursor-pointer property-card bg-white rounded-3xl border border-slate-200 hover:shadow-xl overflow-hidden transition-all duration-300" data-id="101" data-title="Marine Drive Penthouse" data-location="Mumbai" data-type="Penthouse" data-beds="4" data-baths="3.5" data-price="28.5" data-date="2025-05-01">
               <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-                <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAz51O9PThp8WUbaAXY4w5Hmys0vstWFfaqJ1SKS1pO5RaxtxMzR-lzwD5b_BvJ79EF_SRWJiyp-ADKXVn-HuC1EmntPjKsgTXCOe5l7sJoK_kdve81ZY-pDzngg5DdDtle-dP4mowenyMJH1GACSrBEDFQVwRF-gotjNyVc6tJHlUqfkrFmUelat6hNf4dJHFIjm8fXu9pLr_QHx5OVUq3LN85RXOhnLcpigZpXmNR_29Dia-RuFcJQFOyLBKBvRf4lrTEnXyGBTu8" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <img loading="lazy" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                 <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Newly Added</div>
                 <button aria-label="Save Property" class="save-property-btn absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-error transition-colors">
                   <span class="material-symbols-outlined text-[20px]">favorite</span>
@@ -109,7 +109,7 @@ const newCards = `
             <!-- Listing 2 -->
             <div class="group cursor-pointer property-card bg-white rounded-3xl border border-slate-200 hover:shadow-xl overflow-hidden transition-all duration-300" data-id="102" data-title="BKC Corporate Suite" data-location="Mumbai" data-type="Office" data-beds="0" data-baths="0" data-price="11.5" data-date="2025-04-15">
               <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-                <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCNP2aTGDnkfqSHa4ntzoQA2m_ggHg3cFrjA39cvexTFa8B9FdIpD7xEDxHUIbIvLB6xJMfXRxgLJ1p2a4cfmSTpfnUlOW7JN8HdibTBPxIA9G7WHvNNzeuDMOIZyIMosdVxGoNYaz-pQug8qDBT5fk44CZcgRWH0BPmzK0yqRzYFbqXUClD3DahzgNRv39pUS_CO0-PDLQRhKfwL4CWn6hU0Fi1bQVHKlzBdLCf1u1L646jDnDyRxN04XnMl0xu8PUAtOtCnn-yfC" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <img loading="lazy" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                 <div class="absolute top-4 left-4 bg-slate-900 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Commercial</div>
                 <button aria-label="Save Property" class="save-property-btn absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-error transition-colors">
                   <span class="material-symbols-outlined text-[20px]">favorite</span>
@@ -131,7 +131,7 @@ const newCards = `
             <!-- Listing 3 -->
             <div class="group cursor-pointer property-card bg-white rounded-3xl border border-slate-200 hover:shadow-xl overflow-hidden transition-all duration-300" data-id="103" data-title="Vasant Vihar Mansion" data-location="Delhi" data-type="Villa" data-beds="5" data-baths="6" data-price="42.0" data-date="2025-04-20">
               <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-                <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWqaJN_MYIMLr9eCDFt5KinL15valxJ1kD-6e7gbizuYe97SjjJrjv5igj5NUvz4-HnQd2cWipmYiVBMuZIn1MT34seVjdXH0cdtvGqaK7hlwNvjjdHrcwlgUG0aIYL8Mjz4HGhB9pQfazQRaGwsI2ObE6sXIM7J05qp424lZMW4fQyVRP3P4LpGW8EFoDGRttghjqi991gQM4-Key2jvwzthWAdx3oiK_EsKcYNV8Fc2qI0zCLQiYRglK86lZU8GuqiBduXpnTjh0" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <img loading="lazy" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                 <div class="absolute top-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Exclusive</div>
                 <button aria-label="Save Property" class="save-property-btn absolute top-4 right-4 w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-error transition-colors">
                   <span class="material-symbols-outlined text-[20px]">favorite</span>
@@ -154,10 +154,10 @@ const newCards = `
 const gridStart = '<div id="property-grid" class="grid grid-cols-1 md:grid-cols-2 gap-10">';
 const gridEndIndex = content.indexOf('<!-- Pagination (Static) -->');
 if (gridEndIndex !== -1) {
-    const gridStartIndex = content.indexOf(gridStart);
-    if (gridStartIndex !== -1) {
-        content = content.substring(0, gridStartIndex) + newCards + '\n          ' + content.substring(gridEndIndex);
-    }
+  const gridStartIndex = content.indexOf(gridStart);
+  if (gridStartIndex !== -1) {
+    content = content.substring(0, gridStartIndex) + newCards + '\n          ' + content.substring(gridEndIndex);
+  }
 }
 
 // Update Footer to ProjectX footer
@@ -181,7 +181,7 @@ const newFooter = `  <footer class="bg-white py-12 px-6 mt-auto">
 
 const fStartIndex = content.indexOf('<footer');
 if (fStartIndex !== -1) {
-    content = content.substring(0, fStartIndex) + newFooter + '</body>\n</html>';
+  content = content.substring(0, fStartIndex) + newFooter + '</body>\n</html>';
 }
 
 fs.writeFileSync('properties.html', content);
