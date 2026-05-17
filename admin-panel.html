@@ -20,7 +20,7 @@
 <!-- Header -->
 <div class="flex items-center gap-3 mb-6 px-2 pt-2">
 <div class="w-10 h-10 rounded-full overflow-hidden border border-slate-200 flex-shrink-0">
-<img loading="lazy" decoding="async" alt="Broker Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a mature corporate real estate broker in a modern, well-lit office setting. The lighting is soft and natural, creating a clean, high-end light-mode aesthetic typical of luxury corporate profiles. The background features subtle architectural elements like glass panels and steel frames, rendered in muted slate and grey tones to emphasize reliability and premium service." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKpdSIDn8msuUX_5KhXJTt4aNpxb71sXZxSQQjdmt4WaNguZo5StMBg2XwCYlQYaRaJkUvmWacXl_uUgDDn2OeC7RIYJ8z71stqIKXdYOiA5J6LjMQ9D9g8NTSXNH0x3J2T47KaB8Dz66mhQiEFG8wqIAj1ECzrYYgEQ6A3TZpZ793loOtNYWxQ5vpKf-TaE0NTfa-EEHCAJ0Byd6pSfEU6zHqgo9jwPQy_Nld3qy6b8woUFSQ_o5KnUHXuhNts8jbx8PGqu20Vknk"/>
+<img loading="lazy" decoding="async" alt="Broker Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a mature corporate real estate broker in a modern, well-lit office setting. The lighting is soft and natural, creating a clean, high-end light-mode aesthetic typical of luxury corporate profiles. The background features subtle architectural elements like glass panels and steel frames, rendered in muted slate and grey tones to emphasize reliability and premium service." src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"/>
 </div>
 <div>
 <h2 class="text-lg font-bold text-slate-900 dark:text-white leading-tight tracking-tight">Premier Realty</h2>
@@ -253,12 +253,7 @@ Loading platform user profiles...
 </div>
 
 <script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const supabase = createClient(
-  'https://xjpqxhbuuevaplvthvsf.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhqcHF4aGJ1dWV2YXBsdnRodnNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NjI4MDYsImV4cCI6MjA5NDUzODgwNn0.OUt6r65O0Lw4GwgO2Vc8r6dlBgDqtNpzaQaXQ0cElOk'
-);
+import { supabase } from './lib/supabase.js';
 
 function showAdminToast(msg, isError = false) {
   let t = document.getElementById('admin-toast');
@@ -298,7 +293,7 @@ async function checkAuth() {
   const { data } = await supabase.auth.getSession();
   session = data.session;
   if (!session) {
-    window.location.href = 'auth.html';
+    window.location.href = 'login.html';
     return;
   }
   
@@ -311,7 +306,7 @@ async function checkAuth() {
   if (error || !profile || (profile.role !== 'Admin' && profile.role !== 'Employee')) {
     alert('Access Denied. You must be an authorized Administrator or Employee.');
     await supabase.auth.signOut();
-    window.location.href = 'auth.html';
+    window.location.href = 'login.html';
     return;
   }
 
@@ -325,7 +320,9 @@ async function checkAuth() {
 window.logout = async () => {
   if (confirm('Are you sure you want to log out?')) {
     await supabase.auth.signOut();
-    window.location.href = 'auth.html';
+    localStorage.removeItem('role');
+    localStorage.removeItem('userName');
+    window.location.href = 'login.html';
   }
 };
 
