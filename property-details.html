@@ -19,49 +19,6 @@
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/auth.js"></script>
     <script src="/demo-data.js"></script>
-    <script>
-      // Populate property details from demo data using ?id= URL param
-      document.addEventListener('DOMContentLoaded', () => {
-        const id = parseInt(new URLSearchParams(window.location.search).get('id'));
-        if (!id || !window.DEMO_LISTINGS) return;
-        const l = window.DEMO_LISTINGS.find(x => x.id === id);
-        if (!l) return;
-
-        // Update page title
-        document.title = `${l.title} — ProjectX`;
-
-        // Hero image
-        const heroImg = document.querySelector('.hero-img');
-        if (heroImg) heroImg.src = l.img;
-
-        // Price
-        const priceEl = document.getElementById('detail-price');
-        if (priceEl) priceEl.innerHTML = window.formatPrice ? window.formatPrice(l.price, l.intent) : `₹${l.price} Cr`;
-
-        // Title & address
-        const titleEl = document.getElementById('detail-title');
-        if (titleEl) titleEl.textContent = l.title;
-        const addrEl = document.getElementById('detail-address');
-        if (addrEl) addrEl.innerHTML = `<span class="material-symbols-outlined text-[20px]">location_on</span> ${l.address || l.location}`;
-
-        // Stats
-        const bedsEl = document.getElementById('detail-beds');
-        if (bedsEl) bedsEl.textContent = l.beds;
-        const bathsEl = document.getElementById('detail-baths');
-        if (bathsEl) bathsEl.textContent = l.baths;
-        const sqftEl = document.getElementById('detail-sqft');
-        if (sqftEl) sqftEl.textContent = l.sqft.toLocaleString();
-        const typeEl = document.getElementById('detail-type');
-        if (typeEl) typeEl.textContent = l.type;
-
-        // Description
-        const descEl = document.getElementById('detail-desc');
-        if (descEl) {
-          descEl.innerHTML = `<p>This exquisite ${l.type.toLowerCase()} located in ${l.location} offers a premium living experience with ${l.beds} spacious bedrooms and ${l.baths} modern bathrooms. Spanning ${l.sqft.toLocaleString()} sqft, the property features high-end finishes, abundant natural light, and breathtaking views.</p>
-          <p>Perfect for those seeking luxury and comfort, this home includes state-of-the-art amenities and is situated in a prime neighborhood with easy access to the city's best attractions.</p>`;
-        }
-      });
-    </script>
 </head>
 
 <body class="bg-white text-slate-900 font-['Outfit'] antialiased pt-16">
@@ -277,6 +234,18 @@
                             class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl hover:bg-slate-800 transition-colors"
                             type="button">Chat with Broker</button>
                     </form>
+                    
+                    <!-- Chat Section (Visible for Buyers) -->
+                    <div id="buyer-chat-section" class="hidden flex-col h-[400px] mt-4">
+                        <h4 class="font-bold text-slate-900 mb-2">Live Chat</h4>
+                        <div id="buyer-chat-messages" class="flex-1 overflow-y-auto bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-4 flex flex-col gap-3 relative">
+                            <div class="text-center text-slate-400 font-medium my-auto absolute inset-0 flex items-center justify-center">Start a conversation!</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="buyer-chat-input" class="flex-1 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-900 outline-none focus:border-slate-900" placeholder="Type message..." />
+                            <button id="buyer-chat-send" class="bg-slate-900 text-white px-5 py-3 rounded-2xl hover:bg-slate-800 flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">send</span></button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
