@@ -11,8 +11,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 
-  <script type="module" crossorigin src="/assets/auth-DCa-cNue.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-DgPnCZ44.css">
+  <script type="module" crossorigin src="/assets/auth-CTyC5DoU.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-D1I5DWmt.css">
 </head>
 <body class="estate-admin-theme bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex">
 <!-- SideNavBar -->
@@ -42,10 +42,13 @@
 <span class="material-symbols-outlined text-[20px]">insights</span>
             Analytics
         </a>
-<a id="nav-messages" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors" href="#messages-section">
-<span class="material-symbols-outlined text-[20px]">forum</span>
-            Messages
-        </a>
+<a id="nav-messages" class="flex items-center justify-between px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors w-full" href="#messages-section">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-[20px]">forum</span>
+        Messages
+    </div>
+    <span id="unread-messages-badge" class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden">0</span>
+</a>
 <a id="nav-settings" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors" href="#settings-section">
 <span class="material-symbols-outlined text-[20px]">settings</span>
             Settings
