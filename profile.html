@@ -18,10 +18,10 @@
 
     .profile-input {
       width: 100%;
-      padding: 14px 20px;
+      padding: 12px 18px;
       background: #f8fafc;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
       outline: none;
       font-family: 'Outfit', sans-serif;
       font-size: 15px;
@@ -64,7 +64,7 @@
   </style>
 </head>
 
-<body class="bg-[#f8f9fa] text-slate-900 font-['Outfit'] antialiased min-h-screen flex flex-col">
+<body class="estate-admin-theme bg-background text-on-background font-['Outfit'] antialiased min-h-screen flex flex-col">
 
   <!-- Top Navigation -->
   <nav class="fixed top-0 w-full z-50 bg-white border-b border-slate-200 shadow-sm h-16 flex items-center">
@@ -74,7 +74,7 @@
         <a href="/index.html" class="text-xl font-black tracking-tighter text-slate-900">ProjectX</a>
       </div>
       <!-- Navigation Links -->
-      <div class="hidden md:flex items-center gap-8">
+      <div class="hidden md:flex items-center gap-8" id="nav-links-container">
         <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1" href="/properties.html?intent=Buy">Buy</a>
         <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1" href="/properties.html?intent=Rent">Rent</a>
         <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1" href="/map.html">Map View</a>
@@ -93,15 +93,15 @@
   </nav>
 
   <!-- Page Content -->
-  <main class="flex-1 max-w-4xl mx-auto w-full px-6 pt-28 pb-16">
+  <main class="flex-1 max-w-container-max mx-auto w-full px-6 md:px-10 pt-28 pb-16">
 
     <!-- Page Header -->
     <div class="mb-10">
-      <a href="/index.html" class="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors text-sm font-medium mb-6 group">
+      <a id="back-link" href="/index.html" class="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-900 transition-colors text-sm font-medium mb-6 group">
         <span class="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
         Back to Home
       </a>
-      <h1 class="text-3xl font-black text-slate-900 tracking-tight">My Profile</h1>
+      <h1 class="heading-xl tracking-tight">My Profile</h1>
       <p class="text-slate-500 mt-1 font-medium">Manage your personal information and account settings.</p>
     </div>
 
@@ -111,20 +111,26 @@
       <div class="lg:col-span-1 space-y-6">
 
         <!-- Avatar Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center text-center shadow-sm">
-          <div class="avatar-ring w-24 h-24 rounded-full flex items-center justify-center mb-5 shadow-lg">
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center text-center shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div id="avatar-container" class="avatar-ring w-24 h-24 rounded-full flex items-center justify-center mb-5 shadow-lg relative overflow-hidden group cursor-pointer">
             <span id="avatar-initials" class="text-3xl font-black text-white tracking-tight">?</span>
+            <img id="avatar-img" class="w-full h-full object-cover hidden" src="" alt="Profile Picture" />
+            <!-- Camera Overlay (only visible on hover for owner) -->
+            <div id="avatar-hover-overlay" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden">
+              <span class="material-symbols-outlined text-white text-[24px]">photo_camera</span>
+            </div>
           </div>
+          <input type="file" id="avatar-file-input" class="hidden" accept="image/*" />
           <h2 id="profile-display-name" class="text-xl font-black text-slate-900 mb-1">—</h2>
           <p id="profile-display-email" class="text-sm text-slate-400 font-medium mb-4">—</p>
-          <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-widest rounded-full px-3 py-1.5">
+          <span id="profile-display-role" class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 text-[11px] font-bold uppercase tracking-widest rounded-full px-3 py-1.5">
             <span class="material-symbols-outlined text-[14px]">verified_user</span>
             Buyer
           </span>
         </div>
 
         <!-- Stats Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <div id="activity-card" class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Activity</h3>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
@@ -152,9 +158,9 @@
         </div>
 
         <!-- Danger Zone -->
-        <div class="bg-white rounded-2xl border border-red-100 p-6 shadow-sm">
+        <div class="bg-white rounded-2xl border border-red-100 p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <h3 class="text-xs font-black uppercase tracking-widest text-red-400 mb-4">Account</h3>
-          <button id="logout-btn" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 text-sm font-bold transition-colors border border-slate-200 hover:border-red-200">
+          <button id="logout-btn" class="w-full btn-secondary hover:bg-red-50 hover:text-red-600 hover:border-red-200 text-sm font-bold gap-2 py-3 active:scale-[0.98]">
             <span class="material-symbols-outlined text-[18px]">logout</span>
             Sign Out
           </button>
@@ -166,13 +172,13 @@
       <div class="lg:col-span-2 space-y-6">
 
         <!-- Personal Info -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div class="flex items-center justify-between mb-8">
             <div>
-              <h3 class="text-lg font-black text-slate-900">Personal Information</h3>
+              <h3 class="heading-md">Personal Information</h3>
               <p class="text-sm text-slate-400 font-medium mt-0.5">Your name and contact details</p>
             </div>
-            <button id="edit-toggle-btn" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 text-sm font-bold transition-colors border border-slate-200">
+            <button id="edit-toggle-btn" class="btn-secondary gap-2 py-2 px-4 text-sm font-bold">
               <span class="material-symbols-outlined text-[16px]" id="edit-icon">edit</span>
               <span id="edit-btn-text">Edit</span>
             </button>
@@ -201,21 +207,20 @@
             </div>
           </div>
 
-          <!-- Save Button (hidden by default) -->
           <div id="save-actions" class="hidden mt-8 flex gap-3">
-            <button id="save-btn" class="flex-1 bg-slate-900 text-white py-3.5 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-colors shadow-md active:scale-[0.98]">
+            <button id="save-btn" class="flex-1 btn-primary py-3.5 text-xs uppercase tracking-widest active:scale-[0.98]">
               Save Changes
             </button>
-            <button id="cancel-btn" class="px-6 py-3.5 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors border border-slate-200">
+            <button id="cancel-btn" class="px-6 py-3.5 btn-secondary text-sm">
               Cancel
             </button>
           </div>
         </div>
 
         <!-- Preferences -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
+        <div id="buyer-preferences-card" class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div class="mb-6">
-            <h3 class="text-lg font-black text-slate-900">Preferences</h3>
+            <h3 class="heading-md">Preferences</h3>
             <p class="text-sm text-slate-400 font-medium mt-0.5">Your property search preferences</p>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -261,101 +266,977 @@
             </div>
           </div>
           <div class="mt-6">
-            <button id="save-prefs-btn" class="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition-colors">
+            <button id="save-prefs-btn" class="btn-primary py-3 px-6 text-sm gap-2">
               <span class="material-symbols-outlined text-[16px]">save</span>
               Save Preferences
             </button>
           </div>
         </div>
 
+        <!-- Professional Information (Broker specific) -->
+        <div id="broker-professional-card" class="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 hidden">
+          <div class="mb-6">
+            <h3 class="heading-md">Professional Information</h3>
+            <p class="text-sm text-slate-400 font-medium mt-0.5">Your agency and operation details</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="profile-label" for="field-agency">Agency Name</label>
+              <input class="profile-input" id="field-agency" type="text" placeholder="e.g. Premier Realty" />
+            </div>
+            <div>
+              <label class="profile-label" for="field-experience">Years of Experience</label>
+              <input class="profile-input" id="field-experience" type="number" placeholder="e.g. 5" min="0" />
+            </div>
+            <div class="md:col-span-2">
+              <label class="profile-label" for="field-areas">Areas of Operation</label>
+              <input class="profile-input" id="field-areas" type="text" placeholder="e.g. Bandra, Juhu, Andheri" />
+            </div>
+          </div>
+          <div class="mt-6">
+            <button id="save-prof-btn" class="btn-primary py-3 px-6 text-sm gap-2">
+              <span class="material-symbols-outlined text-[16px]">save</span>
+              Save Professional Info
+            </button>
+          </div>
+        </div>
+
+
+        <!-- Broker Actions Placeholder -->
+        <div id="broker-actions-container" class="space-y-6"></div>
+
       </div>
     </div>
   </main>
 
-  <script>
-    const STORAGE_KEY = 'buyerProfile';
+  <script type="module">
+    import { supabase } from './lib/supabase.js';
 
-    function loadProfile() {
+    const STORAGE_KEY = 'buyerProfile';
+    let currentProfile = null;
+
+    function loadLocalProfile() {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       const name = localStorage.getItem('userName') || saved.name || '';
       const email = saved.email || '';
 
-      // Merge from localStorage
-      const profile = {
+      return {
         name,
         email,
         phone: saved.phone || '',
         city: saved.city || '',
         bio: saved.bio || '',
+        avatarUrl: saved.avatarUrl || '',
         joinedAt: saved.joinedAt || new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
         savedCount: saved.savedCount || 0,
         inquiriesCount: saved.inquiriesCount || 0,
-        prefs: saved.prefs || {}
+        prefs: saved.prefs || {},
+        role: saved.role || localStorage.getItem('role') || 'Buyer',
+        isOwnProfile: true,
+        viewerRole: localStorage.getItem('role') || 'Guest'
       };
+    }
 
-      // Persist join date
-      if (!saved.joinedAt) {
-        saved.joinedAt = profile.joinedAt;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, ...profile }));
+    async function loadProfile(targetUserId = null) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          window.location.replace('/login.html');
+          return null;
+        }
+
+        const isOwnProfile = !targetUserId || targetUserId === session.user.id;
+        const queryUserId = isOwnProfile ? session.user.id : targetUserId;
+
+        // Fetch database profile
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', queryUserId)
+          .single();
+
+        if (error) {
+          console.warn('Error fetching profile from database:', error);
+          if (isOwnProfile) {
+            return loadLocalProfile();
+          }
+          return null;
+        }
+
+        // Fetch the logged-in user's role (viewerRole)
+        let viewerRole = localStorage.getItem('role') || 'Guest';
+        const { data: viewerProfile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        if (viewerProfile && viewerProfile.role) {
+          viewerRole = viewerProfile.role;
+        }
+
+        // Fetch dynamic stats from database
+        let inquiriesCount = 0;
+        if (profile.role === 'Buyer') {
+          try {
+            const { count, error: countErr } = await supabase
+              .from('inquiries')
+              .select('*', { count: 'exact', head: true })
+              .eq('buyer_id', queryUserId);
+            if (!countErr && count !== null) {
+              inquiriesCount = count;
+            }
+          } catch (cErr) {
+            console.error('Error fetching inquiries count:', cErr);
+          }
+        } else if (profile.role === 'Broker') {
+          try {
+            const { count, error: countErr } = await supabase
+              .from('listings')
+              .select('*', { count: 'exact', head: true })
+              .eq('broker_id', queryUserId);
+            if (!countErr && count !== null) {
+              inquiriesCount = count; // Let's use listings count for brokers
+            }
+          } catch (cErr) {
+            console.error('Error fetching listings count:', cErr);
+          }
+        }
+
+        // Saved count from localStorage or database
+        let savedCount = 0;
+        if (isOwnProfile && profile.role !== 'Broker') {
+          savedCount = JSON.parse(localStorage.getItem('savedListings') || '[]').length || 0;
+        } else if (profile.role === 'Broker') {
+          // If viewing or owning broker, savedCount is inquiries received!
+          try {
+            const { count, error: countErr } = await supabase
+              .from('inquiries')
+              .select('*', { count: 'exact', head: true })
+              .eq('broker_id', queryUserId);
+            if (!countErr && count !== null) {
+              savedCount = count; // Inquiries received (Total Leads)
+            }
+          } catch (cErr) {
+            console.error('Error fetching inquiries count:', cErr);
+          }
+        }
+
+        let joinedAt = 'May 2026';
+        if (profile.updated_at) {
+          joinedAt = new Date(profile.updated_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+        } else if (isOwnProfile && session.user.created_at) {
+          joinedAt = new Date(session.user.created_at).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+        }
+
+        const buyerProfile = {
+          name: profile.full_name || '',
+          email: isOwnProfile ? session.user.email : 'Confidential',
+          phone: profile.phone || '',
+          city: profile.city || '',
+          bio: profile.bio || '',
+          avatarUrl: profile.avatar_url || '',
+          joinedAt: joinedAt,
+          savedCount: savedCount,
+          inquiriesCount: inquiriesCount,
+          prefs: profile.preferences || {},
+          role: profile.role || 'Buyer',
+          isOwnProfile: isOwnProfile,
+          viewerRole: viewerRole
+        };
+
+        if (isOwnProfile) {
+          // Cache back
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(buyerProfile));
+          if (buyerProfile.name) {
+            localStorage.setItem('userName', buyerProfile.name);
+          }
+          if (buyerProfile.avatarUrl) {
+            localStorage.setItem(`broker_avatar_${session.user.id}`, buyerProfile.avatarUrl);
+          }
+        }
+
+        return buyerProfile;
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+        return targetUserId ? null : loadLocalProfile();
       }
+    }
 
-      return profile;
+    async function populateBrokerListings(buyerId, buyerName) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        
+        const { data: listings, error } = await supabase
+          .from('listings')
+          .select('id, title')
+          .eq('broker_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        const selectEl = document.getElementById('broker-assign-listing');
+        if (!selectEl) return;
+
+        if (error) {
+          console.error('Error fetching broker listings:', error);
+          selectEl.innerHTML = '<option value="">Error loading listings</option>';
+          return;
+        }
+
+        if (!listings || listings.length === 0) {
+          selectEl.innerHTML = '<option value="">No listings available to assign</option>';
+          return;
+        }
+
+        selectEl.innerHTML = '<option value="">Select listing...</option>' + 
+          listings.map(l => `<option value="${l.id}">${l.title}</option>`).join('');
+      } catch (err) {
+        console.error('Failed to populate broker listings:', err);
+      }
+    }
+
+    function convertToDisplayField(id, value, isTextarea = false) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      
+      const displayDiv = document.createElement('div');
+      displayDiv.className = isTextarea
+        ? 'w-full py-3.5 px-5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 min-h-[96px] block whitespace-pre-wrap leading-relaxed'
+        : 'w-full py-3.5 px-5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 min-h-[50px] flex items-center';
+      
+      displayDiv.textContent = value || '—';
+      displayDiv.id = id;
+      
+      el.parentNode.replaceChild(displayDiv, el);
+    }
+
+    function getWhatsAppUrl(phone, fullName, isBrokerText) {
+      if (!phone) return null;
+      
+      // Strip all non-numeric characters
+      const cleanDigits = phone.replace(/\D/g, '');
+      if (!cleanDigits) return null;
+      
+      // Remove leading country code 91 or 0
+      let rawNumber = cleanDigits;
+      if (rawNumber.startsWith('91') && rawNumber.length > 10) {
+        rawNumber = rawNumber.slice(2);
+      } else if (rawNumber.startsWith('0')) {
+        rawNumber = rawNumber.slice(1);
+      }
+      
+      // Standard 10-digit number check (or at least close)
+      if (rawNumber.length < 10) {
+        return null;
+      }
+      
+      const formattedNumber = `91${rawNumber}`;
+      const text = isBrokerText
+        ? `Hi ${fullName}, I am a broker from ProjectX reaching out regarding your property inquiry.`
+        : `Hi ${fullName}, I found your profile on ProjectX and would like to discuss a property.`;
+        
+      return `https://wa.me/${formattedNumber}?text=${encodeURIComponent(text)}`;
     }
 
     function renderProfile(profile) {
+      if (!profile) return;
+      currentProfile = profile;
       const initials = profile.name
         ? profile.name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
         : '?';
-      document.getElementById('avatar-initials').textContent = initials;
-      document.getElementById('profile-display-name').textContent = profile.name || 'New Buyer';
+
+      const avatarInitials = document.getElementById('avatar-initials');
+      const avatarImg = document.getElementById('avatar-img');
+      const hoverOverlay = document.getElementById('avatar-hover-overlay');
+
+      if (profile.avatarUrl) {
+        if (avatarInitials) avatarInitials.classList.add('hidden');
+        if (avatarImg) {
+          avatarImg.src = profile.avatarUrl;
+          avatarImg.classList.remove('hidden');
+        }
+      } else {
+        if (avatarInitials) {
+          avatarInitials.textContent = initials;
+          avatarInitials.classList.remove('hidden');
+        }
+        if (avatarImg) avatarImg.classList.add('hidden');
+      }
+
+      if (hoverOverlay) {
+        if (profile.isOwnProfile) {
+          hoverOverlay.classList.remove('hidden');
+        } else {
+          hoverOverlay.classList.add('hidden');
+        }
+      }
+
+      document.getElementById('profile-display-name').textContent = profile.name || 'New User';
       document.getElementById('profile-display-email').textContent = profile.email || 'No email set';
 
-      document.getElementById('field-name').value = profile.name;
-      document.getElementById('field-email').value = profile.email;
-      document.getElementById('field-phone').value = profile.phone;
-      document.getElementById('field-city').value = profile.city;
-      document.getElementById('field-bio').value = profile.bio;
+      // Load form fields if elements are still input/textarea (i.e. not yet converted to display divs)
+      const fieldName = document.getElementById('field-name');
+      if (fieldName && fieldName.tagName !== 'DIV') fieldName.value = profile.name;
+      
+      const fieldEmail = document.getElementById('field-email');
+      if (fieldEmail && fieldEmail.tagName !== 'DIV') fieldEmail.value = profile.email;
+      
+      const fieldPhone = document.getElementById('field-phone');
+      if (fieldPhone && fieldPhone.tagName !== 'DIV') fieldPhone.value = profile.phone;
+      
+      const fieldCity = document.getElementById('field-city');
+      if (fieldCity && fieldCity.tagName !== 'DIV') fieldCity.value = profile.city;
+      
+      const fieldBio = document.getElementById('field-bio');
+      if (fieldBio && fieldBio.tagName !== 'DIV') fieldBio.value = profile.bio;
 
-      document.getElementById('stat-saved').textContent = profile.savedCount;
-      document.getElementById('stat-inquiries').textContent = profile.inquiriesCount;
-      document.getElementById('stat-joined').textContent = profile.joinedAt;
+      const statSaved = document.getElementById('stat-saved');
+      if (statSaved) statSaved.textContent = profile.savedCount;
 
-      // Load preferences
-      if (profile.prefs) {
-        document.getElementById('pref-type').value = profile.prefs.type || '';
-        document.getElementById('pref-budget').value = profile.prefs.budget || '';
-        document.getElementById('pref-intent').value = profile.prefs.intent || '';
-        document.getElementById('pref-bhk').value = profile.prefs.bhk || '';
+      const statInquiries = document.getElementById('stat-inquiries');
+      if (statInquiries) statInquiries.textContent = profile.inquiriesCount;
+
+      const statJoined = document.getElementById('stat-joined');
+      if (statJoined) statJoined.textContent = profile.joinedAt;
+
+      // Hide or show buyer-specific middle navigation links based on viewer role
+      const navLinks = document.getElementById('nav-links-container');
+      if (navLinks) {
+        if (profile.viewerRole === 'Broker' || profile.viewerRole === 'Employee' || profile.viewerRole === 'Admin') {
+          navLinks.classList.remove('md:flex');
+          navLinks.classList.add('hidden');
+        } else {
+          navLinks.classList.remove('hidden');
+          navLinks.classList.add('md:flex');
+        }
+      }
+
+      // Update "Back to Home" link dynamically based on the viewer's role
+      const backLink = document.getElementById('back-link');
+      if (backLink) {
+        if (profile.viewerRole === 'Broker') {
+          backLink.href = '/broker-dashboard.html';
+          backLink.innerHTML = `
+            <span class="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+            Back to Dashboard
+          `;
+        } else if (profile.viewerRole === 'Admin') {
+          backLink.href = '/admin-panel.html';
+          backLink.innerHTML = `
+            <span class="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+            Back to Admin Panel
+          `;
+        } else if (profile.viewerRole === 'Employee') {
+          backLink.href = '/employee-panel.html';
+          backLink.innerHTML = `
+            <span class="material-symbols-outlined text-[18px] group-hover:-translate-x-0.5 transition-transform">arrow_back</span>
+            Back to Employee Panel
+          `;
+        }
+      }
+
+      // Dynamically update left badge role text
+      const roleBadgeText = document.getElementById('profile-display-role');
+      if (roleBadgeText) {
+        let badgeIcon = 'verified_user';
+        if (profile.role === 'Broker') badgeIcon = 'domain';
+        else if (profile.role === 'Admin') badgeIcon = 'admin_panel_settings';
+        roleBadgeText.innerHTML = `<span class="material-symbols-outlined text-[14px]">${badgeIcon}</span>${profile.role || 'Buyer'}`;
+      }
+
+      // Update stat labels if Broker (only if elements exist)
+      const savedEl = document.getElementById('stat-saved');
+      if (savedEl) {
+        const savedStatLabel = savedEl.previousElementSibling;
+        const inquiriesStatLabel = document.getElementById('stat-inquiries')?.previousElementSibling;
+        if (profile.role === 'Broker') {
+          if (savedStatLabel) savedStatLabel.innerHTML = '<span class="material-symbols-outlined text-[18px] text-slate-400">mail</span>Total Leads';
+          if (inquiriesStatLabel) inquiriesStatLabel.innerHTML = '<span class="material-symbols-outlined text-[18px] text-slate-400">domain</span>Active Listings';
+        } else {
+          if (savedStatLabel) savedStatLabel.innerHTML = '<span class="material-symbols-outlined text-[18px] text-slate-400">favorite</span>Saved Listings';
+          if (inquiriesStatLabel) inquiriesStatLabel.innerHTML = '<span class="material-symbols-outlined text-[18px] text-slate-400">mail</span>Inquiries Sent';
+        }
+      }
+
+      // Toggle Preferences vs Professional Card
+      const buyerPrefCard = document.getElementById('buyer-preferences-card');
+      const brokerProfCard = document.getElementById('broker-professional-card');
+      
+      if (profile.role === 'Broker') {
+        if (buyerPrefCard) buyerPrefCard.classList.add('hidden');
+        if (brokerProfCard) {
+          if (profile.isOwnProfile) {
+            brokerProfCard.classList.remove('hidden');
+            const agencyVal = profile.prefs.agency || '';
+            const expVal = profile.prefs.experience || '';
+            const areasVal = profile.prefs.areas || '';
+            
+            document.getElementById('field-agency').value = agencyVal;
+            document.getElementById('field-experience').value = expVal;
+            document.getElementById('field-areas').value = areasVal;
+          } else {
+            brokerProfCard.classList.add('hidden');
+          }
+        }
+      } else {
+        if (buyerPrefCard) buyerPrefCard.classList.remove('hidden');
+        if (brokerProfCard) brokerProfCard.classList.add('hidden');
+
+        // Load preferences
+        if (profile.prefs) {
+          const prefType = document.getElementById('pref-type');
+          if (prefType) prefType.value = profile.prefs.type || '';
+          
+          const prefBudget = document.getElementById('pref-budget');
+          if (prefBudget) prefBudget.value = profile.prefs.budget || '';
+          
+          const prefIntent = document.getElementById('pref-intent');
+          if (prefIntent) prefIntent.value = profile.prefs.intent || '';
+          
+          const prefBhk = document.getElementById('pref-bhk');
+          if (prefBhk) prefBhk.value = profile.prefs.bhk || '';
+        }
+      }
+
+      // If NOT own profile, apply secure view-only mode!
+      if (profile.isOwnProfile === false) {
+        // 1. Change main header title & description
+        const h1 = document.querySelector('h1');
+        if (h1) {
+          h1.textContent = `${profile.name || 'User'}'s Profile`;
+          document.title = `${profile.name || 'User'}'s Profile — ProjectX`;
+        }
+        
+        const subtitle = document.querySelector('.mb-10 p') || (h1 ? h1.nextElementSibling : null);
+        if (subtitle) subtitle.textContent = 'View contact details and preferences.';
+
+        // 2. Hide edit button
+        const editBtn = document.getElementById('edit-toggle-btn');
+        if (editBtn) {
+          editBtn.classList.add('hidden');
+          editBtn.style.display = 'none';
+        }
+
+        // 3. Hide Save Preferences button
+        const savePrefsBtn = document.getElementById('save-prefs-btn');
+        if (savePrefsBtn) savePrefsBtn.classList.add('hidden');
+
+        // 4. Hide Logout / Danger Zone card
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+          const card = logoutBtn.closest('.border-red-100') || logoutBtn.closest('.bg-white');
+          if (card) card.classList.add('hidden');
+        }
+
+        // 5. Hide Save Changes/Cancel buttons for read-only profiles
+        const saveActions = document.getElementById('save-actions');
+        if (saveActions) saveActions.classList.add('hidden');
+
+        // 6. Disable all fields (only relevant if they are still input fields)
+        const fields = ['field-name', 'field-email', 'field-phone', 'field-city', 'field-bio', 'pref-type', 'pref-budget', 'pref-intent', 'pref-bhk'];
+        fields.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && el.tagName !== 'DIV') el.disabled = true;
+        });
+
+        // 6. Dynamically apply Broker POV modifications if the viewer is a Broker
+        if (profile.viewerRole === 'Broker' && profile.role === 'Buyer') {
+          // A. Convert all Personal Information inputs/textarea into flat, premium display divs (read-only plain text)
+          convertToDisplayField('field-name', profile.name);
+          convertToDisplayField('field-email', profile.email);
+          convertToDisplayField('field-phone', profile.phone);
+          convertToDisplayField('field-city', profile.city);
+          convertToDisplayField('field-bio', profile.bio, true);
+
+          // B. Dynamically swap the entire Activity/Stats panel with our rich Broker Actions panel
+          const activityCard = document.getElementById('activity-card');
+          if (activityCard) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetUserId = urlParams.get('id');
+            const savedNoteKey = `broker_note_${targetUserId}`;
+            const savedNote = localStorage.getItem(savedNoteKey) || '';
+
+            activityCard.className = "bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6";
+            activityCard.innerHTML = `
+              <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Broker Actions</h3>
+              
+              <!-- Contact Buyer -->
+              <div class="space-y-3">
+                <label class="profile-label">Contact Buyer</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <a id="btn-call-buyer" href="tel:${profile.phone || ''}" class="btn-secondary flex-1 text-xs py-2.5 active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[16px]">call</span>
+                    Call
+                  </a>
+                  <a id="btn-email-buyer" href="mailto:${profile.email === 'Confidential' ? '' : (profile.email || '')}" class="btn-secondary flex-1 text-xs py-2.5 active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[16px]">mail</span>
+                    Email
+                  </a>
+                </div>
+                <a id="btn-whatsapp-buyer" href="#" target="_blank" class="btn-secondary w-full text-xs py-2.5 active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[18px] text-[#25D366]">chat</span>
+                  Chat on WhatsApp
+                </a>
+              </div>
+
+              <!-- Assign Property -->
+              <div class="space-y-3">
+                <label class="profile-label" for="broker-assign-listing">Assign Property</label>
+                <div class="flex gap-2">
+                  <select class="profile-input py-2 px-3 text-sm flex-1" id="broker-assign-listing">
+                    <option value="">Loading listings...</option>
+                  </select>
+                  <button id="broker-assign-btn" class="btn-primary px-3.5 py-2 text-xs active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Add Private Note -->
+              <div class="space-y-3">
+                <label class="profile-label" for="broker-private-notes">Private Buyer Note</label>
+                <textarea class="profile-input resize-none h-20 text-xs p-3" id="broker-private-notes" placeholder="Attach private note...">${savedNote}</textarea>
+                <button id="broker-save-notes-btn" class="btn-primary w-full text-xs py-2.5 active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[16px]">save</span>
+                  Save Note
+                </button>
+              </div>
+            `;
+
+            // Populate the active broker's properties list dynamically
+            populateBrokerListings(targetUserId, profile.name);
+
+            // Bind email and call buttons dynamically to prevent issues with confidentiality
+            const callBtn = document.getElementById('btn-call-buyer');
+            if (callBtn) {
+              callBtn.onclick = (e) => {
+                if (!profile.phone) {
+                  e.preventDefault();
+                  showToast('No phone number is available for this buyer.', true);
+                }
+              };
+            }
+
+            const emailBtn = document.getElementById('btn-email-buyer');
+            if (emailBtn) {
+              emailBtn.onclick = (e) => {
+                if (!profile.email || profile.email === 'Confidential') {
+                  e.preventDefault();
+                  showToast("The buyer's email address is confidential.", true);
+                }
+              };
+            }
+
+            // Bind WhatsApp button dynamically
+            const waBtn = document.getElementById('btn-whatsapp-buyer');
+            if (waBtn) {
+              const waUrl = getWhatsAppUrl(profile.phone, profile.name, true);
+              if (waUrl) {
+                waBtn.href = waUrl;
+              } else {
+                waBtn.onclick = (e) => {
+                  e.preventDefault();
+                  showToast('No valid phone number is available to chat on WhatsApp.', true);
+                };
+              }
+            }
+
+            // Bind notes save handler
+            const saveNotesBtn = document.getElementById('broker-save-notes-btn');
+            if (saveNotesBtn) {
+              saveNotesBtn.onclick = () => {
+                const noteVal = document.getElementById('broker-private-notes').value.trim();
+                localStorage.setItem(savedNoteKey, noteVal);
+                showToast('Private note saved successfully!');
+              };
+            }
+
+            // Bind property assignment handler
+            const assignBtn = document.getElementById('broker-assign-btn');
+            if (assignBtn) {
+              assignBtn.onclick = () => {
+                const selectEl = document.getElementById('broker-assign-listing');
+                const listingId = selectEl.value;
+                const listingTitle = selectEl.options[selectEl.selectedIndex].text;
+                if (!listingId) {
+                  showToast('Please select a property listing to assign.', true);
+                  return;
+                }
+                showToast(`Property "${listingTitle}" successfully assigned to ${profile.name}!`);
+              };
+            }
+          }
+        }
+
+        // 7. Dynamically apply Buyer POV modifications if the viewer is a Buyer visiting a Broker's profile
+        if ((profile.viewerRole === 'Buyer' || localStorage.getItem('role') === 'Buyer') && profile.role === 'Broker') {
+          // A. Convert all Personal Information inputs/textarea into flat, premium display divs (read-only plain text)
+          convertToDisplayField('field-name', profile.name);
+          convertToDisplayField('field-email', profile.email);
+          convertToDisplayField('field-phone', profile.phone);
+          convertToDisplayField('field-city', profile.city);
+          convertToDisplayField('field-bio', profile.bio, true);
+
+          // Explicitly hide Edit, Save Changes, and Cancel buttons
+          const editBtn = document.getElementById('edit-toggle-btn');
+          if (editBtn) {
+            editBtn.classList.add('hidden');
+            editBtn.style.display = 'none';
+          }
+          const saveActions = document.getElementById('save-actions');
+          if (saveActions) {
+            saveActions.classList.add('hidden');
+            saveActions.style.display = 'none';
+          }
+
+          // B. Dynamically swap the entire Activity/Stats panel with our rich Buyer Actions panel
+          const activityCard = document.getElementById('activity-card');
+          if (activityCard) {
+            activityCard.className = "bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6";
+            activityCard.innerHTML = `
+              <h3 class="text-xs font-black uppercase tracking-widest text-slate-400">Buyer Actions</h3>
+              
+              <!-- Contact Broker -->
+              <div class="space-y-3">
+                <label class="profile-label">Contact Broker</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <a id="btn-call-broker" href="tel:${profile.phone || ''}" class="btn-secondary flex-1 text-[11px] py-2.5 active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[16px]">call</span>
+                    Call Broker
+                  </a>
+                  <a id="btn-email-broker" href="mailto:${profile.email === 'Confidential' ? '' : (profile.email || '')}" class="btn-secondary flex-1 text-[11px] py-2.5 active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-[16px]">mail</span>
+                    Email Broker
+                  </a>
+                </div>
+                <a id="btn-whatsapp-broker" href="#" target="_blank" class="btn-secondary w-full text-xs py-2.5 active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[18px] text-[#25D366]">chat</span>
+                  Chat on WhatsApp
+                </a>
+              </div>
+
+              <!-- Active Properties -->
+              <div class="space-y-3">
+                <label class="profile-label">Broker's Listings</label>
+                <a href="/properties.html" class="btn-primary w-full text-xs py-2.5 active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[16px]">search</span>
+                  View Active Listings
+                </a>
+              </div>
+            `;
+
+            // Bind email and call buttons dynamically to prevent issues with confidentiality
+            const callBtn = document.getElementById('btn-call-broker');
+            if (callBtn) {
+              callBtn.onclick = (e) => {
+                if (!profile.phone) {
+                  e.preventDefault();
+                  showToast('No phone number is available for this broker.', true);
+                }
+              };
+            }
+
+            const emailBtn = document.getElementById('btn-email-broker');
+            if (emailBtn) {
+              emailBtn.onclick = (e) => {
+                if (!profile.email || profile.email === 'Confidential') {
+                  e.preventDefault();
+                  showToast("The broker's email address is confidential.", true);
+                }
+              };
+            }
+
+            // Bind WhatsApp button dynamically
+            const waBtn = document.getElementById('btn-whatsapp-broker');
+            if (waBtn) {
+              const waUrl = getWhatsAppUrl(profile.phone, profile.name, false);
+              if (waUrl) {
+                waBtn.href = waUrl;
+              } else {
+                waBtn.onclick = (e) => {
+                  e.preventDefault();
+                  showToast('No valid phone number is available to chat on WhatsApp.', true);
+                };
+              }
+            }
+          }
+        }
+      } else {
+        const brokerContainer = document.getElementById('broker-actions-container');
+        if (brokerContainer) brokerContainer.innerHTML = '';
       }
     }
 
-    function saveProfile() {
+    async function handleAvatarUpload(file) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast('Not authenticated.', true);
+        return;
+      }
+
+      const userId = session.user.id;
+      const fileName = `${userId}-${Date.now()}.png`;
+
+      showToast('Uploading avatar...');
+
+      try {
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+
+        if (error) {
+          throw error;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        const publicUrl = publicUrlData.publicUrl;
+
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            avatar_url: publicUrl,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // Cache URL in localStorage
+        localStorage.setItem(`broker_avatar_${userId}`, publicUrl);
+        const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        cached.avatarUrl = publicUrl;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cached));
+
+        if (currentProfile) {
+          currentProfile.avatarUrl = publicUrl;
+        }
+
+        // Update UI immediately
+        const avatarInitials = document.getElementById('avatar-initials');
+        const avatarImg = document.getElementById('avatar-img');
+        if (avatarInitials) avatarInitials.classList.add('hidden');
+        if (avatarImg) {
+          avatarImg.src = publicUrl;
+          avatarImg.classList.remove('hidden');
+        }
+
+        showToast('Profile picture updated successfully!');
+      } catch (err) {
+        console.error('Error uploading avatar:', err);
+        showToast('Failed to upload image: ' + err.message, true);
+      }
+    }
+
+    async function saveBrokerProfessionalInfo() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast('Not authenticated.', true);
+        return;
+      }
+
+      const userId = session.user.id;
+      const agency = document.getElementById('field-agency').value.trim();
+      const experienceInput = document.getElementById('field-experience').value;
+      const experience = experienceInput !== '' ? parseInt(experienceInput, 10) : null;
+      const areas = document.getElementById('field-areas').value.trim();
+
+      const saveProfBtn = document.getElementById('save-prof-btn');
+      const origContent = saveProfBtn.innerHTML;
+
+      try {
+        saveProfBtn.disabled = true;
+        saveProfBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Saving...';
+
+        // 1. Fetch current profile to get existing preferences
+        const { data: profile, error: fetchError } = await supabase
+          .from('profiles')
+          .select('preferences')
+          .eq('id', userId)
+          .single();
+
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        // 2. Merge professional fields into existing preferences
+        const currentPrefs = profile.preferences || {};
+        const mergedPrefs = {
+          ...currentPrefs,
+          agency,
+          experience,
+          areas
+        };
+
+        // 3. Update profiles table
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            preferences: mergedPrefs,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          throw updateError;
+        }
+
+        // 4. Update local storage cache
+        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        existing.prefs = mergedPrefs;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
+
+        // 5. Update local current profile
+        if (currentProfile) {
+          currentProfile.prefs = mergedPrefs;
+        }
+
+        showToast('Professional information saved successfully!');
+      } catch (err) {
+        console.error('Error saving professional info:', err);
+        showToast('Error saving professional info: ' + err.message, true);
+      } finally {
+        saveProfBtn.disabled = false;
+        saveProfBtn.innerHTML = origContent;
+      }
+    }
+
+    async function saveProfile() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast('Not authenticated.', true);
+        return null;
+      }
+
+      const user = session.user;
+      const name = document.getElementById('field-name').value.trim();
+      const phone = document.getElementById('field-phone').value.trim();
+      const city = document.getElementById('field-city').value.trim();
+      const bio = document.getElementById('field-bio').value.trim();
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          full_name: name,
+          phone: phone,
+          city: city,
+          bio: bio,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving profile:', error);
+        showToast('Error saving profile changes.', true);
+        throw error;
+      }
+
+      // Sync local storage
+      if (name) localStorage.setItem('userName', name);
       const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
       const profile = {
         ...existing,
-        name: document.getElementById('field-name').value.trim(),
-        email: document.getElementById('field-email').value.trim(),
-        phone: document.getElementById('field-phone').value.trim(),
-        city: document.getElementById('field-city').value.trim(),
-        bio: document.getElementById('field-bio').value.trim(),
+        name: name,
+        phone: phone,
+        city: city,
+        bio: bio
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-      // Keep userName in sync
-      if (profile.name) localStorage.setItem('userName', profile.name);
       return profile;
     }
 
-    function showToast(msg) {
-      const t = document.createElement('div');
-      t.className = 'fixed bottom-6 right-6 z-[200] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2';
-      t.innerHTML = `<span class="material-symbols-outlined text-green-400 text-[18px]">check_circle</span>${msg}`;
-      document.body.appendChild(t);
-      setTimeout(() => t.remove(), 2500);
+    async function savePreferences() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        showToast('Not authenticated.', true);
+        return;
+      }
+
+      const user = session.user;
+      const prefs = {
+        type: document.getElementById('pref-type').value,
+        budget: document.getElementById('pref-budget').value,
+        intent: document.getElementById('pref-intent').value,
+        bhk: document.getElementById('pref-bhk').value,
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          preferences: prefs,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving preferences:', error);
+        showToast('Error saving preferences.', true);
+        throw error;
+      }
+
+      const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      existing.prefs = prefs;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
     }
 
+
+
     document.addEventListener('DOMContentLoaded', () => {
-      const profile = loadProfile();
-      renderProfile(profile);
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetUserId = urlParams.get('id');
+
+      // Wire avatar upload handlers
+      const avatarContainer = document.getElementById('avatar-container');
+      const avatarFileInput = document.getElementById('avatar-file-input');
+
+      if (avatarContainer && avatarFileInput) {
+        avatarContainer.onclick = () => {
+          if (currentProfile && currentProfile.isOwnProfile) {
+            avatarFileInput.click();
+          }
+        };
+
+        avatarFileInput.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          await handleAvatarUpload(file);
+        };
+      }
+
+      // Wire save broker professional info button
+      const saveProfBtn = document.getElementById('save-prof-btn');
+      if (saveProfBtn) {
+        saveProfBtn.onclick = saveBrokerProfessionalInfo;
+      }
+
+      // 1. Optimistic first render (only if own profile)
+      if (!targetUserId) {
+        const localCached = loadLocalProfile();
+        renderProfile(localCached);
+      } else {
+        // Show loading state for external profile
+        document.getElementById('profile-display-name').textContent = 'Loading...';
+      }
+
+      // 2. Fetch fresh live profile
+      loadProfile(targetUserId)
+        .then(freshProfile => {
+          if (freshProfile) {
+            renderProfile(freshProfile);
+          } else if (targetUserId) {
+            showToast('User profile not found.', true);
+          }
+        })
+        .catch(err => {
+          console.error('Failed background profile load:', err);
+          if (targetUserId) showToast('Failed to load profile.', true);
+        });
 
       let isEditing = false;
       const fields = ['field-name', 'field-email', 'field-phone', 'field-city', 'field-bio'];
@@ -363,7 +1244,12 @@
       function setEditMode(on) {
         isEditing = on;
         fields.forEach(id => {
-          document.getElementById(id).disabled = !on;
+          // Keep email field always disabled since it is primary auth key and should not be edited manually
+          if (id === 'field-email') {
+            document.getElementById(id).disabled = true;
+          } else {
+            document.getElementById(id).disabled = !on;
+          }
         });
         document.getElementById('edit-icon').textContent = on ? 'close' : 'edit';
         document.getElementById('edit-btn-text').textContent = on ? 'Cancel' : 'Edit';
@@ -372,8 +1258,8 @@
 
       document.getElementById('edit-toggle-btn').onclick = () => {
         if (isEditing) {
-          // Cancel: reload
-          renderProfile(loadProfile());
+          // Cancel: reload cached
+          renderProfile(loadLocalProfile());
           setEditMode(false);
         } else {
           setEditMode(true);
@@ -381,27 +1267,51 @@
       };
 
       document.getElementById('cancel-btn').onclick = () => {
-        renderProfile(loadProfile());
+        renderProfile(loadLocalProfile());
         setEditMode(false);
       };
 
-      document.getElementById('save-btn').onclick = () => {
-        const updated = saveProfile();
-        renderProfile(updated);
-        setEditMode(false);
-        showToast('Profile updated successfully!');
+      document.getElementById('save-btn').onclick = async () => {
+        const saveBtn = document.getElementById('save-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const origText = saveBtn.textContent;
+        
+        try {
+          saveBtn.disabled = true;
+          cancelBtn.disabled = true;
+          saveBtn.textContent = 'Saving...';
+          
+          const updated = await saveProfile();
+          if (updated) {
+            renderProfile(updated);
+            setEditMode(false);
+            showToast('Profile updated successfully!');
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          saveBtn.disabled = false;
+          cancelBtn.disabled = false;
+          saveBtn.textContent = origText;
+        }
       };
 
-      document.getElementById('save-prefs-btn').onclick = () => {
-        const existing = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        existing.prefs = {
-          type: document.getElementById('pref-type').value,
-          budget: document.getElementById('pref-budget').value,
-          intent: document.getElementById('pref-intent').value,
-          bhk: document.getElementById('pref-bhk').value,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-        showToast('Preferences saved!');
+      document.getElementById('save-prefs-btn').onclick = async () => {
+        const savePrefsBtn = document.getElementById('save-prefs-btn');
+        const origContent = savePrefsBtn.innerHTML;
+        
+        try {
+          savePrefsBtn.disabled = true;
+          savePrefsBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">sync</span> Saving...';
+          
+          await savePreferences();
+          showToast('Preferences saved!');
+        } catch (err) {
+          console.error(err);
+        } finally {
+          savePrefsBtn.disabled = false;
+          savePrefsBtn.innerHTML = origContent;
+        }
       };
 
       document.getElementById('logout-btn').onclick = () => {

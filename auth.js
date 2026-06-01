@@ -22,13 +22,32 @@ function navigateTo(page) {
     window.location.replace(toAppUrl(page));
 }
 
-function showToast(message) {
+function showToast(message, isError = false) {
+    const existingToast = document.querySelector('.global-toast');
+    if (existingToast) existingToast.remove();
+
     const toast = document.createElement('div');
-    toast.className = 'fixed bottom-6 right-6 z-[200] bg-slate-900 text-white px-4 py-2 rounded-lg shadow-lg text-sm';
-    toast.textContent = message;
+    toast.className = 'global-toast fixed bottom-6 right-6 z-[250] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
+    if (isError) {
+        toast.classList.remove('bg-slate-900');
+        toast.classList.add('bg-red-600');
+    }
+    
+    const iconName = isError ? 'error' : 'check_circle';
+    const iconColor = isError ? 'text-white' : 'text-green-400';
+    
+    toast.innerHTML = `<span class="material-symbols-outlined ${iconColor} text-[18px]">${iconName}</span><span>${message}</span>`;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2200);
+    
+    setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+    }, 2200);
 }
+
+window.showToast = showToast;
+
 
 // ─── Route Maps ───────────────────────────────────────────────────────────────
 
@@ -45,8 +64,8 @@ const roleHomePage = {
 
 const roleAllowedPages = {
     'Admin':    ['admin-panel.html', 'employee-panel.html', 'broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html', 'profile.html'],
-    'Employee': ['employee-panel.html', 'broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html'],
-    'Broker':   ['broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html'],
+    'Employee': ['employee-panel.html', 'broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html', 'profile.html'],
+    'Broker':   ['broker-dashboard.html', 'properties.html', 'map.html', 'property-details.html', 'profile.html'],
     'Buyer':    buyerPages,
     'Guest':    guestPages
 };
@@ -85,7 +104,12 @@ async function checkAuth() {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
         if (profile) {
             role = profile.role;
-            localStorage.setItem('role', role); // Sync for sync checks
+            const activeRole = localStorage.getItem('role');
+            if (role === 'Admin' && (activeRole === 'Broker' || activeRole === 'Employee' || activeRole === 'Admin')) {
+                role = activeRole;
+            } else {
+                localStorage.setItem('role', role); // Sync for sync checks
+            }
         }
     }
 
@@ -109,7 +133,7 @@ checkAuth();
 
 // ─── Exported functions ───────────────────────────────────────────────────────
 
-window.login = async function(role, name) {
+window.login = async function(role, name, targetRole = null) {
     if (role === 'Guest') {
         localStorage.setItem('role', 'Guest');
         navigateTo(roleHomePage['Guest']);
@@ -117,9 +141,15 @@ window.login = async function(role, name) {
     }
     // For other roles, we expect Supabase session to handle it
     // But we'll keep the role in localStorage for synchronous checks if needed
-    localStorage.setItem('role', role);
+    localStorage.setItem('role', targetRole || role);
     if (name) localStorage.setItem('userName', name);
-    navigateTo(roleHomePage[role] || 'index.html');
+    
+    // Admin can bypass to different dashboards depending on selected role
+    if (role === 'Admin' && targetRole && roleHomePage[targetRole]) {
+        navigateTo(roleHomePage[targetRole]);
+    } else {
+        navigateTo(roleHomePage[role] || 'index.html');
+    }
 };
 
 window.logout = async function() {
@@ -181,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function resetRoleTabs() {
             roleButtons.forEach(b => {
-                b.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded role-tab-inactive hover:text-on-surface transition-colors';
+                b.className = 'flex-1 py-2.5 px-3 text-center text-[10px] font-black uppercase tracking-widest rounded-lg role-tab-inactive hover:text-slate-900 transition-colors';
             });
         }
 
@@ -191,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const btn = Array.from(roleButtons).find(b => b.textContent.trim() === role);
             if (btn) {
-                btn.className = 'flex-1 py-2 px-3 text-center font-label-caps text-label-caps rounded bg-white text-slate-900 shadow-sm transition-all scale-105 font-bold';
+                btn.className = 'flex-1 py-2.5 px-3 text-center text-[10px] font-black uppercase tracking-widest rounded-lg role-tab-active font-bold scale-105 transition-all';
             }
 
             updateUI();
@@ -289,12 +319,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (profileError) throw profileError;
 
-                        if (profile.role !== selectedRole) {
+                        let matched = (profile.role === selectedRole);
+                        if (!matched && profile.role === 'Admin' && (selectedRole === 'Broker' || selectedRole === 'Employee' || selectedRole === 'Admin')) {
+                            matched = true;
+                        }
+                        if (!matched) {
                             await supabase.auth.signOut();
                             throw new Error(`This account is registered as a ${profile.role}. Please select the correct role above.`);
                         }
 
-                        window.login(profile.role, profile.full_name);
+                        window.login(profile.role, profile.full_name, selectedRole);
                     }
                 } catch (err) {
                     console.error('Authentication error:', err);
@@ -393,6 +427,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (greeting) greeting.textContent = `Welcome back, ${brokerName}. Here is your portfolio performance.`;
         }
 
+        // Retrieve and apply the uploaded avatar from broker_avatar_${userId} localStorage key
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                const cachedAvatar = localStorage.getItem(`broker_avatar_${session.user.id}`);
+                if (cachedAvatar) {
+                    const profileImgEl = document.getElementById('broker-profile-img');
+                    if (profileImgEl) {
+                        profileImgEl.src = cachedAvatar;
+                    }
+                }
+            }
+        });
+
         // Sidebar Logout
         const sidebarLogout = document.getElementById('sidebar-logout-btn');
         if (sidebarLogout) sidebarLogout.addEventListener('click', window.logout);
@@ -447,12 +494,18 @@ document.addEventListener('DOMContentLoaded', () => {
             b.querySelector('.material-symbols-outlined')?.textContent.trim() === 'download'
         );
         if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
+            downloadBtn.addEventListener('click', async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                let listings = await getListings();
+                if (user) {
+                    listings = listings.filter(l => l.broker_id === user.id);
+                }
+                const inquiries = await getInquiries();
                 const report = {
                     generatedAt: new Date().toISOString(),
                     broker: localStorage.getItem('userName') || 'Broker',
-                    listings: getListings(),
-                    inquiries: getInquiries()
+                    listings: listings,
+                    inquiries: inquiries
                 };
                 const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
@@ -546,7 +599,13 @@ async function initListingsManager() {
 }
 
 async function renderListings() {
-    const listings = await getListings();
+    const { data: { user } } = await supabase.auth.getUser();
+    let listings = await getListings();
+    
+    // Filter listings so the broker only sees and manages their own listings
+    if (user) {
+        listings = listings.filter(l => l.broker_id === user.id);
+    }
     
     // Render widget (max 3)
     const tbodyWidget = document.getElementById('listings-tbody-widget');
@@ -623,6 +682,32 @@ window.shareListing = shareListing;
 
 async function openListingModal(id) {
     const modal = document.getElementById('listing-modal');
+    
+    // Reset any validation warnings
+    const errorBanner = document.getElementById('modal-validation-error');
+    if (errorBanner) {
+        errorBanner.classList.add('hidden');
+        errorBanner.classList.remove('flex');
+    }
+    const inputsToReset = [
+        'modal-prop-title', 'modal-location', 'modal-price', 
+        'modal-intent', 'modal-type', 'modal-status', 
+        'modal-beds', 'modal-baths', 'modal-sqft', 
+        'modal-lat', 'modal-lng'
+    ];
+    inputsToReset.forEach(inputId => {
+        const el = document.getElementById(inputId);
+        if (el) {
+            el.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
+            el.classList.add('border-outline-variant');
+        }
+    });
+    const uploadZoneEl = document.getElementById('modal-upload-zone');
+    if (uploadZoneEl) {
+        uploadZoneEl.classList.remove('border-red-500', 'bg-red-50/20');
+        uploadZoneEl.classList.add('border-slate-200');
+    }
+
     let listing = null;
     if (id) {
         const { data, error } = await supabase.from('listings').select('*').eq('id', id).single();
@@ -647,6 +732,25 @@ async function openListingModal(id) {
     document.getElementById('modal-views').value         = listing ? listing.views     : '0';
     document.getElementById('modal-lat').value           = listing ? (listing.lat || '') : '';
     document.getElementById('modal-lng').value           = listing ? (listing.lng || '') : '';
+    const imgUrl = listing ? (listing.img || '') : '';
+    document.getElementById('modal-img').value = imgUrl;
+
+    const previewEl = document.getElementById('modal-image-preview');
+    const previewImg = document.getElementById('modal-preview-img');
+    const uploadZone = document.getElementById('modal-upload-zone');
+    const fileInput = document.getElementById('modal-file-input');
+
+    if (previewEl && previewImg && uploadZone) {
+        if (imgUrl) {
+            previewImg.src = imgUrl;
+            previewEl.classList.remove('hidden');
+            uploadZone.classList.add('hidden');
+        } else {
+            previewEl.classList.add('hidden');
+            uploadZone.classList.remove('hidden');
+            if (fileInput) fileInput.value = '';
+        }
+    }
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -664,27 +768,93 @@ window.closeListingModal = closeListingModal;
 
 async function saveListingForm() {
     const id       = document.getElementById('modal-id').value;
-    const title    = document.getElementById('modal-prop-title').value.trim();
-    const location = document.getElementById('modal-location').value.trim();
-    const price    = parseFloat(document.getElementById('modal-price').value) || 0;
-    const intent   = document.getElementById('modal-intent').value;
-    const type     = document.getElementById('modal-type').value;
-    const status   = document.getElementById('modal-status').value;
-    const beds     = parseInt(document.getElementById('modal-beds').value) || 0;
-    const baths    = parseFloat(document.getElementById('modal-baths').value) || 0;
-    const sqft     = parseInt(document.getElementById('modal-sqft').value) || 0;
-    const views    = parseInt(document.getElementById('modal-views').value) || 0;
-    const lat      = parseFloat(document.getElementById('modal-lat').value) || null;
-    const lng      = parseFloat(document.getElementById('modal-lng').value) || null;
+    const titleEl    = document.getElementById('modal-prop-title');
+    const locationEl = document.getElementById('modal-location');
+    const priceEl    = document.getElementById('modal-price');
+    const intentEl   = document.getElementById('modal-intent');
+    const typeEl     = document.getElementById('modal-type');
+    const statusEl   = document.getElementById('modal-status');
+    const bedsEl     = document.getElementById('modal-beds');
+    const bathsEl    = document.getElementById('modal-baths');
+    const sqftEl     = document.getElementById('modal-sqft');
+    const latEl      = document.getElementById('modal-lat');
+    const lngEl      = document.getElementById('modal-lng');
+    const uploadZone = document.getElementById('modal-upload-zone');
+    const imgEl      = document.getElementById('modal-img');
 
-    if (!title || !location || !price) {
-        alert('Please fill in all required fields.');
+    const title    = titleEl.value.trim();
+    const location = locationEl.value.trim();
+    const price    = parseFloat(priceEl.value) || 0;
+    const intent   = intentEl.value;
+    const type     = typeEl.value;
+    const status   = statusEl.value;
+    const beds     = parseInt(bedsEl.value) || 0;
+    const baths    = parseFloat(bathsEl.value) || 0;
+    const sqft     = parseInt(sqftEl.value) || 0;
+    const views    = parseInt(document.getElementById('modal-views').value) || 0;
+    const lat      = parseFloat(latEl.value) || null;
+    const lng      = parseFloat(lngEl.value) || null;
+    const img      = imgEl.value.trim();
+
+    // Reset styles
+    [titleEl, locationEl, priceEl, intentEl, typeEl, statusEl, bedsEl, bathsEl, sqftEl, latEl, lngEl].forEach(el => {
+        if (el) {
+            el.classList.remove('border-red-500', 'ring-2', 'ring-red-100');
+            el.classList.add('border-outline-variant');
+        }
+    });
+    if (uploadZone) {
+        uploadZone.classList.remove('border-red-500', 'bg-red-50/20');
+        uploadZone.classList.add('border-slate-200');
+    }
+
+    let hasErrors = false;
+    function markInvalid(el) {
+        if (el) {
+            el.classList.remove('border-outline-variant');
+            el.classList.add('border-red-500', 'ring-2', 'ring-red-100');
+            hasErrors = true;
+        }
+    }
+
+    if (title === '') markInvalid(titleEl);
+    if (location === '') markInvalid(locationEl);
+    if (img === '') {
+        if (uploadZone) {
+            uploadZone.classList.remove('border-slate-200');
+            uploadZone.classList.add('border-red-500', 'bg-red-50/20');
+        }
+        hasErrors = true;
+    }
+    if (priceEl.value.trim() === '' || price <= 0) markInvalid(priceEl);
+    if (intent === '') markInvalid(intentEl);
+    if (type === '') markInvalid(typeEl);
+    if (status === '') markInvalid(statusEl);
+    if (bedsEl.value.trim() === '' || beds < 0) markInvalid(bedsEl);
+    if (bathsEl.value.trim() === '' || baths < 0) markInvalid(bathsEl);
+    if (sqftEl.value.trim() === '' || sqft <= 0) markInvalid(sqftEl);
+    if (latEl.value.trim() === '' || isNaN(lat) || lat < -90 || lat > 90) markInvalid(latEl);
+    if (lngEl.value.trim() === '' || isNaN(lng) || lng < -180 || lng > 180) markInvalid(lngEl);
+
+    const errorBanner = document.getElementById('modal-validation-error');
+    if (hasErrors) {
+        if (errorBanner) {
+            errorBanner.classList.remove('hidden');
+            errorBanner.classList.add('flex');
+            errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        showToast('Please correct the highlighted fields before saving.');
         return;
+    } else {
+        if (errorBanner) {
+            errorBanner.classList.add('hidden');
+            errorBanner.classList.remove('flex');
+        }
     }
 
     const { data: { user } } = await supabase.auth.getUser();
     const listingData = { 
-        title, location, price, intent, type, status, beds, baths, sqft, views, lat, lng,
+        title, location, price, intent, type, status, beds, baths, sqft, views, lat, lng, img,
         broker_id: user ? user.id : null
     };
 
@@ -721,29 +891,56 @@ function injectListingModal() {
           </button>
         </div>
         <div class="p-6 overflow-y-auto max-h-[70vh]">
+          <div id="modal-validation-error" class="hidden mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-xs font-medium flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">warning</span>
+            <span>Please fill in all fields with valid information before saving.</span>
+          </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input type="hidden" id="modal-id"/>
+            <input type="hidden" id="modal-views"/>
             <div class="md:col-span-2">
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Title *</label>
               <input id="modal-prop-title" type="text" placeholder="e.g. 12 Marine Drive, Penthouse" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-2 relative">
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Location *</label>
-              <input id="modal-location" type="text" placeholder="e.g. Bandra West, Mumbai" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+              <div class="relative">
+                <input id="modal-location" type="text" autocomplete="off" placeholder="e.g. Bandra West, Mumbai" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+                <div id="modal-location-results" class="absolute left-0 right-0 mt-1 bg-surface-container-lowest rounded-lg shadow-xl border border-outline-variant hidden flex-col max-h-60 overflow-y-auto z-50"></div>
+              </div>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Media (Image) *</label>
+              <div id="modal-upload-zone" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-slate-50/50 transition-all flex flex-col items-center justify-center gap-2 bg-surface-container-low">
+                <span class="material-symbols-outlined text-[32px] text-slate-400">cloud_upload</span>
+                <p class="text-sm font-medium text-slate-600">Drag & drop your property photo here, or <span class="text-primary font-bold">browse</span></p>
+                <p class="text-xs text-slate-400">Supports PNG, JPG, JPEG up to 10MB</p>
+              </div>
+              <input type="file" id="modal-file-input" class="hidden" accept="image/*" />
+              <div id="modal-upload-progress" class="hidden w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                <div class="bg-primary h-1.5 rounded-full animate-pulse" style="width: 100%"></div>
+              </div>
+              <div id="modal-image-preview" class="hidden mt-3 relative rounded-lg overflow-hidden border border-outline-variant aspect-[16/9] w-full max-h-48 bg-slate-50">
+                <img id="modal-preview-img" src="" alt="Preview" class="w-full h-full object-cover"/>
+                <button type="button" id="modal-remove-img" class="absolute top-2 right-2 p-1.5 bg-slate-900/80 hover:bg-slate-900 text-white rounded-full transition-colors flex items-center justify-center" title="Remove Photo">
+                  <span class="material-symbols-outlined text-[16px]">close</span>
+                </button>
+              </div>
+              <input type="hidden" id="modal-img" />
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price *</label>
               <input id="modal-price" type="number" step="0.01" placeholder="e.g. 12.5" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Intent</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Intent *</label>
               <select id="modal-intent" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
                 <option value="Buy">Buy</option>
                 <option value="Rent">Rent</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Type</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Type *</label>
               <select id="modal-type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
                 <option value="Apartment">Apartment</option>
                 <option value="Villa">Villa</option>
@@ -752,7 +949,7 @@ function injectListingModal() {
               </select>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status *</label>
               <select id="modal-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
                 <option value="Active">Active</option>
                 <option value="Pending">Pending</option>
@@ -760,27 +957,23 @@ function injectListingModal() {
               </select>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bedrooms</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bedrooms *</label>
               <input id="modal-beds" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bathrooms</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bathrooms *</label>
               <input id="modal-baths" type="number" step="0.5" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">SqFt</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">SqFt *</label>
               <input id="modal-sqft" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Views</label>
-              <input id="modal-views" type="number" placeholder="0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude *</label>
               <input id="modal-lat" type="number" step="any" placeholder="19.0760" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude</label>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude *</label>
               <input id="modal-lng" type="number" step="any" placeholder="72.8777" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed"/>
             </div>
           </div>
@@ -793,6 +986,158 @@ function injectListingModal() {
     `;
     document.body.appendChild(modal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeListingModal(); });
+
+    // File upload event listeners
+    const uploadZone = document.getElementById('modal-upload-zone');
+    const fileInput = document.getElementById('modal-file-input');
+    const progressEl = document.getElementById('modal-upload-progress');
+    const previewEl = document.getElementById('modal-image-preview');
+    const previewImg = document.getElementById('modal-preview-img');
+    const removeBtn = document.getElementById('modal-remove-img');
+    const imgUrlInput = document.getElementById('modal-img');
+
+    if (uploadZone && fileInput) {
+        uploadZone.onclick = () => fileInput.click();
+
+        uploadZone.ondragover = (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('border-primary', 'bg-slate-50');
+        };
+
+        uploadZone.ondragleave = () => {
+            uploadZone.classList.remove('border-primary', 'bg-slate-50');
+        };
+
+        uploadZone.ondrop = (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('border-primary', 'bg-slate-50');
+            const file = e.dataTransfer.files[0];
+            if (file) handleUpload(file);
+        };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) handleUpload(file);
+        };
+    }
+
+    async function handleUpload(file) {
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            return;
+        }
+
+        progressEl.classList.remove('hidden');
+        uploadZone.classList.add('opacity-50', 'pointer-events-none');
+
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `listing-${Date.now()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { data, error } = await supabase.storage
+                .from('properties')
+                .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+            if (error) throw error;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('properties')
+                .getPublicUrl(filePath);
+
+            imgUrlInput.value = publicUrl;
+            
+            previewImg.src = publicUrl;
+            previewEl.classList.remove('hidden');
+            uploadZone.classList.add('hidden');
+            showToast('Property photo uploaded successfully!');
+        } catch (err) {
+            console.error('Upload error:', err);
+            showToast('Failed to upload image: ' + err.message);
+        } finally {
+            progressEl.classList.add('hidden');
+            uploadZone.classList.remove('opacity-50', 'pointer-events-none');
+        }
+    }
+
+    if (removeBtn) {
+        removeBtn.onclick = () => {
+            imgUrlInput.value = '';
+            previewImg.src = '';
+            previewEl.classList.add('hidden');
+            uploadZone.classList.remove('hidden');
+            fileInput.value = '';
+        };
+    }
+
+    // Location Autocomplete with OpenStreetMap (Nominatim)
+    const modalLocationInput = document.getElementById('modal-location');
+    const modalLocationResults = document.getElementById('modal-location-results');
+
+    if (modalLocationInput && modalLocationResults) {
+        let debounceTimer;
+        modalLocationInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            const query = e.target.value.trim();
+            if (query.length < 3) {
+                modalLocationResults.innerHTML = '';
+                modalLocationResults.classList.add('hidden');
+                modalLocationResults.classList.remove('flex');
+                return;
+            }
+            debounceTimer = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=IN&limit=5`)
+                    .then(res => res.json())
+                    .then(data => {
+                        modalLocationResults.innerHTML = '';
+                        if (data.length === 0) {
+                            modalLocationResults.innerHTML = '<div class="p-4 text-sm text-slate-500 font-medium bg-surface-container-lowest text-on-surface">No locations found.</div>';
+                        } else {
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'px-4 py-2.5 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors flex items-center gap-3 bg-white text-slate-700 text-left';
+                                div.innerHTML = `
+                                    <span class="material-symbols-outlined text-slate-400 text-[18px] shrink-0">location_on</span>
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="text-sm font-semibold truncate text-slate-800">${item.display_name.split(',')[0]}</span>
+                                        <span class="text-[10px] text-slate-400 truncate">${item.display_name}</span>
+                                    </div>
+                                `;
+                                div.onclick = () => {
+                                    const parts = item.display_name.split(',');
+                                    const formattedLocation = parts.slice(0, 3).map(s => s.trim()).join(', ');
+                                    modalLocationInput.value = formattedLocation;
+                                    
+                                    const latEl = document.getElementById('modal-lat');
+                                    const lngEl = document.getElementById('modal-lng');
+                                    if (latEl) latEl.value = item.lat;
+                                    if (lngEl) lngEl.value = item.lon;
+
+                                    modalLocationResults.innerHTML = '';
+                                    modalLocationResults.classList.add('hidden');
+                                    modalLocationResults.classList.remove('flex');
+                                };
+                                modalLocationResults.appendChild(div);
+                            });
+                        }
+                        modalLocationResults.classList.remove('hidden');
+                        modalLocationResults.classList.add('flex');
+                    })
+                    .catch(err => {
+                        console.error('Error fetching locations:', err);
+                    });
+            }, 300);
+        });
+
+        // Hide results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!modalLocationInput.contains(e.target) && !modalLocationResults.contains(e.target)) {
+                modalLocationResults.innerHTML = '';
+                modalLocationResults.classList.add('hidden');
+                modalLocationResults.classList.remove('flex');
+            }
+        });
+    }
 }
 
 // ══════════════════════════════════════════════════════
@@ -1367,9 +1712,11 @@ async function initBuyerMapPage() {
     const listings = await getListings();
     
     // Filter to those with coordinates
-    const markersData = listings.filter(l => l.lat && l.lng).map(l => {
-        return { ...l, lat: l.lat, lng: l.lng };
+    const markersData = listings.filter(l => l.lat !== null && l.lng !== null).map(l => {
+        return { ...l, lat: parseFloat(l.lat), lng: parseFloat(l.lng) };
     });
+
+    const withoutCoords = listings.filter(l => l.lat === null || l.lng === null);
 
     const markers = [];
     let activeListingId = null;
@@ -1515,6 +1862,49 @@ async function initBuyerMapPage() {
     map.on('moveend', updateSidebar);
     setTimeout(updateSidebar, 100);
 
+    // Geocode missing coordinates on the fly to support legacy listings
+    withoutCoords.forEach((l, index) => {
+        setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(l.location)}&countrycodes=IN&limit=1`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const item = data[0];
+                        const lat = parseFloat(item.lat);
+                        const lng = parseFloat(item.lon);
+                        
+                        const updatedListing = { ...l, lat, lng };
+                        markersData.push(updatedListing);
+                        
+                        const icon = L.divIcon({
+                            className: 'bg-transparent border-none',
+                            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${l.id}">${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</div>`,
+                            iconSize: [0, 0],
+                            iconAnchor: [0, 0]
+                        });
+                        
+                        const marker = L.marker([lat, lng], { icon }).addTo(map);
+                        marker.bindPopup(`
+                            <div class="p-2 min-w-[150px]">
+                                <h4 class="font-bold text-sm text-slate-900">₹${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</h4>
+                                <p class="text-xs font-medium text-slate-500 mt-0.5">${escHtml(l.title)}</p>
+                                <div class="flex items-center gap-2 mt-2 text-slate-600 text-[10px] font-bold">
+                                    <span>${l.beds} BEDS</span> &bull; <span>${l.baths} BATHS</span>
+                                </div>
+                                <button onclick="window.location.href='property-details.html?id=${l.id}'" class="mt-3 w-full bg-slate-900 text-white px-3 py-1.5 rounded text-[10px] uppercase font-bold hover:bg-slate-800 transition-colors">View Details</button>
+                            </div>
+                        `, { closeButton: false, offset: [0, -35] });
+                        
+                        marker.on('click', () => selectListing(l.id, true));
+                        markers.push({ marker, data: updatedListing });
+                        
+                        updateSidebar();
+                    }
+                })
+                .catch(err => console.error('On-the-fly geocoding failed:', err));
+        }, index * 1000); // 1-second delay between requests to comply with Nominatim's strict rate limits
+    });
+
     // Map Search
     const searchInput = document.getElementById('map-location-search');
     const searchBtn = document.getElementById('map-search-btn');
@@ -1590,6 +1980,53 @@ async function initBuyerDetailsPage() {
         return;
     }
 
+    // Fetch and populate actual broker profile from Supabase
+    let brokerName = 'Mehdi Ali'; // Default fallback
+    let brokerRole = 'ProjectX Executive Partner';
+    let brokerImg = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80'; // professional default image
+    
+    if (l.broker_id) {
+        const { data: brokerProfile } = await supabase.from('profiles').select('*').eq('id', l.broker_id).single();
+        if (brokerProfile) {
+            if (brokerProfile.full_name) {
+                brokerName = brokerProfile.full_name;
+            }
+            if (brokerProfile.role) {
+                brokerRole = `${brokerProfile.role}, ProjectX`;
+            }
+        }
+    }
+    
+    const brokerNameEl = document.getElementById('detail-broker-name');
+    if (brokerNameEl) {
+        if (l.broker_id) {
+            brokerNameEl.innerHTML = `<a href="/profile.html?id=${l.broker_id}" target="_blank" class="hover:text-slate-600 hover:underline flex items-center gap-1 transition-colors">
+                ${escHtml(brokerName)}
+                <span class="material-symbols-outlined text-[16px] inline-block font-normal">open_in_new</span>
+            </a>`;
+        } else {
+            brokerNameEl.textContent = brokerName;
+        }
+    }
+    
+    const brokerRoleEl = document.getElementById('detail-broker-role');
+    if (brokerRoleEl) brokerRoleEl.textContent = brokerRole;
+
+    const brokerImgEl = document.getElementById('detail-broker-img');
+    if (brokerImgEl) {
+        if (brokerName.toLowerCase().includes('mehdi')) {
+            brokerImgEl.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80'; // handsome male avatar for Mehdi
+        } else {
+            brokerImgEl.src = brokerImg;
+        }
+        if (l.broker_id) {
+            brokerImgEl.classList.add('cursor-pointer', 'hover:opacity-95', 'transition-opacity');
+            brokerImgEl.onclick = () => {
+                window.open(`/profile.html?id=${l.broker_id}`, '_blank');
+            };
+        }
+    }
+
     // Update page title
     document.title = `${l.title} — EstatePro`;
 
@@ -1644,7 +2081,7 @@ async function initBuyerDetailsPage() {
         if (chatSection) {
             chatSection.classList.remove('hidden');
             chatSection.classList.add('flex');
-            initBuyerChat(user.id, l.broker_id, l.id);
+            initBuyerChat(user.id, l.broker_id, l.id, brokerName);
         }
     } else {
         // Fallback to inquiry form for guests/others
@@ -1686,7 +2123,10 @@ async function initBuyerDetailsPage() {
 }
 
 let buyerChatChannel = null;
-async function initBuyerChat(buyerId, brokerId, listingId) {
+async function initBuyerChat(buyerId, brokerId, listingId, brokerName = 'Broker') {
+    activeChatNames[buyerId] = localStorage.getItem('userName') || 'You';
+    activeChatNames[brokerId] = brokerName;
+
     const msgsEl = document.getElementById('buyer-chat-messages');
     const input = document.getElementById('buyer-chat-input');
     const sendBtn = document.getElementById('buyer-chat-send');
@@ -1907,6 +2347,7 @@ document.querySelectorAll('input[placeholder="Search..."]').forEach(input => {
 // ─── Realtime Chat Logic ─────────────────────────────────────────────────────
 let currentChatConversation = null;
 let chatChannel = null;
+let activeChatNames = {};
 
 window.initBrokerChat = async function initBrokerChat() {
     const listEl = document.getElementById('chat-list');
@@ -1949,28 +2390,60 @@ window.initBrokerChat = async function initBrokerChat() {
     const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', buyerIds);
     const { data: listings } = await supabase.from('listings').select('id, title').in('id', listingIds);
 
+    profiles?.forEach(p => {
+        activeChatNames[p.id] = p.full_name;
+    });
+    activeChatNames[user.id] = localStorage.getItem('userName') || 'You';
+
     listEl.innerHTML = '';
     uniqueConversations.forEach(c => {
         const buyer = profiles?.find(p => p.id === c.buyer_id);
         const listing = listings?.find(l => l.id === c.listing_id);
+        const name = buyer?.full_name || 'Buyer';
+        const letter = name.charAt(0).toUpperCase();
         
+        // Premium HSL matching palette
+        const colors = [
+            'bg-slate-900 text-white',
+            'bg-indigo-900 text-indigo-100',
+            'bg-blue-900 text-blue-100',
+            'bg-emerald-900 text-emerald-100',
+            'bg-teal-900 text-teal-100'
+        ];
+        const colorIdx = (name.charCodeAt(0) || 0) % colors.length;
+        const colorClass = colors[colorIdx];
+
         const div = document.createElement('div');
-        div.className = 'p-4 border-b border-outline-variant hover:bg-slate-100 cursor-pointer transition-colors';
+        div.className = 'p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-all flex items-center gap-3 group';
         div.innerHTML = `
-            <div class="font-bold text-slate-800">${buyer?.full_name || 'Buyer'}</div>
-            <div class="text-xs text-primary font-medium mt-1 truncate">${listing?.title || 'Unknown Property'}</div>
+            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${colorClass} shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200">
+                ${letter}
+            </div>
+            <div class="min-w-0 flex-1">
+                <div class="font-bold text-slate-800 text-sm truncate group-hover:text-slate-900 transition-colors">${escHtml(name)}</div>
+                <div class="text-xs text-slate-400 font-medium mt-0.5 truncate flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px] text-slate-300">domain</span>
+                    ${escHtml(listing?.title || 'Property')}
+                </div>
+            </div>
+            <span class="material-symbols-outlined text-slate-300 text-[16px] opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">chevron_right</span>
         `;
-        div.onclick = () => window.loadChatMessages(c.buyer_id, user.id, c.listing_id, buyer?.full_name || 'Buyer', listing?.title || 'Property');
+        div.onclick = () => window.loadChatMessages(c.buyer_id, user.id, c.listing_id, name, listing?.title || 'Property');
         listEl.appendChild(div);
     });
 };
 
 window.loadChatMessages = async function loadChatMessages(buyerId, brokerId, listingId, buyerName, listingTitle) {
     currentChatConversation = { buyerId, brokerId, listingId };
+    activeChatNames[buyerId] = buyerName;
+    activeChatNames[brokerId] = localStorage.getItem('userName') || 'You';
     
     document.getElementById('chat-header').innerHTML = `
         <div>
-            <div class="text-lg font-bold">${buyerName}</div>
+            <a href="/profile.html?id=${buyerId}" target="_blank" class="text-lg font-bold text-slate-900 hover:text-slate-600 transition-colors flex items-center gap-1.5 hover:underline">
+                ${escHtml(buyerName)}
+                <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+            </a>
             <div class="text-xs font-medium text-slate-500">${listingTitle}</div>
         </div>
     `;
@@ -2064,11 +2537,58 @@ window.loadChatMessages = async function loadChatMessages(buyerId, brokerId, lis
         .subscribe();
 };
 
+function formatMsgTime(dateStr) {
+    if (!dateStr) return 'Just now';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Just now';
+    
+    const now = new Date();
+    const diffMs = now - d;
+    if (diffMs < 30000) return 'Just now'; // less than 30s
+    
+    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+    const dateOptions = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+    
+    if (d.toDateString() === now.toDateString()) {
+        return d.toLocaleTimeString([], timeOptions);
+    }
+    
+    return d.toLocaleDateString([], dateOptions);
+}
+
 window.renderMessage = function renderMessage(m, currentUserId, container) {
     const isMe = m.sender_id === currentUserId;
-    const div = document.createElement('div');
-    div.className = `max-w-[70%] p-3 rounded-xl text-sm ${isMe ? 'bg-primary text-on-primary self-end rounded-tr-none' : 'bg-white border border-outline-variant text-slate-800 self-start rounded-tl-none shadow-sm'}`;
-    div.textContent = m.content;
-    container.appendChild(div);
+    const senderName = isMe ? 'You' : (activeChatNames[m.sender_id] || 'Buyer');
+    const timeStr = formatMsgTime(m.created_at);
+
+    const msgWrapper = document.createElement('div');
+    msgWrapper.className = `flex flex-col gap-1 w-full ${isMe ? 'items-end' : 'items-start'}`;
+
+    // Premium header
+    const header = document.createElement('div');
+    header.className = 'flex items-center gap-1.5 px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest';
+    
+    let senderHTML = `<span>${escHtml(senderName)}</span>`;
+    if (!isMe && m.sender_id) {
+        senderHTML = `<a href="/profile.html?id=${m.sender_id}" target="_blank" class="hover:text-slate-800 hover:underline flex items-center gap-0.5 transition-colors">
+            ${escHtml(senderName)}
+            <span class="material-symbols-outlined text-[10px] inline-block font-normal">open_in_new</span>
+        </a>`;
+    }
+    
+    header.innerHTML = `${senderHTML}<span class="text-[8px] text-slate-300">•</span><span>${timeStr}</span>`;
+
+    // Bubble
+    const bubble = document.createElement('div');
+    bubble.className = `max-w-[75%] px-4 py-3 rounded-2xl text-sm font-medium shadow-sm transition-all duration-200 hover:shadow-md ${
+        isMe 
+        ? 'bg-slate-900 text-white rounded-tr-none border border-slate-800' 
+        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'
+    }`;
+    bubble.textContent = m.content;
+
+    msgWrapper.appendChild(header);
+    msgWrapper.appendChild(bubble);
+    container.appendChild(msgWrapper);
 };
 

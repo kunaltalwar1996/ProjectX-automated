@@ -16,6 +16,7 @@ export default defineConfig({
         employeePanel: 'employee-panel.html',
         propertyDetails: 'property-details.html',
         login: 'login.html',
+        profile: 'profile.html',
         sell: 'sell.html',
         terms: 'terms.html',
         privacy: 'privacy.html'

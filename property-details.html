@@ -18,7 +18,7 @@
 
     <link rel="stylesheet" href="/style.css">
     <script type="module" src="/auth.js"></script>
-    <script src="/demo-data.js"></script>
+    <script type="module" src="/demo-data.js"></script>
 </head>
 
 <body class="bg-white text-slate-900 font-['Outfit'] antialiased pt-16">
@@ -111,30 +111,30 @@
                 <section
                     class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl relative z-10 -mt-12 md:-mt-0 md:static">
                     <h3 class="text-2xl font-black text-slate-900 mb-8">Property Overview</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+                    <div class="grid grid-cols-2 md:flex md:flex-row md:justify-between md:items-start gap-6 md:gap-4">
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">bed</span>
-                            <span id="detail-beds" class="text-3xl font-black text-slate-900">5</span>
+                            <span id="detail-beds" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">5</span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Beds</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">shower</span>
-                            <span id="detail-baths" class="text-3xl font-black text-slate-900">6.5</span>
+                            <span id="detail-baths" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">6.5</span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Baths</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">straighten</span>
-                            <span id="detail-sqft" class="text-3xl font-black text-slate-900">8,500</span>
+                            <span id="detail-sqft" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">8,500</span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Sq Ft</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">landscape</span>
-                            <span id="detail-type" class="text-3xl font-black text-slate-900">1.2</span>
+                            <span id="detail-type" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900" title="Property Type">1.2</span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Type</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">calendar_month</span>
-                            <span class="text-3xl font-black text-slate-900">2022</span>
+                            <span class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">2022</span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Year Built</span>
                         </div>
                     </div>
@@ -179,13 +179,13 @@
                 <!-- Contact Card -->
                 <div class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl sticky top-24">
                     <div class="flex items-center gap-4 mb-8">
-                        <img loading="lazy" decoding="async" alt="Broker Sarah Jenkins"
+                        <img loading="lazy" decoding="async" alt="Broker" id="detail-broker-img"
                             class="w-16 h-16 rounded-full object-cover"
-                            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" />
+                            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" />
                         <div>
-                            <div class="text-xl font-black text-slate-900">Sarah Jenkins</div>
-                            <div class="text-sm font-bold text-slate-500">Premier Luxury Estates</div>
-                            <div class="flex items-center gap-1 text-sm font-bold text-slate-900 mt-1">
+                            <div class="text-xl font-black text-slate-900" id="detail-broker-name">Sarah Jenkins</div>
+                            <div class="text-sm font-bold text-slate-500" id="detail-broker-role">Premier Luxury Estates</div>
+                            <div class="flex items-center gap-1 text-sm font-bold text-slate-900 mt-1" id="detail-broker-rating-container">
                                 <span class="material-symbols-outlined text-[16px] text-amber-400" data-weight="fill"
                                     style="font-variation-settings: 'FILL' 1;">star</span>
                                 4.9 <span class="text-slate-400">(120 reviews)</span>

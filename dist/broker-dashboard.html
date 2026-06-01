@@ -9,24 +9,24 @@
 <title>Broker Dashboard</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 
-  <script type="module" crossorigin src="/assets/auth-iLtGRN-4.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-BRn8gF_U.css">
+  <script type="module" crossorigin src="/assets/auth-D9Xzrdkw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-D-0LYCY-.css">
 </head>
 <body class="estate-admin-theme bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex">
 <!-- SideNavBar -->
-<nav id="broker-sidebar" class="h-screen w-64 border-r fixed left-0 top-0 border-slate-200 bg-slate-50 flex flex-col p-4 gap-2 text-slate-900 font-['Inter'] text-sm font-medium transition-all duration-200 ease-in-out hidden md:flex z-50">
+<nav id="broker-sidebar" class="h-screen w-64 border-r fixed left-0 top-0 border-slate-200 bg-slate-50 flex flex-col p-4 gap-2 text-slate-900 font-['Outfit'] text-sm font-medium transition-all duration-200 ease-in-out hidden md:flex z-50">
 <!-- Header -->
-<div class="flex items-center gap-4 px-2 py-4 mb-4">
-<img loading="lazy" decoding="async" id="broker-profile-img" alt="Broker Profile" class="w-10 h-10 rounded-full object-cover border border-slate-200" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBS3G6A1jVNJjnYXrKZywH9htqi7PkB397d2nyE69L2CBepf1D1XWYRXEkRowZDO04_OcM7S0sqslamSwau45lH5ajDLJUrnDQ-pCLD3qDUC1vNybmam_oMUjoCO4MZncDPEAdylZ-ffN9PKD9gzyuFxfasmxuTxhvjPxyBCpEVFHgm5QCWDuzf2P6YpEdswwhND5O9ye5Iw0eMVLhz9gBEgMcx1EOCS013LUcZhxxAaUuA2ZSUCgcOrKUWWQrd8s-bRmk4x2IG3lwh"/>
-<div>
+<a href="/profile.html" class="flex items-center gap-4 px-2 py-4 mb-4 hover:bg-slate-100/80 rounded-xl transition-all duration-200 group cursor-pointer active:scale-[0.98]">
+<img loading="lazy" decoding="async" id="broker-profile-img" alt="Broker Profile" class="w-10 h-10 rounded-full object-cover border border-slate-200 group-hover:scale-105 transition-transform duration-200" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"/>
+<div class="group-hover:translate-x-0.5 transition-transform duration-200">
 <h2 id="broker-company-name" class="text-lg font-bold text-slate-900">Premier Realty</h2>
 <p class="text-xs text-slate-500 font-normal">Broker Dashboard</p>
 </div>
-</div>
+</a>
 <!-- Navigation Links -->
-<a id="nav-overview" class="flex items-center gap-3 px-3 py-2.5 bg-white text-slate-900 shadow-sm ring-1 ring-slate-200 rounded-lg" href="/broker-dashboard.html">
+<a id="nav-overview" class="flex items-center gap-3 px-3 py-2.5 bg-white text-slate-900 shadow-sm ring-1 ring-slate-200 rounded-lg" href="#overview-section">
 <span class="material-symbols-outlined text-[20px]">dashboard</span>
             Overview
         </a>
@@ -42,7 +42,7 @@
 <span class="material-symbols-outlined text-[20px]">insights</span>
             Analytics
         </a>
-<a id="nav-messages" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors" href="#leads-section">
+<a id="nav-messages" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors" href="#messages-section">
 <span class="material-symbols-outlined text-[20px]">forum</span>
             Messages
         </a>
@@ -241,6 +241,41 @@
             </div>
         </section>
     </div>
+    <!-- TAB: MESSAGES (Realtime Chat) -->
+    <div id="tab-messages" class="tab-content hidden h-[calc(100vh-100px)] flex-col">
+        <header class="flex justify-between items-center mb-4 gap-4">
+            <div>
+                <h1 class="font-h2 text-h2 text-primary">Messages</h1>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Real-time chat with interested buyers.</p>
+            </div>
+        </header>
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-1 overflow-hidden min-h-[500px]">
+            <!-- Chat List Sidebar -->
+            <div class="w-1/3 border-r border-outline-variant flex flex-col bg-slate-50">
+                <div class="p-4 border-b border-outline-variant font-bold text-slate-700 bg-white">Conversations</div>
+                <div id="chat-list" class="flex-1 overflow-y-auto">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+            <!-- Chat Area -->
+            <div class="w-2/3 flex flex-col bg-white relative">
+                <div id="chat-header" class="p-4 border-b border-outline-variant font-bold text-slate-800 flex items-center justify-between shadow-sm z-10 bg-white">
+                    Select a conversation
+                </div>
+                <div id="chat-messages" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50">
+                    <!-- Messages go here -->
+                    <div class="text-center text-slate-400 mt-10 font-medium">Select a chat to view messages.</div>
+                </div>
+                <div class="p-4 border-t border-outline-variant flex gap-2 bg-white">
+                    <input type="text" id="chat-input" disabled class="flex-1 bg-white border border-outline-variant rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50" placeholder="Type a message...">
+                    <button id="chat-send-btn" disabled class="bg-primary text-white px-5 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined text-[20px]">send</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <!-- TAB: ANALYTICS -->
     <div id="tab-analytics" class="tab-content hidden">
         <header class="flex justify-between items-center mb-stack-lg gap-4">
