@@ -48,17 +48,75 @@ function showToast(message, isError = false) {
 
 window.showToast = showToast;
 
-const CUSS_WORDS = [
-    'fuck', 'shit', 'asshole', 'bitch', 'bastard', 'cunt', 'dick', 'pussy', 'whore', 'slut', 'faggot', 'nigger', 'chink', 'retard'
+const leetMap = {
+    'a': '[a@44*]',
+    'b': '[b8*]',
+    'c': '[c(k*]',
+    'd': '[d*]',
+    'e': '[e3*]',
+    'f': '[f*]',
+    'g': '[g9*]',
+    'h': '[h*]',
+    'i': '[i1!*|]',
+    'j': '[j*]',
+    'k': '[k*]',
+    'l': '[l1|*]',
+    'm': '[m*]',
+    'n': '[n*]',
+    'o': '[o0*]',
+    'p': '[p*]',
+    'q': '[q*]',
+    'r': '[r*]',
+    'z': '[z*]',
+    's': '[s$5*]',
+    't': '[t7*]',
+    'u': '[uv*]',
+    'v': '[v*]',
+    'w': '[w*]',
+    'x': '[x*]',
+    'y': '[y*]'
+};
+
+function makePattern(word, boundaryStart = false, boundaryEnd = false, notPrecededByS = false) {
+    const parts = [];
+    for (let i = 0; i < word.length; i++) {
+        const char = word[i];
+        const pattern = leetMap[char] || char;
+        parts.push(pattern);
+    }
+    const separator = '[@*#%!$_\\-\\s.\\d]*';
+    let innerPattern = parts.join(separator);
+    
+    if (notPrecededByS) {
+        innerPattern = '(?<![sS])' + innerPattern;
+    }
+    
+    let patternStr = innerPattern;
+    if (boundaryStart) patternStr = '\\b' + patternStr;
+    if (boundaryEnd) patternStr = patternStr + '\\b';
+    
+    return new RegExp(patternStr, 'i');
+}
+
+const substringWords = [
+    'fuck', 'shit', 'bitch', 'cunt', 'pussy', 'whore', 'slut', 'faggot', 'bastard', 'chink', 'retard',
+    'asshole', 'badass', 'dumbass', 'jackass'
+];
+
+const standaloneWords = [
+    'ass', 'asses', 'dick', 'dicks'
+];
+
+const patterns = [
+    ...substringWords.map(w => makePattern(w, false, false, w === 'nigger')),
+    makePattern('nigger', false, false, true),
+    ...standaloneWords.map(w => makePattern(w, true, true))
 ];
 
 function hasProfanity(text) {
     if (!text) return false;
     const lowerText = text.toLowerCase();
-    return CUSS_WORDS.some(word => {
-        const regex = new RegExp(`\\b${word}\\b`, 'i');
-        return regex.test(lowerText);
-    });
+    return patterns.some(regex => regex.test(lowerText));
 }
 
 window.hasProfanity = hasProfanity;
@@ -2270,9 +2328,15 @@ function initSellPage() {
         const name = document.getElementById('val-name')?.value?.trim();
         const email = document.getElementById('val-email')?.value?.trim();
         const address = document.getElementById('val-address')?.value?.trim();
+        const phone = document.getElementById('val-phone')?.value?.trim();
 
         if (!name || !email || !address) {
             showToast('Please fill in all required fields.');
+            return;
+        }
+
+        if (window.hasProfanity && (window.hasProfanity(name) || window.hasProfanity(address) || window.hasProfanity(phone))) {
+            showToast('Offensive language detected. Please refrain from using cuss words.');
             return;
         }
 
