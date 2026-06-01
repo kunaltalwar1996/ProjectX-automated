@@ -708,6 +708,18 @@ async function renderListings() {
         listings = listings.filter(l => l.broker_id === user.id);
     }
     
+    // Dynamically update listings overview stats
+    const viewsEl = document.getElementById('stat-total-views');
+    if (viewsEl) {
+        const totalViews = listings.reduce((sum, l) => sum + (l.views || 0), 0);
+        viewsEl.textContent = totalViews.toLocaleString();
+    }
+    
+    const listingsCountEl = document.getElementById('stat-total-listings');
+    if (listingsCountEl) {
+        listingsCountEl.textContent = listings.length.toLocaleString();
+    }
+    
     // Render widget (max 3)
     const tbodyWidget = document.getElementById('listings-tbody-widget');
     if (tbodyWidget) {
@@ -1283,7 +1295,20 @@ async function initInquiriesManager() {
 }
 
 async function renderInquiries() {
-    const inquiries = await getInquiries();
+    const { data: { user } } = await supabase.auth.getUser();
+    let inquiries = await getInquiries();
+    
+    // Filter inquiries so the broker only sees and manages their own inquiries
+    if (user) {
+        inquiries = inquiries.filter(i => i.broker_id === user.id);
+    }
+    
+    // Dynamically update total leads stats card
+    const contactsEl = document.getElementById('stat-new-contacts');
+    if (contactsEl) {
+        contactsEl.textContent = inquiries.length.toLocaleString();
+    }
+
     const unreadCount = inquiries.filter(i => !i.read).length;
     const badge = document.getElementById('new-inquiries-badge');
     
