@@ -657,6 +657,58 @@ document.addEventListener('DOMContentLoaded', () => {
         // Init managers
         initListingsManager();
         initInquiriesManager();
+
+        // Global Real-time Message Listener for Broker Dashboard
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session && session.user) {
+                const user = session.user;
+                supabase.channel(`global_broker_chat_notification_${user.id}`)
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'messages',
+                        filter: `broker_id=eq.${user.id}`
+                    }, async (payload) => {
+                        const msg = payload.new;
+                        // Alert only on incoming messages from buyers (sender is not the broker themselves)
+                        if (msg.sender_id !== user.id) {
+                            // 1. Check if the broker is currently actively chatting in this exact viewport
+                            const isActivelyChatting = currentChatConversation &&
+                                currentChatConversation.buyerId === msg.buyer_id &&
+                                currentChatConversation.listingId === msg.listing_id &&
+                                !document.getElementById('tab-messages').classList.contains('hidden');
+
+                            if (!isActivelyChatting) {
+                                // Fetch buyer name and listing title dynamically to construct a beautiful premium notification
+                                const { data: buyerProf } = await supabase.from('profiles').select('full_name').eq('id', msg.buyer_id).single();
+                                const { data: listingData } = await supabase.from('listings').select('title').eq('id', msg.listing_id).single();
+                                
+                                const buyerName = buyerProf?.full_name || 'Buyer';
+                                const propTitle = listingData?.title || 'Property';
+
+                                activeChatNames[msg.buyer_id] = buyerName;
+
+                                // Show a rich notification toast
+                                showToast(`💬 New message from ${buyerName} regarding "${propTitle}": "${msg.content}"`);
+
+                                // Mark conversation as unread
+                                const key = `${msg.buyer_id}-${msg.listing_id}`;
+                                unreadConversations.add(key);
+
+                                // Update unread sidebar badge
+                                updateSidebarMessagesBadge();
+
+                                // If currently on the Messages tab, refresh the left conversations list
+                                const listEl = document.getElementById('chat-list');
+                                if (listEl && !document.getElementById('tab-messages').classList.contains('hidden')) {
+                                    if (typeof initBrokerChat === 'function') initBrokerChat();
+                                }
+                            }
+                        }
+                    })
+                    .subscribe();
+            }
+        });
     }
 
     // ── Buyer Property Details ──
@@ -2513,6 +2565,23 @@ document.querySelectorAll('input[placeholder="Search..."]').forEach(input => {
 });
 
 // ─── Realtime Chat Logic ─────────────────────────────────────────────────────
+const unreadConversations = new Set();
+
+function updateSidebarMessagesBadge() {
+    const badge = document.getElementById('unread-messages-badge');
+    if (badge) {
+        const count = unreadConversations.size;
+        if (count > 0) {
+            badge.textContent = count;
+            badge.classList.remove('hidden');
+            badge.classList.add('inline-block');
+        } else {
+            badge.classList.add('hidden');
+            badge.classList.remove('inline-block');
+        }
+    }
+}
+
 let currentChatConversation = null;
 let chatChannel = null;
 let activeChatNames = {};
@@ -2581,14 +2650,20 @@ window.initBrokerChat = async function initBrokerChat() {
         const colorIdx = (name.charCodeAt(0) || 0) % colors.length;
         const colorClass = colors[colorIdx];
 
+        const conversationKey = `${c.buyer_id}-${c.listing_id}`;
+        const isUnread = unreadConversations.has(conversationKey);
+
         const div = document.createElement('div');
-        div.className = 'p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-all flex items-center gap-3 group';
+        div.className = `p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer transition-all flex items-center gap-3 group relative ${isUnread ? 'bg-red-50/20' : ''}`;
         div.innerHTML = `
             <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${colorClass} shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200">
                 ${letter}
             </div>
             <div class="min-w-0 flex-1">
-                <div class="font-bold text-slate-800 text-sm truncate group-hover:text-slate-900 transition-colors">${escHtml(name)}</div>
+                <div class="flex items-center gap-2">
+                    <div class="font-bold text-slate-800 text-sm truncate group-hover:text-slate-900 transition-colors">${escHtml(name)}</div>
+                    ${isUnread ? `<span class="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" title="Unread message"></span>` : ''}
+                </div>
                 <div class="text-xs text-slate-400 font-medium mt-0.5 truncate flex items-center gap-1">
                     <span class="material-symbols-outlined text-[14px] text-slate-300">domain</span>
                     ${escHtml(listing?.title || 'Property')}
@@ -2596,7 +2671,14 @@ window.initBrokerChat = async function initBrokerChat() {
             </div>
             <span class="material-symbols-outlined text-slate-300 text-[16px] opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300">chevron_right</span>
         `;
-        div.onclick = () => window.loadChatMessages(c.buyer_id, user.id, c.listing_id, name, listing?.title || 'Property');
+        div.onclick = () => {
+            unreadConversations.delete(conversationKey);
+            updateSidebarMessagesBadge();
+            div.classList.remove('bg-red-50/20');
+            const dot = div.querySelector('.bg-red-500');
+            if (dot) dot.remove();
+            window.loadChatMessages(c.buyer_id, user.id, c.listing_id, name, listing?.title || 'Property');
+        };
         listEl.appendChild(div);
     });
 };
