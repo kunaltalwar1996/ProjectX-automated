@@ -26,24 +26,52 @@ function showToast(message, isError = false) {
     const existingToast = document.querySelector('.global-toast');
     if (existingToast) existingToast.remove();
 
+    // Dynamically inject shake animations if they don't exist yet
+    if (!document.getElementById('toast-shake-style')) {
+        const style = document.createElement('style');
+        style.id = 'toast-shake-style';
+        style.innerHTML = `
+            @keyframes toast-shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+                20%, 40%, 60%, 80% { transform: translateX(8px); }
+            }
+            .toast-shake {
+                animation: toast-shake 0.5s ease-in-out;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
     const toast = document.createElement('div');
-    toast.className = 'global-toast fixed bottom-6 right-6 z-[250] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2 transition-all duration-300 transform translate-y-0 opacity-100';
-    if (isError) {
-        toast.classList.remove('bg-slate-900');
-        toast.classList.add('bg-red-600');
+    toast.className = 'global-toast fixed bottom-6 right-6 z-[250] text-white px-5 py-3.5 rounded-xl shadow-2xl text-sm font-bold flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100';
+    
+    let iconName = 'check_circle';
+    let iconColor = 'text-green-400';
+    
+    if (isError === 'profanity') {
+        // Highly aggressive warning design: crimson gradient, solid warning border, active pulse icon, and physical shake!
+        toast.className += ' bg-gradient-to-r from-red-700 via-red-800 to-red-950 border-2 border-red-500 toast-shake';
+        iconName = 'dangerous';
+        iconColor = 'text-red-200 animate-pulse';
+    } else if (isError) {
+        toast.className += ' bg-red-600';
+        iconName = 'error';
+        iconColor = 'text-white';
+    } else {
+        toast.className += ' bg-slate-900';
     }
     
-    const iconName = isError ? 'error' : 'check_circle';
-    const iconColor = isError ? 'text-white' : 'text-green-400';
-    
-    toast.innerHTML = `<span class="material-symbols-outlined ${iconColor} text-[18px]">${iconName}</span><span>${message}</span>`;
+    toast.innerHTML = `<span class="material-symbols-outlined ${iconColor} text-[20px]">${iconName}</span><span>${message}</span>`;
     document.body.appendChild(toast);
+    
+    const displayDuration = isError === 'profanity' ? 3200 : 2200;
     
     setTimeout(() => {
         toast.classList.remove('opacity-100');
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
-    }, 2200);
+    }, displayDuration);
 }
 
 window.showToast = showToast;
@@ -922,12 +950,12 @@ async function saveListingForm() {
     if (profanityFound) {
         if (errorBanner) {
             const textSpan = errorBanner.querySelector('span:last-child');
-            if (textSpan) textSpan.textContent = 'Offensive language detected. Please refrain from using cuss words.';
+            if (textSpan) textSpan.textContent = 'WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.';
             errorBanner.classList.remove('hidden');
             errorBanner.classList.add('flex');
             errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        showToast('Offensive language detected in input fields.');
+        showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
         return;
     }
 
@@ -1370,7 +1398,7 @@ function injectInquiryModal() {
                 return;
             }
             if (window.hasProfanity && window.hasProfanity(reply)) {
-                showToast('Offensive language detected. Please refrain from using cuss words.');
+                showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
                 return;
             }
             const { error } = await supabase.from('inquiries').update({ broker_reply: reply, read: true }).eq('id', activeInquiryId);
@@ -2198,7 +2226,7 @@ async function initBuyerDetailsPage() {
                 }
 
                 if (window.hasProfanity && (window.hasProfanity(firstName) || window.hasProfanity(fullName) || window.hasProfanity(message))) {
-                    showToast('Offensive language detected. Please refrain from using cuss words.');
+                    showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
                     return;
                 }
 
@@ -2276,7 +2304,7 @@ async function initBuyerChat(buyerId, brokerId, listingId, brokerName = 'Broker'
         const content = input.value.trim();
         if (!content) return;
         if (window.hasProfanity && window.hasProfanity(content)) {
-            showToast('Offensive language detected. Please refrain from using cuss words.');
+            showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
             return;
         }
         input.value = '';
@@ -2336,7 +2364,7 @@ function initSellPage() {
         }
 
         if (window.hasProfanity && (window.hasProfanity(name) || window.hasProfanity(address) || window.hasProfanity(phone))) {
-            showToast('Offensive language detected. Please refrain from using cuss words.');
+            showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
             return;
         }
 
@@ -2609,7 +2637,7 @@ window.loadChatMessages = async function loadChatMessages(buyerId, brokerId, lis
         const content = input.value.trim();
         if (!content) return;
         if (window.hasProfanity && window.hasProfanity(content)) {
-            showToast('Offensive language detected. Please refrain from using cuss words.');
+            showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
             return;
         }
         input.value = '';
