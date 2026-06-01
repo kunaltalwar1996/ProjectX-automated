@@ -23,7 +23,7 @@ import{t as e}from"./auth-CTyC5DoU.js";/* empty css              */var t=`buyerP
                     Email
                   </a>
                 </div>
-                <a id="btn-whatsapp-buyer" href="#" target="_blank" class="btn-secondary w-full text-xs py-2.5 active:scale-[0.98]">
+                <a id="btn-whatsapp-buyer" href="https://wa.me/${(e.phone||``).replace(/[^0-9+]/g,``)}" target="_blank" class="btn-secondary w-full text-xs py-2.5 active:scale-[0.98]">
                   <span class="material-symbols-outlined text-[18px] text-[#25D366]">chat</span>
                   Chat on WhatsApp
                 </a>
@@ -67,7 +67,7 @@ import{t as e}from"./auth-CTyC5DoU.js";/* empty css              */var t=`buyerP
                     Email Broker
                   </a>
                 </div>
-                <a id="btn-whatsapp-broker" href="#" target="_blank" class="btn-secondary w-full text-xs py-2.5 active:scale-[0.98]">
+                <a id="btn-whatsapp-broker" href="https://wa.me/${(e.phone||``).replace(/[^0-9+]/g,``)}" target="_blank" class="btn-secondary w-full text-xs py-2.5 active:scale-[0.98]">
                   <span class="material-symbols-outlined text-[18px] text-[#25D366]">chat</span>
                   Chat on WhatsApp
                 </a>
