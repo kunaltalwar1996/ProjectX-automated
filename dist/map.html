@@ -3,27 +3,87 @@
 <head>
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>EstatePro - Rent</title>
+  <title>ProjectX - Rent</title>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com" rel="preconnect"/>
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
-  <script type="module" crossorigin src="/assets/auth-iLtGRN-4.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-BRn8gF_U.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <style>
+    #map { background: #f8fafc; }
+    .leaflet-popup-content-wrapper { border-radius: 20px; padding: 4px; }
+    .leaflet-popup-tip { display: none; }
+    .leaflet-container { font-family: 'Inter', sans-serif !important; }
+    /* Custom Pin Styles */
+    .custom-price-pin {
+        background: white;
+        border: 2px solid #0f172a; /* slate-900 */
+        color: #0f172a;
+        font-weight: 800;
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 20px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        text-align: center;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    .custom-price-pin::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 6px 6px 0;
+        border-style: solid;
+        border-color: #0f172a transparent transparent transparent;
+        display: block;
+    }
+    .custom-price-pin.active-pin {
+        background: #0f172a;
+        color: white;
+        transform: scale(1.15);
+        z-index: 1000 !important;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+    }
+    .custom-price-pin.active-pin::after {
+        border-color: #0f172a transparent transparent transparent;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/auth-D9Xzrdkw.js"></script>
+  <script type="module" crossorigin src="/assets/demo-data-zTh-P6ys.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-D-0LYCY-.css">
 </head>
-<body class="estate-admin-theme bg-white text-slate-900 font-['Inter'] antialiased h-screen overflow-hidden flex flex-col">
+<body class="bg-white text-slate-900 font-['Outfit'] antialiased h-screen overflow-hidden flex flex-col">
   <!-- Top Navigation (Standardized) -->
-  <nav class="w-full z-50 bg-white border-b border-slate-100 h-16 shrink-0 flex items-center">
-    <div class="max-w-[1280px] mx-auto px-6 w-full flex items-center justify-between">
-      <a href="/index.html" class="text-xl font-black tracking-tighter text-slate-900">EstatePro</a>
-      <div class="hidden md:flex items-center gap-8">
-        <a href="/properties.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Buy</a>
-        <a href="/map.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Rent</a>
-        <a href="/sell.html" class="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Sell</a>
+  <nav class="w-full z-50 bg-white border-b border-slate-200 shadow-sm h-16 shrink-0 flex items-center">
+    <div class="max-w-[1280px] mx-auto px-6 w-full flex items-center justify-between gap-8">
+      <!-- Brand -->
+      <div class="flex items-center gap-2">
+        <a href="/index.html" class="text-xl font-black tracking-tighter text-slate-900">ProjectX</a>
       </div>
+      <!-- Navigation Links -->
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+          href="/properties.html?intent=Buy">Buy</a>
+        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+          href="/properties.html?intent=Rent">Rent</a>
+        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest border-b-2 border-slate-900 pb-1"
+          href="/map.html">Map View</a>
+        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
+          href="/sell.html">Sell</a>
+      </div>
+      <!-- Trailing Actions -->
       <div class="flex items-center gap-4">
-        <button class="text-slate-400 hover:text-slate-900 transition-colors">
-          <span class="material-symbols-outlined">account_circle</span>
+        <button class="text-slate-500 hover:text-slate-900 transition-colors">
+          <span class="material-symbols-outlined text-[24px]">account_circle</span>
+        </button>
+        <button class="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider ml-2">
+          Dashboard
         </button>
       </div>
     </div>
@@ -32,92 +92,34 @@
   <!-- Main Split Layout -->
   <main class="flex-grow flex flex-col lg:flex-row overflow-hidden">
     <!-- Left Pane: Map -->
-    <section class="flex-1 bg-slate-100 relative min-h-[300px] lg:min-h-0">
-      <!-- Mock Map Representation -->
-      <div class="absolute inset-0 bg-[url('https://api.mapbox.com/styles/v1/mapbox/light-v10/static/72.8777,19.0760,11,0/1280x800?access_token=pk.eyJ1IjoiZGVtbyIsImEiOiJjbDFsZzJ6ZG8wMTNnM2ptazB6Z3Z6Z3Z6In0')] bg-cover bg-center"></div>
+    <section class="basis-[40%] lg:basis-auto lg:flex-1 shrink-0 bg-slate-100 relative">
+      <!-- OpenStreetMap Container -->
+      <div id="map" class="absolute inset-0 z-0"></div>
       
-      <!-- Map Controls -->
-      <div class="absolute bottom-10 right-10 flex flex-col gap-2">
-        <button class="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-900 hover:bg-slate-50 transition-colors">
-          <span class="material-symbols-outlined">add</span>
-        </button>
-        <button class="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-slate-900 hover:bg-slate-50 transition-colors">
-          <span class="material-symbols-outlined">remove</span>
-        </button>
+      <!-- Map Search Bar -->
+      <div class="absolute top-4 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-sm">
+        <div class="bg-white rounded-full shadow-lg border border-slate-200 flex items-center p-1">
+          <span class="material-symbols-outlined text-slate-400 pl-3">location_on</span>
+          <input type="text" id="map-location-search" placeholder="Search neighborhood..." class="w-full py-2 px-3 text-sm font-medium text-slate-900 outline-none bg-transparent" autocomplete="off">
+          <button id="map-search-btn" class="bg-slate-900 text-white w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors mr-1 shrink-0">
+            <span class="material-symbols-outlined text-[18px]">search</span>
+          </button>
+        </div>
+        <div id="map-search-results" class="mt-2 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden hidden flex-col max-h-64 overflow-y-auto"></div>
       </div>
     </section>
 
     <!-- Right Pane: Listings Sidebar -->
-    <section class="w-full lg:w-[450px] bg-white border-l border-slate-100 flex flex-col overflow-hidden shadow-2xl z-10">
+    <section class="basis-[60%] lg:basis-auto w-full lg:w-[450px] bg-white border-l border-slate-100 flex flex-col overflow-hidden shadow-2xl z-10 shrink-0">
       <div class="p-6 border-b border-slate-100 shrink-0">
-        <h2 class="text-xl font-black text-slate-900 tracking-tight">Rentals in Mumbai</h2>
-        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">124 matches found</p>
+        <h2 class="text-xl font-black text-slate-900 tracking-tight">Explore Properties</h2>
+        <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1" id="map-listings-count">15 matches found</p>
         
         <!-- Filters removed as per user request -->
       </div>
 
       <div class="flex-grow overflow-y-auto p-6 space-y-6">
-        <!-- Listing 1 -->
-        <div class="group cursor-pointer bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all">
-          <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-            <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv4Cy8BnsWBZwEWZHwZyuj09yQE7V5HmsLlP53rPrTAAz9kAWutXynMUN38Mz1aZuWHJEH5-m9acsQwqLLYWVIFZH7wbEyhh3OLmt-Kq_udx152P4k1FMTPJ2314Fe5nIyBBB_GxACKtsyvfzvZgYfgvC47gLqXZ2qyXAWCUEkZln4X-t-2LdSHY0wdb_qrmlRhlphMpY0ncRdNPoBvrzHFfeE2xlA6b3vROzKiVySQ-MPMJUuTQl3rHz-8uH36C_1xSyYEzD381qJ" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Available Now</div>
-          </div>
-          <div class="p-5">
-            <div class="flex justify-between items-start mb-1">
-              <h3 class="text-xl font-black text-slate-900">₹2.4 Lac<span class="text-sm font-normal text-slate-500"> /mo</span></h3>
-              <button class="text-slate-200 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
-              </button>
-            </div>
-            <p class="text-slate-500 text-sm font-medium mb-4">1420 Cuffe Parade, Apt 4B, Mumbai</p>
-            <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bed</span>
-                <span class="text-xs font-black text-slate-900">4</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bathtub</span>
-                <span class="text-xs font-black text-slate-900">3.5</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">square_foot</span>
-                <span class="text-xs font-black text-slate-900">3,200 <span class="font-normal text-slate-400">sqft</span></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Listing 2 -->
-        <div class="group cursor-pointer bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all">
-          <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-            <img loading="lazy" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2FVlJdIx52ahqaJAKht7ChrCZYkiSSvqDW9MuqBb-nB-gOq6mcOZNV3Xd7Jv3ZXmmW5MmWgbAPQiOV1eBp-8n7sPEZcGfGb6JCO7j3IaFyafJs2sEb0sRjvHYrJjv5dHkVfL7sLx7h4Hqh2aVAk8aWb9aIRnPdTSIvgYcMJ9WvR-SZvsFQ6Nol2BPXbblymFIZzNy2QTathI1-5zvbZ4vVlWpo4rh1BwOPohuX099r7uf9_LzmovlQQK3YWH_cDl1WhLg1Wa7w0Io" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Popular</div>
-          </div>
-          <div class="p-5">
-            <div class="flex justify-between items-start mb-1">
-              <h3 class="text-xl font-black text-slate-900">₹1.8 Lac<span class="text-sm font-normal text-slate-500"> /mo</span></h3>
-              <button class="text-slate-200 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined text-[24px]">favorite</span>
-              </button>
-            </div>
-            <p class="text-slate-500 text-sm font-medium mb-4">880 Marine Drive, Penthouse 2, Mumbai</p>
-            <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bed</span>
-                <span class="text-xs font-black text-slate-900">3</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bathtub</span>
-                <span class="text-xs font-black text-slate-900">2</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">square_foot</span>
-                <span class="text-xs font-black text-slate-900">2,150 <span class="font-normal text-slate-400">sqft</span></span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Injected dynamically by JS -->
       </div>
 
     </section>

@@ -14,7 +14,7 @@
   <!-- Leaflet Map JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script type="module" src="/auth.js"></script>
-  <script src="/demo-data.js"></script>
+  <script type="module" src="/demo-data.js"></script>
   <style>
     #map { background: #f8fafc; }
     .leaflet-popup-content-wrapper { border-radius: 20px; padding: 4px; }
@@ -119,67 +119,7 @@
       </div>
 
       <div class="flex-grow overflow-y-auto p-6 space-y-6">
-        <!-- Listing 1 -->
-        <div class="group cursor-pointer bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all">
-          <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-            <img loading="lazy" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Available Now</div>
-          </div>
-          <div class="p-5">
-            <div class="flex justify-between items-start mb-1">
-              <h3 class="text-xl font-black text-slate-900">₹2.4 Lac<span class="text-sm font-normal text-slate-500"> /mo</span></h3>
-              <button class="text-slate-200 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">favorite</span>
-              </button>
-            </div>
-            <p class="text-slate-500 text-sm font-medium mb-4">1420 Cuffe Parade, Apt 4B, Mumbai</p>
-            <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bed</span>
-                <span class="text-xs font-black text-slate-900">4</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bathtub</span>
-                <span class="text-xs font-black text-slate-900">3.5</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">square_foot</span>
-                <span class="text-xs font-black text-slate-900">3,200 <span class="font-normal text-slate-400">sqft</span></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Listing 2 -->
-        <div class="group cursor-pointer bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-xl transition-all">
-          <div class="aspect-[16/9] overflow-hidden relative bg-slate-100">
-            <img loading="lazy" src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-            <div class="absolute top-4 left-4 bg-white/95 backdrop-blur px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm">Popular</div>
-          </div>
-          <div class="p-5">
-            <div class="flex justify-between items-start mb-1">
-              <h3 class="text-xl font-black text-slate-900">₹1.8 Lac<span class="text-sm font-normal text-slate-500"> /mo</span></h3>
-              <button class="text-slate-200 hover:text-red-500 transition-colors">
-                <span class="material-symbols-outlined text-[24px]">favorite</span>
-              </button>
-            </div>
-            <p class="text-slate-500 text-sm font-medium mb-4">880 Marine Drive, Penthouse 2, Mumbai</p>
-            <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bed</span>
-                <span class="text-xs font-black text-slate-900">3</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">bathtub</span>
-                <span class="text-xs font-black text-slate-900">2</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="material-symbols-outlined text-[18px]">square_foot</span>
-                <span class="text-xs font-black text-slate-900">2,150 <span class="font-normal text-slate-400">sqft</span></span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Injected dynamically by JS -->
       </div>
 
     </section>

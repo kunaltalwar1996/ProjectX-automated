@@ -18,15 +18,15 @@
 <!-- SideNavBar -->
 <nav id="broker-sidebar" class="h-screen w-64 border-r fixed left-0 top-0 border-slate-200 bg-slate-50 flex flex-col p-4 gap-2 text-slate-900 font-['Outfit'] text-sm font-medium transition-all duration-200 ease-in-out hidden md:flex z-50">
 <!-- Header -->
-<div class="flex items-center gap-4 px-2 py-4 mb-4">
-<img loading="lazy" decoding="async" id="broker-profile-img" alt="Broker Profile" class="w-10 h-10 rounded-full object-cover border border-slate-200" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"/>
-<div>
+<a href="/profile.html" class="flex items-center gap-4 px-2 py-4 mb-4 hover:bg-slate-100/80 rounded-xl transition-all duration-200 group cursor-pointer active:scale-[0.98]">
+<img loading="lazy" decoding="async" id="broker-profile-img" alt="Broker Profile" class="w-10 h-10 rounded-full object-cover border border-slate-200 group-hover:scale-105 transition-transform duration-200" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"/>
+<div class="group-hover:translate-x-0.5 transition-transform duration-200">
 <h2 id="broker-company-name" class="text-lg font-bold text-slate-900">Premier Realty</h2>
 <p class="text-xs text-slate-500 font-normal">Broker Dashboard</p>
 </div>
-</div>
+</a>
 <!-- Navigation Links -->
-<a id="nav-overview" class="flex items-center gap-3 px-3 py-2.5 bg-white text-slate-900 shadow-sm ring-1 ring-slate-200 rounded-lg" href="/broker-dashboard.html">
+<a id="nav-overview" class="flex items-center gap-3 px-3 py-2.5 bg-white text-slate-900 shadow-sm ring-1 ring-slate-200 rounded-lg" href="#overview-section">
 <span class="material-symbols-outlined text-[20px]">dashboard</span>
             Overview
         </a>

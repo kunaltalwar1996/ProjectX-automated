@@ -3,124 +3,12 @@
 
 const DEMO_LISTINGS = [
   {
-    id: 201, title: "Sea-View 3BHK in Worli",
-    address: "Sea Breeze Tower, Worli Sea Face, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 3, baths: 3, price: 8.5, intent: "Buy",
-    sqft: 1850, date: "2025-05-10", badge: "New Launch", badgeColor: "bg-blue-500",
-    img: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop",
-    coords: [19.0203, 72.8131]
-  },
-  {
-    id: 202, title: "Luxury 4BHK Penthouse – Bandra West",
-    address: "Pinnacle Residences, Carter Road, Bandra West, Mumbai",
-    location: "Mumbai", type: "Penthouse", beds: 4, baths: 4, price: 22.0, intent: "Buy",
-    sqft: 3600, date: "2025-05-02", badge: "Premium", badgeColor: "bg-amber-500",
-    img: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop",
+    id: 1, title: "Mehdi's house",
+    address: "Bandra West, Mumbai",
+    location: "Mumbai", type: "Apartment", beds: 1, baths: 1, price: 0.45, intent: "Rent",
+    sqft: 4500, date: "2026-05-17", badge: "Premium", badgeColor: "bg-amber-500",
+    img: "https://images.unsplash.com/photo-1600587771525-78b9dba3b914?w=800&auto=format&fit=crop",
     coords: [19.0596, 72.8295]
-  },
-  {
-    id: 203, title: "2BHK Ready Possession – Andheri East",
-    address: "Evergreen CHS, J.B. Nagar, Andheri East, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 2, baths: 2, price: 1.85, intent: "Buy",
-    sqft: 780, date: "2025-04-28", badge: "Ready to Move", badgeColor: "bg-green-500",
-    img: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&auto=format&fit=crop",
-    coords: [19.1136, 72.8697]
-  },
-  {
-    id: 204, title: "Spacious 3BHK – Powai Lake View",
-    address: "Hiranandani Gardens, Powai, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 3, baths: 2, price: 4.2, intent: "Buy",
-    sqft: 1420, date: "2025-05-07", badge: "Newly Added", badgeColor: "bg-white text-slate-900",
-    img: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop",
-    coords: [19.1176, 72.9060]
-  },
-  {
-    id: 205, title: "1BHK Starter Home – Ghatkopar",
-    address: "Sai Complex, LBS Marg, Ghatkopar West, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 1, baths: 1, price: 0.92, intent: "Buy",
-    sqft: 460, date: "2025-04-20", badge: "Best Value", badgeColor: "bg-emerald-500",
-    img: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=800&auto=format&fit=crop",
-    coords: [19.0860, 72.9090]
-  },
-  {
-    id: 206, title: "Duplex Villa – Juhu",
-    address: "Palm Grove Estate, Juhu Tara Road, Mumbai",
-    location: "Mumbai", type: "Villa", beds: 5, baths: 5, price: 38.0, intent: "Buy",
-    sqft: 5200, date: "2025-03-15", badge: "Exclusive", badgeColor: "bg-purple-600",
-    img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop",
-    coords: [19.1026, 72.8270]
-  },
-  {
-    id: 207, title: "Commercial Office – BKC",
-    address: "G-Block, Bandra Kurla Complex, Mumbai",
-    location: "Mumbai", type: "Office", beds: 0, baths: 2, price: 14.5, intent: "Buy",
-    sqft: 3200, date: "2025-05-01", badge: "Commercial", badgeColor: "bg-slate-900",
-    img: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&auto=format&fit=crop",
-    coords: [19.0607, 72.8637]
-  },
-  {
-    id: 208, title: "2BHK – Thane West Township",
-    address: "Lodha Palava, Dombivli-Palava Link Rd, Thane",
-    location: "Mumbai", type: "Apartment", beds: 2, baths: 2, price: 1.1, intent: "Buy",
-    sqft: 820, date: "2025-04-10", badge: "Under Construction", badgeColor: "bg-orange-500",
-    img: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&auto=format&fit=crop",
-    coords: [19.2183, 72.9781]
-  },
-  {
-    id: 209, title: "Vasant Vihar Bungalow",
-    address: "7, Vasant Vihar Colony, New Delhi",
-    location: "Delhi", type: "Villa", beds: 6, baths: 6, price: 52.0, intent: "Buy",
-    sqft: 8000, date: "2025-05-05", badge: "Exclusive", badgeColor: "bg-purple-600",
-    img: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=800&auto=format&fit=crop",
-    coords: [28.5606, 77.1611]
-  },
-  {
-    id: 210, title: "3BHK – South Delhi, Greater Kailash",
-    address: "M-Block Market Lane, Greater Kailash II, Delhi",
-    location: "Delhi", type: "Apartment", beds: 3, baths: 3, price: 6.75, intent: "Buy",
-    sqft: 1950, date: "2025-04-25", badge: "Ready to Move", badgeColor: "bg-green-500",
-    img: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop",
-    coords: [28.5355, 77.2393]
-  },
-  {
-    id: 301, title: "Modern 2BHK Rental – Cuffe Parade",
-    address: "Sea View Towers, Cuffe Parade, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 2, baths: 2, price: 0.024, intent: "Rent",
-    sqft: 1100, date: "2025-05-12", badge: "Available Now", badgeColor: "bg-blue-500",
-    img: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop",
-    coords: [18.9152, 72.8131]
-  },
-  {
-    id: 302, title: "Cozy 1BHK – Colaba",
-    address: "Garden View Lane, Colaba, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 1, baths: 1, price: 0.008, intent: "Rent",
-    sqft: 550, date: "2025-05-11", badge: "Hot Deal", badgeColor: "bg-orange-500",
-    img: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop",
-    coords: [18.9067, 72.8147]
-  },
-  {
-    id: 303, title: "3BHK Furnished – Malabar Hill",
-    address: "Ridge Road, Malabar Hill, Mumbai",
-    location: "Mumbai", type: "Apartment", beds: 3, baths: 3, price: 0.045, intent: "Rent",
-    sqft: 1800, date: "2025-05-09", badge: "Fully Furnished", badgeColor: "bg-green-500",
-    img: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&auto=format&fit=crop",
-    coords: [18.9548, 72.7985]
-  },
-  {
-    id: 304, title: "Studio Apartment – Hauz Khas",
-    address: "Village Market, Hauz Khas, New Delhi",
-    location: "Delhi", type: "Studio", beds: 1, baths: 1, price: 0.005, intent: "Rent",
-    sqft: 400, date: "2025-05-08", badge: "Student Friendly", badgeColor: "bg-blue-500",
-    img: "https://images.unsplash.com/photo-1536376074432-bf121770b440?w=800&auto=format&fit=crop",
-    coords: [28.5494, 77.2001]
-  },
-  {
-    id: 305, title: "4BHK Independent Floor – Defence Colony",
-    address: "Block A, Defence Colony, New Delhi",
-    location: "Delhi", type: "Apartment", beds: 4, baths: 4, price: 0.035, intent: "Rent",
-    sqft: 3200, date: "2025-05-07", badge: "Premium Location", badgeColor: "bg-amber-500",
-    img: "https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?w=800&auto=format&fit=crop",
-    coords: [28.5727, 77.2345]
   }
 ];
 
