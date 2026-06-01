@@ -1047,6 +1047,11 @@
       const experience = experienceInput !== '' ? parseInt(experienceInput, 10) : null;
       const areas = document.getElementById('field-areas').value.trim();
 
+      if (window.hasProfanity && (window.hasProfanity(agency) || window.hasProfanity(areas))) {
+        showToast('Offensive language detected. Please refrain from using cuss words.', true);
+        return;
+      }
+
       const saveProfBtn = document.getElementById('save-prof-btn');
       const origContent = saveProfBtn.innerHTML;
 
@@ -1119,6 +1124,11 @@
       const phone = document.getElementById('field-phone').value.trim();
       const city = document.getElementById('field-city').value.trim();
       const bio = document.getElementById('field-bio').value.trim();
+
+      if (window.hasProfanity && (window.hasProfanity(name) || window.hasProfanity(city) || window.hasProfanity(bio))) {
+        showToast('Offensive language detected. Please refrain from using cuss words.', true);
+        return null;
+      }
 
       const { error } = await supabase
         .from('profiles')
