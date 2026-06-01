@@ -48,6 +48,21 @@ function showToast(message, isError = false) {
 
 window.showToast = showToast;
 
+const CUSS_WORDS = [
+    'fuck', 'shit', 'asshole', 'bitch', 'bastard', 'cunt', 'dick', 'pussy', 'whore', 'slut', 'faggot', 'nigger', 'chink', 'retard'
+];
+
+function hasProfanity(text) {
+    if (!text) return false;
+    const lowerText = text.toLowerCase();
+    return CUSS_WORDS.some(word => {
+        const regex = new RegExp(`\\b${word}\\b`, 'i');
+        return regex.test(lowerText);
+    });
+}
+
+window.hasProfanity = hasProfanity;
+
 
 // ─── Route Maps ───────────────────────────────────────────────────────────────
 
@@ -688,6 +703,8 @@ async function openListingModal(id) {
     if (errorBanner) {
         errorBanner.classList.add('hidden');
         errorBanner.classList.remove('flex');
+        const textSpan = errorBanner.querySelector('span:last-child');
+        if (textSpan) textSpan.textContent = 'Please fill in all fields with valid information before saving.';
     }
     const inputsToReset = [
         'modal-prop-title', 'modal-location', 'modal-price', 
@@ -836,9 +853,30 @@ async function saveListingForm() {
     if (latEl.value.trim() === '' || isNaN(lat) || lat < -90 || lat > 90) markInvalid(latEl);
     if (lngEl.value.trim() === '' || isNaN(lng) || lng < -180 || lng > 180) markInvalid(lngEl);
 
+    let profanityFound = false;
+    if (window.hasProfanity && (window.hasProfanity(title) || window.hasProfanity(location))) {
+        profanityFound = true;
+        if (window.hasProfanity(title)) markInvalid(titleEl);
+        if (window.hasProfanity(location)) markInvalid(locationEl);
+    }
+
     const errorBanner = document.getElementById('modal-validation-error');
+    if (profanityFound) {
+        if (errorBanner) {
+            const textSpan = errorBanner.querySelector('span:last-child');
+            if (textSpan) textSpan.textContent = 'Offensive language detected. Please refrain from using cuss words.';
+            errorBanner.classList.remove('hidden');
+            errorBanner.classList.add('flex');
+            errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        showToast('Offensive language detected in input fields.');
+        return;
+    }
+
     if (hasErrors) {
         if (errorBanner) {
+            const textSpan = errorBanner.querySelector('span:last-child');
+            if (textSpan) textSpan.textContent = 'Please fill in all fields with valid information before saving.';
             errorBanner.classList.remove('hidden');
             errorBanner.classList.add('flex');
             errorBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1271,6 +1309,10 @@ function injectInquiryModal() {
             const reply = document.getElementById('inquiry-modal-reply')?.value?.trim();
             if (!activeInquiryId || !reply) {
                 showToast('Please enter a reply message.');
+                return;
+            }
+            if (window.hasProfanity && window.hasProfanity(reply)) {
+                showToast('Offensive language detected. Please refrain from using cuss words.');
                 return;
             }
             const { error } = await supabase.from('inquiries').update({ broker_reply: reply, read: true }).eq('id', activeInquiryId);
@@ -2097,6 +2139,11 @@ async function initBuyerDetailsPage() {
                     return;
                 }
 
+                if (window.hasProfanity && (window.hasProfanity(firstName) || window.hasProfanity(fullName) || window.hasProfanity(message))) {
+                    showToast('Offensive language detected. Please refrain from using cuss words.');
+                    return;
+                }
+
                 const phone = document.getElementById('buyer-phone')?.value?.trim();
                 const fullName = `${firstName} ${document.getElementById('buyer-last-name')?.value || ''}`.trim();
                 const type = document.getElementById('inquiry-type')?.value || 'Inquiry';
@@ -2170,6 +2217,10 @@ async function initBuyerChat(buyerId, brokerId, listingId, brokerName = 'Broker'
     sendBtn.onclick = async () => {
         const content = input.value.trim();
         if (!content) return;
+        if (window.hasProfanity && window.hasProfanity(content)) {
+            showToast('Offensive language detected. Please refrain from using cuss words.');
+            return;
+        }
         input.value = '';
         input.disabled = true;
         sendBtn.disabled = true;
@@ -2493,6 +2544,10 @@ window.loadChatMessages = async function loadChatMessages(buyerId, brokerId, lis
     sendBtn.onclick = async () => {
         const content = input.value.trim();
         if (!content) return;
+        if (window.hasProfanity && window.hasProfanity(content)) {
+            showToast('Offensive language detected. Please refrain from using cuss words.');
+            return;
+        }
         input.value = '';
         input.disabled = true;
         sendBtn.disabled = true;
