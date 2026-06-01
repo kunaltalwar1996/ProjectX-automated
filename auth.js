@@ -42,6 +42,19 @@ function showToast(message, isError = false) {
         `;
         document.head.appendChild(style);
     }
+    if (isError === 'profanity') {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-red-950/95 backdrop-blur-md text-white animate-pulse';
+        overlay.innerHTML = `
+            <span class="material-symbols-outlined text-[120px] mb-6 text-red-500">warning</span>
+            <h1 class="text-6xl font-black mb-4 tracking-tighter text-center uppercase text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)]">PROFANITY DETECTED</h1>
+            <p class="text-2xl font-bold mb-8 text-center px-8 max-w-3xl leading-relaxed">${message}</p>
+            <p class="text-lg font-medium mb-12 text-center text-red-300">Your action has been blocked. Repeated offenses will result in an immediate permanent ban.</p>
+            <button onclick="this.parentElement.remove()" class="bg-black text-red-500 font-black px-12 py-5 rounded-2xl text-xl hover:bg-red-900 hover:text-white transition-all border-4 border-red-500 hover:scale-105 active:scale-95 shadow-[0_0_50px_rgba(239,68,68,0.5)] uppercase tracking-widest">I Understand and Will Comply</button>
+        `;
+        document.body.appendChild(overlay);
+        return;
+    }
 
     const toast = document.createElement('div');
     toast.className = 'global-toast fixed bottom-6 right-6 z-[250] text-white px-5 py-3.5 rounded-xl shadow-2xl text-sm font-bold flex items-center gap-3 transition-all duration-300 transform translate-y-0 opacity-100';
@@ -49,12 +62,7 @@ function showToast(message, isError = false) {
     let iconName = 'check_circle';
     let iconColor = 'text-green-400';
     
-    if (isError === 'profanity') {
-        // Highly aggressive warning design: crimson gradient, solid warning border, active pulse icon, and physical shake!
-        toast.className += ' bg-gradient-to-r from-red-700 via-red-800 to-red-950 border-2 border-red-500 toast-shake';
-        iconName = 'dangerous';
-        iconColor = 'text-red-200 animate-pulse';
-    } else if (isError) {
+    if (isError) {
         toast.className += ' bg-red-600';
         iconName = 'error';
         iconColor = 'text-white';
