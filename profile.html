@@ -1048,7 +1048,7 @@
       const areas = document.getElementById('field-areas').value.trim();
 
       if (window.hasProfanity && (window.hasProfanity(agency) || window.hasProfanity(areas))) {
-        showToast('Offensive language detected. Please refrain from using cuss words.', true);
+        showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
         return;
       }
 
@@ -1126,7 +1126,7 @@
       const bio = document.getElementById('field-bio').value.trim();
 
       if (window.hasProfanity && (window.hasProfanity(name) || window.hasProfanity(city) || window.hasProfanity(bio))) {
-        showToast('Offensive language detected. Please refrain from using cuss words.', true);
+        showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
         return null;
       }
 
