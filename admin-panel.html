@@ -48,8 +48,8 @@
             </a>
 <a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out flex justify-between" href="/employee-panel.html">
 <div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[20px]" data-icon="forum">forum</span>
-                    Messages
+<span class="material-symbols-outlined text-[20px]" data-icon="support_agent">support_agent</span>
+                    Employee Panel
                 </div>
 </a>
 <a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out" href="/admin-panel.html">
@@ -82,10 +82,6 @@
 <button class="bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2">
 <span class="material-symbols-outlined text-[18px]">download</span>
                         Export Log
-                    </button>
-<button class="bg-primary text-on-primary rounded-lg px-4 py-2 font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-<span class="material-symbols-outlined text-[18px]">security_update_good</span>
-                        Force Sync
                     </button>
 </div>
 </header>
@@ -193,8 +189,41 @@ Loading platform user profiles...
 </div>
 <span class="bg-primary text-on-primary font-label-caps text-[10px] px-2 py-0.5 rounded-full" id="active-listings-badge">... Active</span>
 </div>
+<div class="px-stack-md pt-stack-sm flex flex-wrap gap-2 border-b border-outline-variant pb-2 bg-surface-container-low">
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Active">Active</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Flagged">Flagged</button>
+</div>
 <div class="p-stack-md flex flex-col gap-stack-sm flex-1" id="listings-moderation-list">
 <div class="text-center py-8 text-on-surface-variant text-sm">Loading recent listings...</div>
+<!-- Reported Issues Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col flex-1 mt-6">
+  <div class="p-stack-md border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-on-surface-variant">report</span>
+      <h3 class="font-h3 text-h3 text-on-background">Reported Issues Queue</h3>
+    </div>
+    <span class="bg-slate-200 text-slate-600 font-label-caps text-[10px] px-2 py-0.5 rounded-full" id="pending-reports-badge">... Pending</span>
+  </div>
+  <div class="table-container overflow-x-auto">
+    <table class="w-full text-left border-collapse min-w-[500px]">
+      <thead class="bg-surface-container-low border-b border-outline-variant">
+        <tr>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Reporter</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Type</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Item</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Details</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reports-table-body" class="font-body-sm text-body-sm text-on-surface">
+        <tr class="border-b border-surface-variant bg-surface-bright">
+          <td colspan="5" class="py-8 text-center text-on-surface-variant text-sm">Loading reports...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 </div>
 </div>
@@ -289,11 +318,12 @@ function getRelativeTime(isoString) {
 
 // Check session & role on boot
 let session = null;
+let currentStatusFilter = 'All';
 async function checkAuth() {
   const { data } = await supabase.auth.getSession();
   session = data.session;
   if (!session) {
-    window.location.href = 'login.html';
+    window.navigateTo('login.html');
     return;
   }
   
@@ -306,14 +336,33 @@ async function checkAuth() {
   if (error || !profile || (profile.role !== 'Admin' && profile.role !== 'Employee')) {
     alert('Access Denied. You must be an authorized Administrator or Employee.');
     await supabase.auth.signOut();
-    window.location.href = 'login.html';
+    window.navigateTo('login.html');
     return;
   }
 
   // Initialize page
   loadStats();
   loadUsers();
+  setupFilterTabs();
   loadListingsModeration();
+  loadReports();
+}
+
+function setupFilterTabs() {
+  const tabs = document.querySelectorAll('.status-filter-tab');
+  if (tabs.length === 0) return;
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        t.classList.remove('bg-slate-900', 'text-white');
+        t.classList.add('bg-surface-container', 'text-on-surface');
+      });
+      tab.classList.remove('bg-surface-container', 'text-on-surface');
+      tab.classList.add('bg-slate-900', 'text-white');
+      currentStatusFilter = tab.getAttribute('data-status');
+      loadListingsModeration();
+    });
+  });
 }
 
 // Logout handler
@@ -497,17 +546,18 @@ function renderPlatformBreakdown(users) {
 
 // 4. Property Listings Moderation Queue
 async function loadListingsModeration() {
-  const { data: listings, error } = await supabase
-    .from('listings')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(4);
+  let query = supabase.from('listings').select('*').order('created_at', { ascending: false });
+  if (currentStatusFilter !== 'All') {
+    query = query.eq('status', currentStatusFilter);
+  }
+
+  const { data: listings, error } = await query.limit(20);
 
   const container = document.getElementById('listings-moderation-list');
   if (error || !listings || listings.length === 0) {
     container.innerHTML = `
       <div class="text-center py-8 text-on-surface-variant text-sm">
-        No active property listings available for moderation.
+        No property listings available with status "${currentStatusFilter}".
       </div>`;
     return;
   }
@@ -521,16 +571,39 @@ async function loadListingsModeration() {
 
     const imageSrc = lst.img || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=120&q=80';
 
+    let badgeClass = 'bg-surface-container-high text-on-surface-variant';
+    if (lst.status === 'Active') badgeClass = 'bg-secondary-fixed text-on-secondary-fixed-variant';
+    else if (lst.status === 'Pending') badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+    else if (lst.status === 'Flagged') badgeClass = 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+    else if (lst.status === 'Sold') badgeClass = 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+
+    const showApprove = lst.status !== 'Active';
+    const showFlag = lst.status !== 'Flagged' && lst.status !== 'Sold';
+
     return `
-      <div class="flex items-center justify-between p-3 border border-surface-variant rounded-lg hover:border-outline-variant transition-colors bg-surface-bright">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 border border-surface-variant rounded-lg hover:border-outline-variant transition-colors bg-surface-bright gap-3">
         <div class="flex items-center gap-3">
           <img src="${imageSrc}" class="w-12 h-12 object-cover rounded-lg border border-outline-variant bg-surface-container" alt="Listing Image"/>
           <div>
             <div class="font-body-md font-medium text-on-background line-clamp-1">${lst.title}</div>
-            <div class="font-body-sm text-on-surface-variant text-xs">${lst.location} • <span class="font-semibold text-primary">${priceStr}</span></div>
+            <div class="font-body-sm text-on-surface-variant text-xs flex items-center gap-2 flex-wrap">
+              <span>${lst.location}</span> • 
+              <span class="font-semibold text-primary">${priceStr}</span> • 
+              <span class="${badgeClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">${lst.status}</span>
+            </div>
           </div>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 self-end sm:self-center">
+          ${showApprove ? `
+            <button class="approve-listing-btn w-8 h-8 rounded-full bg-green-100 text-green-800 flex items-center justify-center hover:bg-green-600 hover:text-white transition-colors" data-id="${lst.id}" data-title="${lst.title}" title="Approve Listing">
+              <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            </button>
+          ` : ''}
+          ${showFlag ? `
+            <button class="flag-listing-btn w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center hover:bg-amber-600 hover:text-white transition-colors" data-id="${lst.id}" data-title="${lst.title}" title="Flag Listing">
+              <span class="material-symbols-outlined text-[18px]">flag</span>
+            </button>
+          ` : ''}
           <button class="delete-listing-btn w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center hover:bg-error hover:text-on-error transition-colors" data-id="${lst.id}" data-title="${lst.title}" title="Delete Listing">
             <span class="material-symbols-outlined text-[18px]">delete</span>
           </button>
@@ -538,6 +611,36 @@ async function loadListingsModeration() {
       </div>
     `;
   }).join('');
+
+  document.querySelectorAll('.approve-listing-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const title = btn.getAttribute('data-title');
+      const { error } = await supabase.from('listings').update({ status: 'Active' }).eq('id', id);
+      if (error) {
+        showAdminToast(error.message, true);
+      } else {
+        showAdminToast(`✓ Approved listing "${title}"`);
+        loadListingsModeration();
+        loadStats();
+      }
+    });
+  });
+
+  document.querySelectorAll('.flag-listing-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const title = btn.getAttribute('data-title');
+      const { error } = await supabase.from('listings').update({ status: 'Flagged' }).eq('id', id);
+      if (error) {
+        showAdminToast(error.message, true);
+      } else {
+        showAdminToast(`✓ Flagged listing "${title}"`);
+        loadListingsModeration();
+        loadStats();
+      }
+    });
+  });
 
   document.querySelectorAll('.delete-listing-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -577,6 +680,13 @@ function closeModal() {
 document.getElementById('create-staff-btn')?.addEventListener('click', openModal);
 document.getElementById('close-staff-modal')?.addEventListener('click', closeModal);
 modal?.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+// Allow Enter key in staff form fields to trigger submit
+['staff-name', 'staff-email', 'staff-password'].forEach(id => {
+  document.getElementById(id)?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('submit-staff-btn')?.click();
+  });
+});
 
 document.getElementById('submit-staff-btn')?.addEventListener('click', async () => {
   const full_name = document.getElementById('staff-name').value.trim();
@@ -621,6 +731,185 @@ document.getElementById('submit-staff-btn')?.addEventListener('click', async () 
     btn.textContent = 'Create Account';
   }
 });
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadReports() {
+  try {
+    const { data: reports, error } = await supabase
+        .from('reports')
+        .select(`
+            *,
+            profiles:reporter_id (full_name, role)
+        `)
+        .order('created_at', { ascending: false });
+
+    const tbody = document.getElementById('reports-table-body');
+    const badge = document.getElementById('pending-reports-badge');
+
+    if (error) {
+        console.error("Failed to load reports:", error);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-error">Error loading reports.</td></tr>';
+        return;
+    }
+
+    const pendingCount = reports ? reports.filter(r => r.status === 'Pending').length : 0;
+    if (badge) {
+        badge.textContent = `${pendingCount} Pending`;
+        if (pendingCount > 0) {
+            badge.className = 'bg-red-500 text-white font-label-caps text-[10px] px-2 py-0.5 rounded-full';
+        } else {
+            badge.className = 'bg-slate-200 text-slate-600 font-label-caps text-[10px] px-2 py-0.5 rounded-full';
+        }
+    }
+
+    if (!tbody) return;
+
+    if (!reports || reports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">No reports submitted yet.</td></tr>';
+        return;
+    }
+
+    const [{ data: listings }, { data: profiles }] = await Promise.all([
+        supabase.from('listings').select('id, title'),
+        supabase.from('profiles').select('id, full_name')
+    ]);
+
+    const listingsMap = {};
+    if (listings) listings.forEach(l => listingsMap[l.id] = l.title);
+    const profilesMap = {};
+    if (profiles) profiles.forEach(p => profilesMap[p.id] = p.full_name);
+
+    tbody.innerHTML = reports.map(r => {
+        const reporterName = r.profiles ? r.profiles.full_name : 'Unknown Reporter';
+        const reporterRole = r.profiles ? r.profiles.role : 'User';
+        
+        let targetName = 'Unknown Target';
+        if (r.target_type === 'listing') {
+            targetName = listingsMap[r.target_id] || `Listing ID: ${r.target_id}`;
+        } else if (r.target_type === 'profile') {
+            targetName = profilesMap[r.target_id] || `User ID: ${r.target_id}`;
+        } else if (r.target_type === 'message') {
+            targetName = `Message ID: ${r.target_id}`;
+        }
+
+        const dateStr = new Date(r.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        
+        let statusClass = 'bg-slate-100 text-slate-600';
+        if (r.status === 'Pending') statusClass = 'bg-red-100 text-red-800';
+        else if (r.status === 'Actioned') statusClass = 'bg-green-100 text-green-800';
+        else if (r.status === 'Dismissed') statusClass = 'bg-slate-200 text-slate-600';
+
+        const showResolve = r.status === 'Pending';
+        const showDismiss = r.status === 'Pending';
+
+        return `
+          <tr class="border-b border-surface-variant hover:bg-surface-container transition-colors">
+            <td class="p-3">
+              <div class="font-medium text-on-background">${escHtml(reporterName)}</div>
+              <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${escHtml(reporterRole)}</div>
+            </td>
+            <td class="p-3 font-semibold uppercase tracking-wider text-[11px] text-on-surface-variant">${r.target_type}</td>
+            <td class="p-3 font-medium max-w-xs truncate" title="${escHtml(targetName)}">${escHtml(targetName)}</td>
+            <td class="p-3 max-w-sm">
+              <div class="font-bold text-slate-900 text-xs">${escHtml(r.reason)}</div>
+              <div class="text-slate-500 text-xs mt-0.5 whitespace-pre-wrap">${escHtml(r.description)}</div>
+            </td>
+            <td class="p-3 text-right">
+              <div class="flex justify-end gap-1.5 items-center">
+                ${showResolve ? `
+                  <button class="resolve-report-btn bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[11px] font-bold transition-colors" data-id="${r.id}" data-type="${r.target_type}" data-target-id="${r.target_id}">
+                    Action
+                  </button>
+                ` : ''}
+                ${showDismiss ? `
+                  <button class="dismiss-report-btn bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-0.5 rounded text-[11px] font-bold transition-colors" data-id="${r.id}">
+                    Dismiss
+                  </button>
+                ` : ''}
+                <span class="${statusClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${showResolve ? 'hidden' : ''}">${r.status}</span>
+              </div>
+            </td>
+          </tr>
+        `;
+    }).join('');
+
+    // Bind resolve actions
+    tbody.querySelectorAll('.resolve-report-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const reportId = btn.getAttribute('data-id');
+            const targetType = btn.getAttribute('data-type');
+            const targetId = btn.getAttribute('data-target-id');
+
+            let confirmMsg = 'Confirm resolve report? This will mark the report as Actioned';
+            if (targetType === 'listing') {
+                confirmMsg += ' and automatically flag the target listing.';
+            } else if (targetType === 'profile') {
+                confirmMsg += ' and flag/restrict the target user.';
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                if (targetType === 'listing') {
+                    const { error: listingError } = await supabase
+                        .from('listings')
+                        .update({ status: 'Flagged' })
+                        .eq('id', targetId);
+                    if (listingError) throw listingError;
+                } else if (targetType === 'profile') {
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .update({ bio: '[FLAGGED ACCOUNT] Abusive or fraudulent behavior reported.' })
+                        .eq('id', targetId);
+                    if (profileError) throw profileError;
+                }
+
+                const { error: reportError } = await supabase
+                    .from('reports')
+                    .update({ status: 'Actioned' })
+                    .eq('id', reportId);
+                if (reportError) throw reportError;
+
+                showAdminToast('✓ Report resolved and target actioned');
+                loadReports();
+                if (typeof loadStats === 'function') loadStats();
+                if (typeof loadListingsModeration === 'function') loadListingsModeration();
+            } catch (err) {
+                console.error(err);
+                showAdminToast(err.message, true);
+            }
+        };
+    });
+
+    // Bind dismiss actions
+    tbody.querySelectorAll('.dismiss-report-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const reportId = btn.getAttribute('data-id');
+            if (!confirm('Are you sure you want to dismiss this report?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('reports')
+                    .update({ status: 'Dismissed' })
+                    .eq('id', reportId);
+                if (error) throw error;
+
+                showAdminToast('✓ Report dismissed');
+                loadReports();
+            } catch (err) {
+                console.error(err);
+                showAdminToast(err.message, true);
+            }
+        };
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 // Run boot Auth verification
 checkAuth();

@@ -1,0 +1,9 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/signup.html",
+      "destination": "/login.html"
+    }
+  ]
+}

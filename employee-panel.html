@@ -33,16 +33,16 @@
 </div>
 <!-- Navigation Links -->
 <div class="flex flex-col gap-1">
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<!-- ACTIVE TAB: Overview -->
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
 <span class="material-symbols-outlined">dashboard</span>
 <span>Overview</span>
 </a>
-<!-- ACTIVE TAB: Listings -->
-<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
 <span class="material-symbols-outlined">domain</span>
 <span>Listings</span>
 </a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
 <span class="material-symbols-outlined">person_search</span>
 <span>Leads</span>
 </a>
@@ -50,13 +50,17 @@
 <span class="material-symbols-outlined">insights</span>
 <span>Analytics</span>
 </a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html#support-tickets-section">
 <span class="material-symbols-outlined">forum</span>
 <span>Messages</span>
 </a>
 <a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
 <span class="material-symbols-outlined">settings</span>
 <span>Settings</span>
+</a>
+<a id="admin-panel-link" class="hidden items-center gap-3 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/admin-panel.html">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Admin Panel</span>
 </a>
 </div>
 <!-- CTA -->
@@ -97,76 +101,57 @@
 </header>
 <!-- Bento Grid Layout -->
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-gutter">
-<!-- Listings Review Queue (Spans 2 columns) -->
 <section class="xl:col-span-2 flex flex-col gap-stack-md bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg shadow-sm">
 <div class="flex justify-between items-center mb-2">
 <h2 class="font-h3 text-h3 text-on-background flex items-center gap-2">
 <span class="material-symbols-outlined text-outline">fact_check</span>
                             Listings Review Queue
                         </h2>
-<span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md">4 Pending</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md" id="pending-count-badge">... Pending</span>
 </div>
-<!-- Review Card 1 -->
-<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
-<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="A bright, high-resolution interior photograph of a modern, open-concept living room in a luxury urban penthouse. The space is flooded with natural daylight from floor-to-ceiling windows overlooking a city skyline. The decor features minimalist, light-colored furniture, hardwood floors, and a sleek, neutral color palette with subtle accents of deep blue and emerald green. The overall aesthetic is clean, airy, and highly professional, reflecting a premium real estate listing suitable for a high-end corporate dashboard." src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"/>
+<div class="flex flex-wrap gap-2 border-b border-outline-variant pb-3 mb-2 bg-surface-container-lowest">
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Active">Active</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Flagged">Flagged</button>
 </div>
-<div class="flex-1 flex flex-col justify-between">
-<div>
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-h3 text-h3 text-on-background text-lg">742 Evergreen Terrace</h3>
-<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">check_circle</span>
-                                        Content Checked ✓
-                                    </span>
+<div id="listings-review-queue-list" class="flex flex-col gap-4">
+  <div class="text-center py-8 text-on-surface-variant text-sm">Loading review queue...</div>
 </div>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #8839</span> • 2 hours ago</p>
-<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹12.5 Cr</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 4 Beds</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 3 Baths</span>
-</div>
-</div>
-<div class="flex gap-3 mt-4">
-<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
-<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
-<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
-</div>
-</div>
-</div>
-<!-- Review Card 2 -->
-<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
-<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="An exterior shot of a contemporary single-family home on a sunny day with clear blue skies. The architecture features clean, geometric lines, large glass panels, and a mix of white stucco and natural wood siding. A neatly manicured green lawn and a small paved driveway complete the front yard. The lighting is crisp and natural, highlighting the property's modern aesthetic and premium quality, styled to fit perfectly within a clean, light-mode corporate software interface." src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"/>
-</div>
-<div class="flex-1 flex flex-col justify-between">
-<div>
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-h3 text-h3 text-on-background text-lg">1001 Modernist Way</h3>
-<span class="bg-surface-container text-on-surface-variant border border-outline-variant px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">pending</span>
-                                        Scan Pending
-                                    </span>
-</div>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #2104</span> • 5 hours ago</p>
-<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹34.0 Cr</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 5 Beds</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 4.5 Baths</span>
-</div>
-</div>
-<div class="flex gap-3 mt-4">
-<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
-<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
-<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
-</div>
-</div>
-</div>
+</section>
+
+<!-- Reported Issues Queue Section -->
+<section class="xl:col-span-2 flex flex-col gap-stack-md bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg shadow-sm">
+    <div class="flex justify-between items-center mb-2">
+        <h2 class="font-h3 text-h3 text-on-background flex items-center gap-2">
+            <span class="material-symbols-outlined text-outline">report</span>
+            Reported Issues Queue
+        </h2>
+        <span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md" id="pending-reports-badge">... Pending</span>
+    </div>
+    <div class="table-container overflow-x-auto font-sans">
+      <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead class="bg-surface-container-low border-b border-outline-variant">
+          <tr>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Reporter</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Type</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Item</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Details</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reports-table-body" class="font-body-sm text-body-sm text-on-surface">
+          <tr class="border-b border-surface-variant bg-surface-bright">
+            <td colspan="5" class="py-8 text-center text-on-surface-variant text-sm">Loading reports...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 </section>
 <!-- Right Column: Support & Moderation -->
 <div class="flex flex-col gap-gutter">
 <!-- Support Tickets -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
+<section id="support-tickets-section" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
 <div class="flex justify-between items-center mb-4">
 <h2 class="font-h3 text-h3 text-on-background text-lg flex items-center gap-2">
 <span class="material-symbols-outlined text-outline">support_agent</span>
@@ -234,4 +219,391 @@
 </div>
 </div>
 </main>
+<script type="module">
+import { supabase } from './lib/supabase.js';
+
+function showEmployeeToast(msg, isError = false) {
+  let t = document.getElementById('employee-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'employee-toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:white;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,0.2);transition:transform 0.3s;white-space:nowrap;z-index:9999;font-family:Outfit,sans-serif';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.background = isError ? '#ef4444' : '#0f172a';
+  t.style.transform = 'translateX(-50%) translateY(0)';
+  setTimeout(() => t.style.transform = 'translateX(-50%) translateY(80px)', 3000);
+}
+
+let session = null;
+let currentStatusFilter = 'All';
+
+async function checkAuth() {
+  const { data } = await supabase.auth.getSession();
+  session = data.session;
+  if (!session) {
+    window.navigateTo('login.html');
+    return;
+  }
+  
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', session.user.id)
+    .single();
+
+  if (error || !profile || (profile.role !== 'Employee' && profile.role !== 'Admin')) {
+    alert('Access Denied. You must be an authorized Employee or Admin.');
+    await supabase.auth.signOut();
+    window.navigateTo('login.html');
+    return;
+  }
+
+  if (profile.role === 'Admin') {
+    const adminLink = document.getElementById('admin-panel-link');
+    if (adminLink) {
+      adminLink.classList.remove('hidden');
+      adminLink.classList.add('flex');
+    }
+  }
+
+  // Initialize page
+  setupFilterTabs();
+  loadReviewQueue();
+  loadReports();
+}
+
+// Logout handler
+window.logout = async () => {
+  if (confirm('Are you sure you want to log out?')) {
+    await supabase.auth.signOut();
+    localStorage.removeItem('role');
+    localStorage.removeItem('userName');
+    window.navigateTo('login.html');
+  }
+};
+
+function setupFilterTabs() {
+  const tabs = document.querySelectorAll('.status-filter-tab');
+  if (tabs.length === 0) return;
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        t.classList.remove('bg-slate-900', 'text-white');
+        t.classList.add('bg-surface-container', 'text-on-surface');
+      });
+      tab.classList.remove('bg-surface-container', 'text-on-surface');
+      tab.classList.add('bg-slate-900', 'text-white');
+      currentStatusFilter = tab.getAttribute('data-status');
+      loadReviewQueue();
+    });
+  });
+}
+
+async function loadReviewQueue() {
+  try {
+    // Update Pending badge count
+    const { count: pendingCount } = await supabase
+      .from('listings')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'Pending');
+    document.getElementById('pending-count-badge').textContent = `${pendingCount || 0} Pending`;
+
+    let query = supabase.from('listings').select('*').order('created_at', { ascending: false });
+    if (currentStatusFilter !== 'All') {
+      query = query.eq('status', currentStatusFilter);
+    }
+
+    const { data: listings, error } = await query;
+    const container = document.getElementById('listings-review-queue-list');
+    if (error || !listings || listings.length === 0) {
+      container.innerHTML = `<div class="text-center py-8 text-on-surface-variant text-sm">No listings found with status "${currentStatusFilter}".</div>`;
+      return;
+    }
+
+    container.innerHTML = listings.map(lst => {
+      const priceStr = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+      }).format(lst.price);
+
+      const imageSrc = lst.img || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80';
+      const timeStr = new Date(lst.created_at).toLocaleDateString() + ' ' + new Date(lst.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let badgeClass = 'bg-surface-container-high text-on-surface-variant';
+      if (lst.status === 'Active') badgeClass = 'bg-secondary-fixed text-on-secondary-fixed-variant';
+      else if (lst.status === 'Pending') badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+      else if (lst.status === 'Flagged') badgeClass = 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+      else if (lst.status === 'Sold') badgeClass = 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+
+      const showApprove = lst.status !== 'Active';
+      const showFlag = lst.status !== 'Flagged' && lst.status !== 'Sold';
+
+      return `
+        <div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow relative" data-id="${lst.id}">
+          <div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
+            <img src="${imageSrc}" class="w-full h-full object-cover" alt="Property Image"/>
+          </div>
+          <div class="flex-grow flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-start mb-1 flex-wrap gap-2">
+                <div>
+                  <h3 class="font-h3 text-h3 text-on-background text-lg font-bold">${lst.title}</h3>
+                  <p class="text-xs text-on-surface-variant">${lst.location}</p>
+                </div>
+                <span class="${badgeClass} px-2.5 py-1 rounded font-bold text-xs uppercase tracking-wider flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">info</span>
+                  ${lst.status}
+                </span>
+              </div>
+              <p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by Broker: <span class="font-mono text-[10px] text-primary select-all">${lst.broker_id || 'System'}</span> • ${timeStr}</p>
+              <div class="flex flex-wrap gap-4 font-body-sm text-body-sm text-on-background">
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ${priceStr}</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> ${lst.beds || 0} Beds</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> ${lst.baths || 0} Baths</span>
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">square_foot</span> ${lst.sqft || 0} SqFt</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3 mt-4">
+              ${showApprove ? `<button class="approve-btn flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity" data-id="${lst.id}" data-title="${lst.title}">Approve</button>` : ''}
+              ${showFlag ? `<button class="flag-btn px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors" data-id="${lst.id}" data-title="${lst.title}">Flag</button>` : ''}
+              <button class="remove-btn px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors" data-id="${lst.id}" data-title="${lst.title}">Remove</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind handlers
+    document.querySelectorAll('.approve-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        const { error } = await supabase.from('listings').update({ status: 'Active' }).eq('id', id);
+        if (error) {
+          showEmployeeToast(error.message, true);
+        } else {
+          showEmployeeToast(`✓ Approved listing "${title}"`);
+          loadReviewQueue();
+        }
+      };
+    });
+
+    document.querySelectorAll('.flag-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        const { error } = await supabase.from('listings').update({ status: 'Flagged' }).eq('id', id);
+        if (error) {
+          showEmployeeToast(error.message, true);
+        } else {
+          showEmployeeToast(`✓ Flagged listing "${title}"`);
+          loadReviewQueue();
+        }
+      };
+    });
+
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.getAttribute('data-id');
+        const title = btn.getAttribute('data-title');
+        if (confirm(`Are you sure you want to permanently delete/remove "${title}"?`)) {
+          const { error } = await supabase.from('listings').delete().eq('id', id);
+          if (error) {
+            showEmployeeToast(error.message, true);
+          } else {
+            showEmployeeToast(`✓ Successfully removed listing "${title}"`);
+            loadReviewQueue();
+          }
+        }
+      };
+    });
+  } catch (err) {
+    console.error("Failed to load review queue:", err);
+  }
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadReports() {
+  try {
+    const { data: reports, error } = await supabase
+        .from('reports')
+        .select(`
+            *,
+            profiles:reporter_id (full_name, role)
+        `)
+        .order('created_at', { ascending: false });
+
+    const tbody = document.getElementById('reports-table-body');
+    const badge = document.getElementById('pending-reports-badge');
+
+    if (error) {
+        console.error("Failed to load reports:", error);
+        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-error">Error loading reports.</td></tr>';
+        return;
+    }
+
+    const pendingCount = reports ? reports.filter(r => r.status === 'Pending').length : 0;
+    if (badge) {
+        badge.textContent = `${pendingCount} Pending`;
+        if (pendingCount > 0) {
+            badge.className = 'bg-red-500 text-white font-label-caps text-[10px] px-2 py-0.5 rounded-full';
+        } else {
+            badge.className = 'bg-slate-200 text-slate-600 font-label-caps text-[10px] px-2 py-0.5 rounded-full';
+        }
+    }
+
+    if (!tbody) return;
+
+    if (!reports || reports.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-slate-400">No reports submitted yet.</td></tr>';
+        return;
+    }
+
+    const [{ data: listings }, { data: profiles }] = await Promise.all([
+        supabase.from('listings').select('id, title'),
+        supabase.from('profiles').select('id, full_name')
+    ]);
+
+    const listingsMap = {};
+    if (listings) listings.forEach(l => listingsMap[l.id] = l.title);
+    const profilesMap = {};
+    if (profiles) profiles.forEach(p => profilesMap[p.id] = p.full_name);
+
+    tbody.innerHTML = reports.map(r => {
+        const reporterName = r.profiles ? r.profiles.full_name : 'Unknown Reporter';
+        const reporterRole = r.profiles ? r.profiles.role : 'User';
+        
+        let targetName = 'Unknown Target';
+        if (r.target_type === 'listing') {
+            targetName = listingsMap[r.target_id] || `Listing ID: ${r.target_id}`;
+        } else if (r.target_type === 'profile') {
+            targetName = profilesMap[r.target_id] || `User ID: ${r.target_id}`;
+        } else if (r.target_type === 'message') {
+            targetName = `Message ID: ${r.target_id}`;
+        }
+
+        const dateStr = new Date(r.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+        
+        let statusClass = 'bg-slate-100 text-slate-600';
+        if (r.status === 'Pending') statusClass = 'bg-red-100 text-red-800';
+        else if (r.status === 'Actioned') statusClass = 'bg-green-100 text-green-800';
+        else if (r.status === 'Dismissed') statusClass = 'bg-slate-200 text-slate-600';
+
+        const showResolve = r.status === 'Pending';
+        const showDismiss = r.status === 'Pending';
+
+        return `
+          <tr class="border-b border-surface-variant hover:bg-surface-container transition-colors">
+            <td class="p-3">
+              <div class="font-medium text-on-background">${escHtml(reporterName)}</div>
+              <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${escHtml(reporterRole)}</div>
+            </td>
+            <td class="p-3 font-semibold uppercase tracking-wider text-[11px] text-on-surface-variant">${r.target_type}</td>
+            <td class="p-3 font-medium max-w-xs truncate" title="${escHtml(targetName)}">${escHtml(targetName)}</td>
+            <td class="p-3 max-w-sm">
+              <div class="font-bold text-slate-900 text-xs">${escHtml(r.reason)}</div>
+              <div class="text-slate-500 text-xs mt-0.5 whitespace-pre-wrap">${escHtml(r.description)}</div>
+            </td>
+            <td class="p-3 text-right">
+              <div class="flex justify-end gap-1.5 items-center">
+                ${showResolve ? `
+                  <button class="resolve-report-btn bg-red-600 hover:bg-red-700 text-white px-2 py-0.5 rounded text-[11px] font-bold transition-colors" data-id="${r.id}" data-type="${r.target_type}" data-target-id="${r.target_id}">
+                    Action
+                  </button>
+                ` : ''}
+                ${showDismiss ? `
+                  <button class="dismiss-report-btn bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-0.5 rounded text-[11px] font-bold transition-colors" data-id="${r.id}">
+                    Dismiss
+                  </button>
+                ` : ''}
+                <span class="${statusClass} px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${showResolve ? 'hidden' : ''}">${r.status}</span>
+              </div>
+            </td>
+          </tr>
+        `;
+    }).join('');
+
+    // Bind resolve actions
+    tbody.querySelectorAll('.resolve-report-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const reportId = btn.getAttribute('data-id');
+            const targetType = btn.getAttribute('data-type');
+            const targetId = btn.getAttribute('data-target-id');
+
+            let confirmMsg = 'Confirm resolve report? This will mark the report as Actioned';
+            if (targetType === 'listing') {
+                confirmMsg += ' and automatically flag the target listing.';
+            } else if (targetType === 'profile') {
+                confirmMsg += ' and flag/restrict the target user.';
+            }
+
+            if (!confirm(confirmMsg)) return;
+
+            try {
+                if (targetType === 'listing') {
+                    const { error: listingError } = await supabase
+                        .from('listings')
+                        .update({ status: 'Flagged' })
+                        .eq('id', targetId);
+                    if (listingError) throw listingError;
+                } else if (targetType === 'profile') {
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .update({ bio: '[FLAGGED ACCOUNT] Abusive or fraudulent behavior reported.' })
+                        .eq('id', targetId);
+                    if (profileError) throw profileError;
+                }
+
+                const { error: reportError } = await supabase
+                    .from('reports')
+                    .update({ status: 'Actioned' })
+                    .eq('id', reportId);
+                if (reportError) throw reportError;
+
+                showEmployeeToast('✓ Report resolved and target actioned');
+                loadReports();
+                if (typeof loadReviewQueue === 'function') loadReviewQueue();
+            } catch (err) {
+                console.error(err);
+                showEmployeeToast(err.message, true);
+            }
+        };
+    });
+
+    // Bind dismiss actions
+    tbody.querySelectorAll('.dismiss-report-btn').forEach(btn => {
+        btn.onclick = async () => {
+            const reportId = btn.getAttribute('data-id');
+            if (!confirm('Are you sure you want to dismiss this report?')) return;
+
+            try {
+                const { error } = await supabase
+                    .from('reports')
+                    .update({ status: 'Dismissed' })
+                    .eq('id', reportId);
+                if (error) throw error;
+
+                showEmployeeToast('✓ Report dismissed');
+                loadReports();
+            } catch (err) {
+                console.error(err);
+                showEmployeeToast(err.message, true);
+            }
+        };
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// Run boot Auth verification
+checkAuth();
+</script>
 </body></html>

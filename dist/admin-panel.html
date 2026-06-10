@@ -11,9 +11,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 
 
-  <script type="module" crossorigin src="/assets/adminPanel-CHTDkogE.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/auth-BV7-Rypf.js">
-  <link rel="stylesheet" crossorigin href="/assets/style-3fgGv8Fg.css">
+  <script type="module" crossorigin src="/assets/adminPanel-BfhspYcX.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-tsqep5kj.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-C27CVGt5.css">
 </head>
 <body class="bg-background text-on-background font-body-md antialiased flex min-h-screen">
 <!-- SideNavBar (Generated from JSON Anchor) -->
@@ -49,8 +49,8 @@
             </a>
 <a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out flex justify-between" href="/employee-panel.html">
 <div class="flex items-center gap-3">
-<span class="material-symbols-outlined text-[20px]" data-icon="forum">forum</span>
-                    Messages
+<span class="material-symbols-outlined text-[20px]" data-icon="support_agent">support_agent</span>
+                    Employee Panel
                 </div>
 </a>
 <a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out" href="/admin-panel.html">
@@ -83,10 +83,6 @@
 <button class="bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-body-sm text-body-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2">
 <span class="material-symbols-outlined text-[18px]">download</span>
                         Export Log
-                    </button>
-<button class="bg-primary text-on-primary rounded-lg px-4 py-2 font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-<span class="material-symbols-outlined text-[18px]">security_update_good</span>
-                        Force Sync
                     </button>
 </div>
 </header>
@@ -194,8 +190,41 @@ Loading platform user profiles...
 </div>
 <span class="bg-primary text-on-primary font-label-caps text-[10px] px-2 py-0.5 rounded-full" id="active-listings-badge">... Active</span>
 </div>
+<div class="px-stack-md pt-stack-sm flex flex-wrap gap-2 border-b border-outline-variant pb-2 bg-surface-container-low">
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Active">Active</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Flagged">Flagged</button>
+</div>
 <div class="p-stack-md flex flex-col gap-stack-sm flex-1" id="listings-moderation-list">
 <div class="text-center py-8 text-on-surface-variant text-sm">Loading recent listings...</div>
+<!-- Reported Issues Card -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col flex-1 mt-6">
+  <div class="p-stack-md border-b border-outline-variant flex items-center justify-between bg-surface-container-low">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-on-surface-variant">report</span>
+      <h3 class="font-h3 text-h3 text-on-background">Reported Issues Queue</h3>
+    </div>
+    <span class="bg-slate-200 text-slate-600 font-label-caps text-[10px] px-2 py-0.5 rounded-full" id="pending-reports-badge">... Pending</span>
+  </div>
+  <div class="table-container overflow-x-auto">
+    <table class="w-full text-left border-collapse min-w-[500px]">
+      <thead class="bg-surface-container-low border-b border-outline-variant">
+        <tr>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Reporter</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Type</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Item</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Details</th>
+          <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reports-table-body" class="font-body-sm text-body-sm text-on-surface">
+        <tr class="border-b border-surface-variant bg-surface-bright">
+          <td colspan="5" class="py-8 text-center text-on-surface-variant text-sm">Loading reports...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 </div>
 </div>

@@ -14,8 +14,9 @@
 <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
-  <script type="module" crossorigin src="/assets/auth-BV7-Rypf.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-3fgGv8Fg.css">
+  <script type="module" crossorigin src="/assets/employeePanel-CIKBbhnR.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-tsqep5kj.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-C27CVGt5.css">
 </head>
 <body class="bg-background text-on-background antialiased min-h-screen flex">
 <!-- SideNavBar (Shared Component) -->
@@ -33,16 +34,16 @@
 </div>
 <!-- Navigation Links -->
 <div class="flex flex-col gap-1">
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<!-- ACTIVE TAB: Overview -->
+<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
 <span class="material-symbols-outlined">dashboard</span>
 <span>Overview</span>
 </a>
-<!-- ACTIVE TAB: Listings -->
-<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
 <span class="material-symbols-outlined">domain</span>
 <span>Listings</span>
 </a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
 <span class="material-symbols-outlined">person_search</span>
 <span>Leads</span>
 </a>
@@ -50,13 +51,17 @@
 <span class="material-symbols-outlined">insights</span>
 <span>Analytics</span>
 </a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html#support-tickets-section">
 <span class="material-symbols-outlined">forum</span>
 <span>Messages</span>
 </a>
 <a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
 <span class="material-symbols-outlined">settings</span>
 <span>Settings</span>
+</a>
+<a id="admin-panel-link" class="hidden items-center gap-3 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/admin-panel.html">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+<span>Admin Panel</span>
 </a>
 </div>
 <!-- CTA -->
@@ -97,76 +102,57 @@
 </header>
 <!-- Bento Grid Layout -->
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-gutter">
-<!-- Listings Review Queue (Spans 2 columns) -->
 <section class="xl:col-span-2 flex flex-col gap-stack-md bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg shadow-sm">
 <div class="flex justify-between items-center mb-2">
 <h2 class="font-h3 text-h3 text-on-background flex items-center gap-2">
 <span class="material-symbols-outlined text-outline">fact_check</span>
                             Listings Review Queue
                         </h2>
-<span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md">4 Pending</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md" id="pending-count-badge">... Pending</span>
 </div>
-<!-- Review Card 1 -->
-<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
-<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="A bright, high-resolution interior photograph of a modern, open-concept living room in a luxury urban penthouse. The space is flooded with natural daylight from floor-to-ceiling windows overlooking a city skyline. The decor features minimalist, light-colored furniture, hardwood floors, and a sleek, neutral color palette with subtle accents of deep blue and emerald green. The overall aesthetic is clean, airy, and highly professional, reflecting a premium real estate listing suitable for a high-end corporate dashboard." src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"/>
+<div class="flex flex-wrap gap-2 border-b border-outline-variant pb-3 mb-2 bg-surface-container-lowest">
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Active">Active</button>
+  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Flagged">Flagged</button>
 </div>
-<div class="flex-1 flex flex-col justify-between">
-<div>
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-h3 text-h3 text-on-background text-lg">742 Evergreen Terrace</h3>
-<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">check_circle</span>
-                                        Content Checked ✓
-                                    </span>
+<div id="listings-review-queue-list" class="flex flex-col gap-4">
+  <div class="text-center py-8 text-on-surface-variant text-sm">Loading review queue...</div>
 </div>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #8839</span> • 2 hours ago</p>
-<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹12.5 Cr</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 4 Beds</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 3 Baths</span>
-</div>
-</div>
-<div class="flex gap-3 mt-4">
-<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
-<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
-<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
-</div>
-</div>
-</div>
-<!-- Review Card 2 -->
-<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
-<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="An exterior shot of a contemporary single-family home on a sunny day with clear blue skies. The architecture features clean, geometric lines, large glass panels, and a mix of white stucco and natural wood siding. A neatly manicured green lawn and a small paved driveway complete the front yard. The lighting is crisp and natural, highlighting the property's modern aesthetic and premium quality, styled to fit perfectly within a clean, light-mode corporate software interface." src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"/>
-</div>
-<div class="flex-1 flex flex-col justify-between">
-<div>
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-h3 text-h3 text-on-background text-lg">1001 Modernist Way</h3>
-<span class="bg-surface-container text-on-surface-variant border border-outline-variant px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">pending</span>
-                                        Scan Pending
-                                    </span>
-</div>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #2104</span> • 5 hours ago</p>
-<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹34.0 Cr</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 5 Beds</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 4.5 Baths</span>
-</div>
-</div>
-<div class="flex gap-3 mt-4">
-<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
-<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
-<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
-</div>
-</div>
-</div>
+</section>
+
+<!-- Reported Issues Queue Section -->
+<section class="xl:col-span-2 flex flex-col gap-stack-md bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg shadow-sm">
+    <div class="flex justify-between items-center mb-2">
+        <h2 class="font-h3 text-h3 text-on-background flex items-center gap-2">
+            <span class="material-symbols-outlined text-outline">report</span>
+            Reported Issues Queue
+        </h2>
+        <span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md" id="pending-reports-badge">... Pending</span>
+    </div>
+    <div class="table-container overflow-x-auto font-sans">
+      <table class="w-full text-left border-collapse min-w-[600px]">
+        <thead class="bg-surface-container-low border-b border-outline-variant">
+          <tr>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Reporter</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Type</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Item</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Details</th>
+            <th class="p-3 font-label-caps text-xs text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reports-table-body" class="font-body-sm text-body-sm text-on-surface">
+          <tr class="border-b border-surface-variant bg-surface-bright">
+            <td colspan="5" class="py-8 text-center text-on-surface-variant text-sm">Loading reports...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 </section>
 <!-- Right Column: Support & Moderation -->
 <div class="flex flex-col gap-gutter">
 <!-- Support Tickets -->
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
+<section id="support-tickets-section" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
 <div class="flex justify-between items-center mb-4">
 <h2 class="font-h3 text-h3 text-on-background text-lg flex items-center gap-2">
 <span class="material-symbols-outlined text-outline">support_agent</span>

@@ -153,6 +153,29 @@
                     </span>
                     <span class="font-body-sm text-body-sm text-on-surface-variant">vs last month</span>
                 </div>
+        </section>
+
+        <!-- Referral Link Widget -->
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-sm hover:shadow-md transition-shadow mb-stack-lg">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h3 class="text-lg font-bold text-primary flex items-center gap-2">
+                        <span class="material-symbols-outlined text-secondary">share_reviews</span>
+                        Broker Referral Program
+                    </h3>
+                    <p class="text-xs text-on-surface-variant mt-1">Share your unique referral link with clients to invite them to ProjectX and track your referrals.</p>
+                </div>
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                    <input type="text" id="referral-link-input" readonly value="Loading..." class="flex-1 md:w-80 bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2 text-xs font-mono text-on-surface-variant focus:outline-none">
+                    <button id="copy-referral-btn" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 active:scale-95">
+                        <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+            <div class="mt-6 border-t border-slate-100 pt-4 flex flex-wrap gap-x-8 gap-y-2 text-xs font-semibold text-on-surface-variant" id="referrals-stat-container">
+                <span>Total Invited: <strong id="invited-count" class="text-primary">0</strong></span>
+                <span>Active Referrals: <strong id="active-referred-count" class="text-primary">0</strong></span>
             </div>
         </section>
 
@@ -171,6 +194,7 @@
                                 <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">PROPERTY</th>
                                 <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">STATUS</th>
                                 <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">PRICE</th>
+                                <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">LISTED</th>
                                 <th class="p-4 font-label-caps text-label-caps text-on-surface-variant text-right">ACTIONS</th>
                             </tr>
                         </thead>
@@ -210,7 +234,7 @@
                 <span class="material-symbols-outlined text-[18px]">add</span> Add Listing
             </button>
         </header>
-        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col mb-8">
             <div class="overflow-x-auto flex-1">
                 <table class="w-full text-left border-collapse min-w-[700px]">
                     <thead>
@@ -219,10 +243,38 @@
                             <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">STATUS</th>
                             <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">PRICE</th>
                             <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">VIEWS</th>
+                            <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">LISTED</th>
                             <th class="p-4 font-label-caps text-label-caps text-on-surface-variant text-right">ACTIONS</th>
                         </tr>
                     </thead>
                     <tbody id="listings-tbody-full" class="font-body-sm text-body-sm text-on-surface">
+                        <!-- Injected by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Custom Shareable Filters Section -->
+        <header class="flex justify-between items-center mb-stack-lg gap-4 mt-12">
+            <div>
+                <h2 class="font-h2 text-h2 text-primary">Custom Shareable Filters</h2>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-unit">Create pre-filtered property views and share them with clients.</p>
+            </div>
+            <button class="bg-primary text-on-primary px-4 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm" onclick="openCustomFilterModal()">
+                <span class="material-symbols-outlined text-[18px]">add</span> New Filter
+            </button>
+        </header>
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left border-collapse min-w-[700px]">
+                    <thead>
+                        <tr class="bg-surface-container-low border-b border-outline-variant">
+                            <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">FILTER NAME</th>
+                            <th class="p-4 font-label-caps text-label-caps text-on-surface-variant">CRITERIA</th>
+                            <th class="p-4 font-label-caps text-label-caps text-on-surface-variant text-right">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="custom-filters-tbody" class="font-body-sm text-body-sm text-on-surface">
                         <!-- Injected by JS -->
                     </tbody>
                 </table>

@@ -4,6 +4,18 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [
     tailwindcss(),
+    {
+      name: 'rewrite-signup',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const url = new URL(req.url, 'http://localhost');
+          if (url.pathname === '/signup.html' || url.pathname === '/signup') {
+            req.url = '/login.html' + url.search;
+          }
+          next();
+        });
+      }
+    }
   ],
   build: {
     rollupOptions: {

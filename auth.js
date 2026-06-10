@@ -7,8 +7,23 @@ if (!currentPage.includes('.')) currentPage += '.html'; // Handle Vite-style pat
 const appBasePath = currentPath.endsWith('/')
     ? currentPath
     : currentPath.slice(0, currentPath.lastIndexOf('/') + 1);
-const userRole = localStorage.getItem('role');
+let userRole = localStorage.getItem('role');
+let isLoginPage = currentPage === 'login.html' || currentPage === 'staff-login.html' || currentPage === 'signup.html';
 let activeInquiryId = null;
+let updateHeaderVisibility = null;
+let referrerId = null;
+
+// Parse ref parameter on boot
+try {
+    const urlParamsForRef = new URLSearchParams(window.location.search);
+    const refParam = urlParamsForRef.get('ref');
+    if (refParam) {
+        referrerId = refParam;
+        localStorage.setItem('referred_by', refParam);
+    }
+} catch (e) {
+    console.error('Failed to parse ref query parameter:', e);
+}
 
 function toAppUrl(page) {
     if (page.startsWith('http')) return page;
@@ -19,8 +34,13 @@ function toAppUrl(page) {
 window.toAppUrl = toAppUrl;
 
 function navigateTo(page) {
-    window.location.replace(toAppUrl(page));
+    if (window.ajaxLoadPage) {
+        window.ajaxLoadPage(toAppUrl(page), true);
+    } else {
+        window.location.replace(toAppUrl(page));
+    }
 }
+window.navigateTo = navigateTo;
 
 function showToast(message, isError = false) {
     const existingToast = document.querySelector('.global-toast');
@@ -183,7 +203,7 @@ const roleAllowedPages = {
 
 // ─── Global Auth Guard (asynchronous) ──────────────────────────────────────────
 
-const isLoginPage = currentPage === 'login.html' || currentPage === 'staff-login.html';
+isLoginPage = currentPage === 'login.html' || currentPage === 'staff-login.html';
 
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -270,7 +290,14 @@ window.logout = async function() {
 
 // ─── DOM-ready handlers ───────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+function initAppPage() {
+    // Re-evaluate currentPage, userRole and isLoginPage context dynamically
+    const currentPath = window.location.pathname;
+    currentPage = currentPath.split('/').pop() || 'index.html';
+    if (!currentPage.includes('.')) currentPage += '.html';
+    userRole = localStorage.getItem('role');
+    isLoginPage = currentPage === 'login.html' || currentPage === 'staff-login.html';
+
     normalizeInternalLinks();
 
     // ══════════════════════════════════════════════
@@ -287,7 +314,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const signInBtn   = document.getElementById('sign-in-btn');
         let selectedRole  = 'Buyer';
         const urlParams   = new URLSearchParams(window.location.search);
-        let isSignUp      = urlParams.get('mode') === 'signup';
+        let isSignUp      = (urlParams.get('mode') === 'signup') || (currentPage === 'signup.html');
+        let referrerInfo  = null;
+
+        function getInitials(name) {
+            if (!name) return 'U';
+            return name.split(' ')
+                       .filter(Boolean)
+                       .map(n => n[0])
+                       .join('')
+                       .toUpperCase()
+                       .slice(0, 2);
+        }
+
+        function updateReferralBanner() {
+            let banner = document.getElementById('referral-banner');
+            if (isSignUp && referrerInfo) {
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'referral-banner';
+                    banner.className = 'flex items-center gap-4 p-4 bg-slate-50 border border-slate-100 rounded-2xl mb-6';
+                    
+                    const form = document.querySelector('form');
+                    if (form) {
+                        form.parentNode.insertBefore(banner, form);
+                    }
+                }
+                
+                const initials = getInitials(referrerInfo.full_name);
+                const avatarHtml = referrerInfo.avatar_url 
+                    ? `<img src="${referrerInfo.avatar_url}" class="w-full h-full object-cover" alt="Referrer Avatar">`
+                    : `<span>${initials}</span>`;
+                
+                banner.innerHTML = `
+                    <div class="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-slate-900 text-white flex items-center justify-center font-bold text-lg">
+                        ${avatarHtml}
+                    </div>
+                    <div class="flex-grow">
+                        <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Special Invitation</p>
+                        <p class="text-sm font-semibold text-slate-900">You've been invited by <span class="font-extrabold text-indigo-600">${referrerInfo.full_name}</span> to join EstatePro as a Broker</p>
+                    </div>
+                `;
+                banner.style.display = 'flex';
+            } else {
+                if (banner) {
+                    banner.style.display = 'none';
+                }
+            }
+        }
 
         function updateUI() {
             if (formTitle) {
@@ -316,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     nameField.style.display = 'none';
                 }
             }
+            updateReferralBanner();
         }
 
         function resetRoleTabs() {
@@ -325,10 +400,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function selectRole(role) {
-            selectedRole = role;
+            let normalizedRole = role;
+            if (role) {
+                normalizedRole = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+            }
+            selectedRole = normalizedRole;
             resetRoleTabs();
             
-            const btn = Array.from(roleButtons).find(b => b.textContent.trim() === role);
+            const btn = Array.from(roleButtons).find(b => b.textContent.trim().toLowerCase() === normalizedRole.toLowerCase());
             if (btn) {
                 btn.className = 'flex-1 py-2.5 px-3 text-center text-[10px] font-black uppercase tracking-widest rounded-lg role-tab-active font-bold scale-105 transition-all';
             }
@@ -354,14 +433,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (urlRole) selectRole(urlRole);
         else selectRole(currentPage === 'staff-login.html' ? 'Admin' : 'Buyer');
 
-        // Handle Enter key in form
-        const authForm = document.querySelector('form');
-        if (authForm) {
-            authForm.onsubmit = (e) => {
-                e.preventDefault();
-                if (signInBtn && !signInBtn.disabled) signInBtn.click();
-            };
+        // Fetch referrer details if ref is present
+        const refParam = urlParams.get('ref') || referrerId || localStorage.getItem('referred_by');
+        if (refParam) {
+            referrerId = refParam;
+            localStorage.setItem('referred_by', refParam);
+            
+            supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
+                .eq('id', refParam)
+                .single()
+                .then(({ data, error }) => {
+                    if (data && !error) {
+                        referrerInfo = data;
+                        updateReferralBanner();
+                    }
+                });
         }
+
+        // Handle Enter key in form — direct keydown listeners are more reliable
+        // than form.onsubmit because sign-in-btn is type="button"
+        ['input-email', 'input-password', 'input-name'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && signInBtn && !signInBtn.disabled) {
+                        e.preventDefault();
+                        signInBtn.click();
+                    }
+                });
+            }
+        });
 
         // Sign In button
         if (signInBtn) {
@@ -394,12 +497,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (data.user) {
                             // Create profile
-                            const { error: profileError } = await supabase.from('profiles').insert({
+                            const profileData = {
                                 id: data.user.id,
                                 full_name: name,
                                 role: selectedRole
-                            });
+                            };
+                            const referredBy = referrerId || localStorage.getItem('referred_by');
+                            if (referredBy) {
+                                profileData.referred_by = referredBy;
+                                profileData.preferences = {
+                                    ...(profileData.preferences || {}),
+                                    referrer_id: referredBy
+                                };
+                            }
+                            const { error: profileError } = await supabase.from('profiles').insert(profileData);
                             if (profileError) throw profileError;
+                            
+                            // Clear referral after successful profile creation
+                            localStorage.removeItem('referred_by');
                         }
 
                         showToast('Account created successfully!');
@@ -467,7 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Global Header Visibility ──
-    function updateHeaderVisibility() {
+    updateHeaderVisibility = function() {
         const currentRole = localStorage.getItem('role') || 'Guest';
         const isStaff = ['Admin', 'Employee', 'Broker'].includes(currentRole);
         
@@ -503,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button onclick="window.location.href=window.toAppUrl('profile.html')" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center" title="Signed in as Buyer — Go to Profile">
                         <span class="material-symbols-outlined text-[24px]">account_circle</span>
                     </button>
-                    <button onclick="if(confirm('Are you sure you want to sign out?')) window.logout()" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center ml-2" title="Sign Out">
+                    <button onclick="window.logout()" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center ml-2" title="Sign Out">
                         <span class="material-symbols-outlined text-[24px]">logout</span>
                     </button>
                 `;
@@ -512,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="${window.toAppUrl(roleHomePage[currentRole] || 'index.html')}" class="bg-slate-900 text-white px-5 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider shadow-sm mr-2 flex items-center">
                         Dashboard
                     </a>
-                    <button onclick="if(confirm('Are you sure you want to sign out?')) window.logout()" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center" title="Signed in as ${currentRole} — Sign Out">
+                    <button onclick="window.logout()" class="text-slate-500 hover:text-slate-900 transition-colors flex items-center" title="Signed in as ${currentRole} — Sign Out">
                         <span class="material-symbols-outlined text-[24px]">logout</span>
                     </button>
                 `;
@@ -535,6 +650,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const greeting = document.querySelector('main header p');
             if (greeting) greeting.textContent = `Welcome back, ${brokerName}. Here is your portfolio performance.`;
         }
+
+        // Setup Broker Referral Program
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+            if (session) {
+                const userId = session.user.id;
+                const referralUrl = `${window.location.origin}/signup.html?ref=${userId}&role=broker`;
+                
+                const linkInput = document.getElementById('referral-link-input');
+                if (linkInput) linkInput.value = referralUrl;
+
+                const copyBtn = document.getElementById('copy-referral-btn');
+                if (copyBtn) {
+                    copyBtn.onclick = () => {
+                        navigator.clipboard.writeText(referralUrl).then(() => {
+                            showToast('Referral link copied to clipboard!');
+                        }).catch(() => {
+                            showToast('Failed to copy referral link.', true);
+                        });
+                    };
+                }
+
+                // Load referral stats
+                const loadReferralStats = async () => {
+                    const { data: referredUsers, error } = await supabase
+                        .from('profiles')
+                        .select('id, role')
+                        .eq('referred_by', userId);
+
+                    if (!error && referredUsers) {
+                        const invitedCount = referredUsers.length;
+                        const activeCount = referredUsers.filter(u => u.role === 'Buyer' || u.role === 'Broker').length;
+
+                        const invitedEl = document.getElementById('invited-count');
+                        const activeEl = document.getElementById('active-referred-count');
+                        if (invitedEl) invitedEl.textContent = invitedCount;
+                        if (activeEl) activeEl.textContent = activeCount;
+                    }
+                };
+                await loadReferralStats();
+            }
+        });
 
         // Retrieve and apply the uploaded avatar from broker_avatar_${userId} localStorage key
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -559,41 +715,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sidebar Navigation Interactivity
         const sidebarLinks = document.querySelectorAll('#broker-sidebar a');
+        
+        const activateBrokerTab = (hash) => {
+            if (!hash || !hash.startsWith('#')) return;
+            const targetLink = Array.from(sidebarLinks).find(l => l.getAttribute('href') === hash);
+            if (!targetLink) return;
+
+            // Active state management
+            sidebarLinks.forEach(l => {
+                l.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200');
+                l.classList.add('text-slate-500', 'hover:bg-slate-100', 'hover:text-slate-900');
+            });
+            targetLink.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200');
+            targetLink.classList.remove('text-slate-500', 'hover:bg-slate-100', 'hover:text-slate-900');
+
+            // Section handling
+            const targetId = 'tab-' + hash.substring(1).replace('-section', '');
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+                tab.classList.remove('block', 'flex');
+            });
+            
+            // Show target tab
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                targetEl.classList.remove('hidden');
+                if (targetId === 'tab-messages') {
+                    targetEl.classList.add('flex');
+                    if (typeof initBrokerChat === 'function') initBrokerChat();
+                } else {
+                    targetEl.classList.add('block');
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+
+        // Activate correct tab on load based on hash (default to overview)
+        activateBrokerTab(window.location.hash || '#overview-section');
+
         sidebarLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 const href = link.getAttribute('href');
-                
-                // Active state management
-                sidebarLinks.forEach(l => {
-                    l.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200');
-                    l.classList.add('text-slate-500', 'hover:bg-slate-100', 'hover:text-slate-900');
-                });
-                link.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200');
-                link.classList.remove('text-slate-500', 'hover:bg-slate-100', 'hover:text-slate-900');
-
-                // Section handling
-                if (href.startsWith('#')) {
+                if (href && href.startsWith('#')) {
                     e.preventDefault();
-                    const targetId = 'tab-' + href.substring(1).replace('-section', '');
-                    
-                    // Hide all tabs
-                    document.querySelectorAll('.tab-content').forEach(tab => {
-                        tab.classList.add('hidden');
-                        tab.classList.remove('block', 'flex');
-                    });
-                    
-                    // Show target tab
-                    const targetEl = document.getElementById(targetId);
-                    if (targetEl) {
-                        targetEl.classList.remove('hidden');
-                        if (targetId === 'tab-messages') {
-                            targetEl.classList.add('flex');
-                            if (typeof initBrokerChat === 'function') initBrokerChat();
-                        } else {
-                            targetEl.classList.add('block');
-                        }
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
+                    history.pushState(null, '', href);
+                    activateBrokerTab(href);
                 }
             });
         });
@@ -665,6 +833,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Init managers
         initListingsManager();
         initInquiriesManager();
+        initCustomFiltersManager();
 
         // Global Real-time Message Listener for Broker Dashboard
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -735,7 +904,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (userRole === 'Employee' && currentPage === 'employee-panel.html') {
         initEmployeePanelInteractions();
     }
-});
+}
+document.addEventListener('DOMContentLoaded', initAppPage);
 
 // ══════════════════════════════════════════════════════
 //  BROKER LISTINGS MANAGER (localStorage-based CRUD)
@@ -794,9 +964,16 @@ async function renderListings() {
 }
 
 function generateListingsHTML(listings, showViews) {
-    if (!listings.length) return '<tr><td colspan="5" class="p-8 text-center text-slate-400">No listings found. Click "Add Listing" to start.</td></tr>';
+    if (!listings.length) return '<tr><td colspan="6" class="p-8 text-center text-slate-400">No listings found. Click "Add Listing" to start.</td></tr>';
     
-    return listings.map(l => `
+    return listings.map(l => {
+        let badgeClass = 'bg-surface-container-high text-on-surface-variant';
+        if (l.status === 'Active') badgeClass = 'bg-secondary-fixed text-on-secondary-fixed-variant';
+        else if (l.status === 'Pending') badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        else if (l.status === 'Flagged') badgeClass = 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+        else if (l.status === 'Sold') badgeClass = 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+
+        return `
         <tr class="border-b border-surface-variant hover:bg-surface-container transition-colors group" data-id="${l.id}">
           <td class="p-4">
             <div class="flex items-center gap-3">
@@ -808,10 +985,14 @@ function generateListingsHTML(listings, showViews) {
             </div>
           </td>
           <td class="p-4">
-            <span class="${l.status === 'Active' ? 'bg-secondary-fixed text-on-secondary-fixed-variant' : 'bg-surface-container-high text-on-surface-variant'} px-2 py-1 rounded-full text-xs font-medium">${l.status}</span>
+            <span class="${badgeClass} px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">${l.status}</span>
           </td>
           <td class="p-4 font-medium">${escHtml(l.price)}</td>
           ${showViews ? `<td class="p-4">${(l.views || 0).toLocaleString()}</td>` : ''}
+          <td class="p-4">
+            <div class="text-sm font-medium text-slate-900">${listingAge(l.created_at).date}</div>
+            <div class="text-[10px] text-slate-500 font-bold uppercase tracking-wide">${listingAge(l.created_at).label}</div>
+          </td>
           <td class="p-4 text-right">
             <div class="flex justify-end gap-2">
               <button onclick="shareListing(${l.id})" class="p-1.5 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container" title="Share">
@@ -826,7 +1007,8 @@ function generateListingsHTML(listings, showViews) {
             </div>
           </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 async function deleteListing(id) {
@@ -900,7 +1082,8 @@ async function openListingModal(id) {
     document.getElementById('modal-price').value         = listing ? listing.price     : '';
     document.getElementById('modal-intent').value        = listing ? listing.intent    : 'Buy';
     document.getElementById('modal-type').value          = listing ? listing.type      : 'Apartment';
-    document.getElementById('modal-status').value        = listing ? listing.status    : 'Active';
+    const defaultStatus = (userRole === 'Broker') ? 'Pending' : 'Active';
+    document.getElementById('modal-status').value        = listing ? listing.status    : defaultStatus;
     document.getElementById('modal-beds').value          = listing ? listing.beds      : '0';
     document.getElementById('modal-baths').value         = listing ? listing.baths     : '0';
     document.getElementById('modal-sqft').value          = listing ? listing.sqft      : '0';
@@ -1049,8 +1232,9 @@ async function saveListingForm() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
+    const finalStatus = (userRole === 'Broker' && status !== 'Sold') ? 'Pending' : status;
     const listingData = { 
-        title, location, price, intent, type, status, beds, baths, sqft, views, lat, lng, img,
+        title, location, price, intent, type, status: finalStatus, beds, baths, sqft, views, lat, lng, img,
         broker_id: user ? user.id : null
     };
 
@@ -1147,10 +1331,11 @@ function injectListingModal() {
             <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status *</label>
               <select id="modal-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
-                <option value="Active">Active</option>
+                ${userRole !== 'Broker' ? '<option value="Active">Active</option>' : ''}
                 <option value="Pending">Pending</option>
                 <option value="Sold">Sold</option>
               </select>
+              ${userRole === 'Broker' ? '<p class="text-[10px] text-amber-600 font-semibold mt-1">Note: All new/edited listings require employee approval before going Active.</p>' : ''}
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bedrooms *</label>
@@ -1474,6 +1659,16 @@ function injectInquiryModal() {
     document.body.appendChild(modal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeInquiryModal(); });
 
+    // Allow Ctrl+Enter on the reply textarea to send
+    const replyTextarea = document.getElementById('inquiry-modal-reply');
+    if (replyTextarea) {
+        replyTextarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                document.getElementById('reply-inquiry-btn')?.click();
+            }
+        });
+    }
+
     const replyBtn = document.getElementById('reply-inquiry-btn');
     if (replyBtn) {
         replyBtn.addEventListener('click', async () => {
@@ -1503,6 +1698,318 @@ function injectInquiryModal() {
         });
     }
 }
+
+// ══════════════════════════════════════════════════════
+//  BROKER CUSTOM FILTERS MANAGER (Supabase-based CRUD)
+// ══════════════════════════════════════════════════════
+
+async function initCustomFiltersManager() {
+    await renderCustomFilters();
+    injectCustomFilterModal();
+}
+
+async function renderCustomFilters() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const tbody = document.getElementById('custom-filters-tbody');
+    if (!tbody) return;
+
+    const { data: filters, error } = await supabase
+        .from('custom_filters')
+        .select('*')
+        .eq('broker_id', user.id)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Error fetching custom filters:', error);
+        tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-400">Error loading custom filters.</td></tr>';
+        return;
+    }
+
+    if (!filters || filters.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-slate-400 font-medium">No custom filters saved. Create one to share tailored lists with clients.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filters.map(f => {
+        const crit = [];
+        if (f.criteria.location) crit.push(`Location: ${escHtml(f.criteria.location)}`);
+        if (f.criteria.minPrice || f.criteria.maxPrice) {
+            const min = f.criteria.minPrice ? `₹${f.criteria.minPrice}Cr` : '0';
+            const max = f.criteria.maxPrice ? `₹${f.criteria.maxPrice}Cr` : '∞';
+            crit.push(`Price: ${min} - ${max}`);
+        }
+        if (f.criteria.type) crit.push(`Type: ${f.criteria.type}`);
+        if (f.criteria.intent) crit.push(`Intent: ${f.criteria.intent}`);
+        if (f.criteria.beds) crit.push(`Beds: ${f.criteria.beds}+`);
+        if (f.criteria.baths) crit.push(`Baths: ${f.criteria.baths}+`);
+
+        const criteriaStr = crit.join(' | ') || 'All Properties';
+
+        return `
+        <tr class="border-b border-surface-variant hover:bg-surface-container transition-colors" data-filter-id="${f.id}">
+          <td class="p-4 font-semibold text-primary">${escHtml(f.name)}</td>
+          <td class="p-4 text-on-surface-variant text-xs">${criteriaStr}</td>
+          <td class="p-4 text-right">
+            <div class="flex justify-end gap-2">
+              <button onclick="copyShareLink(${f.id})" class="p-1.5 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container" title="Copy Shareable Link">
+                <span class="material-symbols-outlined text-[20px]">content_copy</span>
+              </button>
+              <button onclick="testCustomFilter(${f.id})" class="p-1.5 text-on-surface-variant hover:text-primary rounded hover:bg-surface-container" title="Test Filter">
+                <span class="material-symbols-outlined text-[20px]">open_in_new</span>
+              </button>
+              <button onclick="deleteCustomFilter(${f.id})" class="p-1.5 text-on-surface-variant hover:text-error rounded hover:bg-error-container" title="Delete">
+                <span class="material-symbols-outlined text-[20px]">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function injectCustomFilterModal() {
+    if (document.getElementById('custom-filter-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'custom-filter-modal';
+    modal.className = 'hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm';
+    modal.innerHTML = `
+      <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden border border-outline-variant">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+          <h3 id="filter-modal-title" class="font-h3 text-h3 text-primary">Create Custom Filter</h3>
+          <button onclick="closeCustomFilterModal()" class="text-slate-400 hover:text-slate-700 transition-colors">
+            <span class="material-symbols-outlined text-[24px]">close</span>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Filter Name *</label>
+            <input id="filter-name" type="text" placeholder="e.g. Bandra West 2BHK for Mr. Shah" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Location / neighborhood</label>
+            <input id="filter-location" type="text" placeholder="e.g. Bandra West" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price Min (Cr)</label>
+              <input id="filter-price-min" type="number" step="0.1" placeholder="e.g. 1.0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price Max (Cr)</label>
+              <input id="filter-price-max" type="number" step="0.1" placeholder="e.g. 5.0" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Property Type</label>
+              <select id="filter-type" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                <option value="">Any</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa</option>
+                <option value="Penthouse">Penthouse</option>
+                <option value="Office">Office</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Intent</label>
+              <select id="filter-intent" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                <option value="">Any</option>
+                <option value="Buy">Buy</option>
+                <option value="Rent">Rent</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bedrooms</label>
+              <select id="filter-beds" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                <option value="">Any</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+                <option value="4">4+</option>
+                <option value="5">5+</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bathrooms</label>
+              <select id="filter-baths" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                <option value="">Any</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+          <button onclick="closeCustomFilterModal()" class="px-5 py-2 rounded-lg border border-outline-variant text-on-surface-variant text-sm font-medium hover:bg-surface-container transition-colors">Cancel</button>
+          <button onclick="saveCustomFilter()" class="px-5 py-2 rounded-lg bg-primary text-on-primary text-sm font-medium hover:opacity-90 transition-opacity">Save Filter</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeCustomFilterModal(); });
+
+    // Allow Enter on text inputs inside the custom filter modal to save
+    ['filter-name', 'filter-location', 'filter-price-min', 'filter-price-max'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') saveCustomFilter(); });
+    });
+}
+
+window.openCustomFilterModal = function() {
+    const modal = document.getElementById('custom-filter-modal');
+    if (modal) {
+        document.getElementById('filter-name').value = '';
+        document.getElementById('filter-location').value = '';
+        document.getElementById('filter-price-min').value = '';
+        document.getElementById('filter-price-max').value = '';
+        document.getElementById('filter-type').value = '';
+        document.getElementById('filter-intent').value = '';
+        document.getElementById('filter-beds').value = '';
+        document.getElementById('filter-baths').value = '';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+};
+
+window.closeCustomFilterModal = function() {
+    const modal = document.getElementById('custom-filter-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+async function saveCustomFilter() {
+    const name = document.getElementById('filter-name').value.trim();
+    const location = document.getElementById('filter-location').value.trim();
+    const minPrice = document.getElementById('filter-price-min').value;
+    const maxPrice = document.getElementById('filter-price-max').value;
+    const type = document.getElementById('filter-type').value;
+    const intent = document.getElementById('filter-intent').value;
+    const beds = document.getElementById('filter-beds').value;
+    const baths = document.getElementById('filter-baths').value;
+
+    if (!name) {
+        showToast('Please enter a filter name.');
+        return;
+    }
+
+    if (window.hasProfanity && (window.hasProfanity(name) || window.hasProfanity(location))) {
+        showToast('WARNING: Swearing is strictly prohibited! Please remove all offensive language to proceed.', 'profanity');
+        return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        showToast('Error: No active user session.');
+        return;
+    }
+
+    const filterData = {
+        broker_id: user.id,
+        name,
+        criteria: {
+            location,
+            minPrice,
+            maxPrice,
+            type,
+            intent,
+            beds,
+            baths
+        }
+    };
+
+    const { error } = await supabase.from('custom_filters').insert([filterData]);
+
+    if (error) {
+        showToast('Error saving filter: ' + error.message);
+    } else {
+        showToast('Custom filter saved successfully.');
+        closeCustomFilterModal();
+        await renderCustomFilters();
+    }
+}
+
+async function deleteCustomFilter(filterId) {
+    if (!confirm('Are you sure you want to delete this custom filter?')) return;
+    const { error } = await supabase.from('custom_filters').delete().eq('id', filterId);
+    if (error) {
+        showToast('Error deleting filter: ' + error.message);
+    } else {
+        showToast('Custom filter deleted.');
+        await renderCustomFilters();
+    }
+}
+
+async function copyShareLink(filterId) {
+    const { data: filter, error } = await supabase
+        .from('custom_filters')
+        .select('*')
+        .eq('id', filterId)
+        .single();
+
+    if (error || !filter) {
+        showToast('Filter not found.');
+        return;
+    }
+
+    const params = new URLSearchParams();
+    params.set('brokerId', filter.broker_id);
+    if (filter.criteria.location) params.set('q', filter.criteria.location);
+    if (filter.criteria.minPrice) params.set('minPrice', filter.criteria.minPrice);
+    if (filter.criteria.maxPrice) params.set('maxPrice', filter.criteria.maxPrice);
+    if (filter.criteria.type) params.set('type', filter.criteria.type);
+    if (filter.criteria.intent) params.set('intent', filter.criteria.intent);
+    if (filter.criteria.beds) params.set('beds', filter.criteria.beds);
+    if (filter.criteria.baths) params.set('baths', filter.criteria.baths);
+
+    const shareUrl = `${window.location.origin}/properties.html?${params.toString()}`;
+
+    navigator.clipboard.writeText(shareUrl).then(() => {
+        showToast('Shareable link copied to clipboard!');
+    }).catch(() => {
+        showToast('Failed to copy link.');
+    });
+}
+
+async function testCustomFilter(filterId) {
+    const { data: filter, error } = await supabase
+        .from('custom_filters')
+        .select('*')
+        .eq('id', filterId)
+        .single();
+
+    if (error || !filter) return;
+
+    const params = new URLSearchParams();
+    params.set('brokerId', filter.broker_id);
+    if (filter.criteria.location) params.set('q', filter.criteria.location);
+    if (filter.criteria.minPrice) params.set('minPrice', filter.criteria.minPrice);
+    if (filter.criteria.maxPrice) params.set('maxPrice', filter.criteria.maxPrice);
+    if (filter.criteria.type) params.set('type', filter.criteria.type);
+    if (filter.criteria.intent) params.set('intent', filter.criteria.intent);
+    if (filter.criteria.beds) params.set('beds', filter.criteria.beds);
+    if (filter.criteria.baths) params.set('baths', filter.criteria.baths);
+
+    const shareUrl = `${window.location.origin}/properties.html?${params.toString()}`;
+
+    if (window.ajaxLoadPage) {
+        window.ajaxLoadPage(shareUrl, true);
+    } else {
+        window.open(shareUrl, '_blank');
+    }
+}
+
+window.saveCustomFilter = saveCustomFilter;
+window.deleteCustomFilter = deleteCustomFilter;
+window.copyShareLink = copyShareLink;
+window.testCustomFilter = testCustomFilter;
 
 
 function initBuyerPageInteractions() {
@@ -1598,7 +2105,7 @@ async function initBuyerHomePage() {
     // ── [Featured Cards from Supabase] ──
     const featuredGrid = document.querySelector('section.py-20 .grid');
     if (featuredGrid) {
-        const listings = await getListings();
+        const listings = (await getListings()).filter(l => l.status === 'Active');
         const top3 = listings.slice(0, 3);
         
         if (top3.length > 0) {
@@ -1618,6 +2125,18 @@ async function initBuyerHomePage() {
                       <div class="flex items-center gap-2 text-slate-400"><span class="material-symbols-outlined text-[18px]">bathtub</span><span class="text-xs font-black text-slate-900">${top3[0].baths}</span></div>
                       <div class="flex items-center gap-2 text-slate-400"><span class="material-symbols-outlined text-[18px]">square_foot</span><span class="text-xs font-black text-slate-900">${(top3[0].sqft || 0).toLocaleString()}</span></div>
                     </div>
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">schedule</span> Listed ${listingAge(top3[0].created_at).date}
+                      </span>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                        listingAge(top3[0].created_at).days <= 7 
+                          ? 'bg-emerald-50 text-emerald-700' 
+                          : listingAge(top3[0].created_at).days <= 30 
+                            ? 'bg-amber-50 text-amber-700' 
+                            : 'bg-slate-50 text-slate-600'
+                      }">${listingAge(top3[0].created_at).label}</span>
+                    </div>
                   </div>
                 </div>
                 ${top3.slice(1).map(l => `
@@ -1633,6 +2152,16 @@ async function initBuyerHomePage() {
                     <div class="flex items-center gap-4 mt-auto pt-4 border-t border-slate-50">
                       <div class="flex items-center gap-1.5 text-slate-400"><span class="material-symbols-outlined text-[14px]">bed</span><span class="text-[10px] font-black text-slate-900">${l.beds}</span></div>
                       <div class="flex items-center gap-1.5 text-slate-400"><span class="material-symbols-outlined text-[14px]">square_foot</span><span class="text-[10px] font-black text-slate-900">${(l.sqft || 0).toLocaleString()}</span></div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-50 flex items-center justify-between text-[10px]">
+                      <span class="font-bold text-slate-400 uppercase tracking-widest">${listingAge(l.created_at).date}</span>
+                      <span class="font-extrabold uppercase tracking-wider ${
+                        listingAge(l.created_at).days <= 7 
+                          ? 'text-emerald-600' 
+                          : listingAge(l.created_at).days <= 30 
+                            ? 'text-amber-600' 
+                            : 'text-slate-500'
+                      }">${listingAge(l.created_at).label}</span>
                     </div>
                   </div>
                 </div>
@@ -1656,7 +2185,18 @@ async function initBuyerListingsPage() {
     if (!propertyGrid) return;
 
     // ── [Fetch & Render from Supabase] ──
-    const listings = await getListings();
+    const urlParams = new URLSearchParams(window.location.search);
+    const brokerId = urlParams.get('brokerId');
+    const intent = urlParams.get('intent');
+
+    let listings = (await getListings()).filter(l => l.status === 'Active');
+
+    if (brokerId) {
+        listings = listings.filter(l => l.broker_id === brokerId);
+    }
+    if (intent) {
+        listings = listings.filter(l => l.intent.toLowerCase() === intent.toLowerCase());
+    }
     
     propertyGrid.innerHTML = listings.map(l => `
         <div class="group cursor-pointer property-card bg-white rounded-3xl border border-slate-200 hover:shadow-xl overflow-hidden transition-all duration-300" 
@@ -1671,6 +2211,9 @@ async function initBuyerListingsPage() {
             <button aria-label="Share Property" class="share-property-btn absolute top-4 right-[52px] w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-blue-500 transition-colors z-10" onclick="event.stopPropagation();">
               <span class="material-symbols-outlined text-[20px]">share</span>
             </button>
+            <button aria-label="Report Property" class="report-property-btn absolute top-4 right-[100px] w-9 h-9 flex items-center justify-center bg-white/90 backdrop-blur rounded-full shadow text-slate-400 hover:text-red-500 transition-colors z-10" onclick="event.stopPropagation(); window.openReportModal('listing', '${l.id}', '${escHtml(l.title)}');">
+              <span class="material-symbols-outlined text-[20px]">flag</span>
+            </button>
           </div>
           <div class="p-5">
             <div class="flex justify-between items-start mb-1">
@@ -1681,6 +2224,18 @@ async function initBuyerListingsPage() {
               <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">bed</span><span class="text-xs font-black text-slate-900">${l.beds}</span></div>
               <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">bathtub</span><span class="text-xs font-black text-slate-900">${l.baths}</span></div>
               <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">square_foot</span><span class="text-xs font-black text-slate-900">${(l.sqft || 0).toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span></div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">schedule</span> Listed ${listingAge(l.created_at).date}
+              </span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                listingAge(l.created_at).days <= 7 
+                  ? 'bg-emerald-50 text-emerald-700' 
+                  : listingAge(l.created_at).days <= 30 
+                    ? 'bg-amber-50 text-amber-700' 
+                    : 'bg-slate-50 text-slate-600'
+              }">${listingAge(l.created_at).label}</span>
             </div>
           </div>
         </div>
@@ -1777,6 +2332,13 @@ async function initBuyerListingsPage() {
         el.addEventListener('change', applyFilters);
     });
 
+    // Allow Enter key on price inputs to trigger filter
+    ['price-min', 'price-max'].forEach(id => {
+        document.getElementById(id)?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') applyFilters();
+        });
+    });
+
     document.querySelectorAll('button[data-filter]').forEach(btn => {
         btn.addEventListener('click', () => {
             const filterType = btn.dataset.filter;
@@ -1824,6 +2386,7 @@ async function initBuyerListingsPage() {
     cards.forEach(card => {
         card.addEventListener('click', (e) => {
             if (e.target.closest('.save-property-btn')) return;
+            if (e.target.closest('.report-property-btn')) return;
             if (e.target.closest('.share-property-btn')) {
                 const url = window.location.origin + '/property-details.html?id=' + (card.dataset.id || '');
                 navigator.clipboard.writeText(url).then(() => {
@@ -1858,15 +2421,69 @@ async function initBuyerListingsPage() {
         btn.onclick = () => showToast('Pagination is demo-only in this build.');
     });
 
-    // Handle initial search from URL
-    const urlParams = new URLSearchParams(window.location.search);
+    // Handle initial search & filters from URL
     const q = urlParams.get('q');
+    const minPrice = urlParams.get('minPrice');
+    const maxPrice = urlParams.get('maxPrice');
+    const typeParam = urlParams.get('type');
+    const beds = urlParams.get('beds');
+    const baths = urlParams.get('baths');
+
+    let shouldApply = false;
+
     if (q) {
         const input = document.getElementById('listing-search-input');
         if (input) {
             input.value = q;
-            applyFilters();
+            shouldApply = true;
         }
+    }
+    if (minPrice) {
+        const input = document.getElementById('price-min');
+        if (input) {
+            input.value = minPrice;
+            shouldApply = true;
+        }
+    }
+    if (maxPrice) {
+        const input = document.getElementById('price-max');
+        if (input) {
+            input.value = maxPrice;
+            shouldApply = true;
+        }
+    }
+    if (typeParam) {
+        const types = typeParam.split(',');
+        document.querySelectorAll('input[name="type"]').forEach(checkbox => {
+            if (types.includes(checkbox.value)) {
+                checkbox.checked = true;
+                shouldApply = true;
+            }
+        });
+    }
+    if (beds) {
+        const btn = document.querySelector(`button[data-filter="beds"][data-value="${beds}"]`);
+        if (btn) {
+            document.querySelectorAll('button[data-filter="beds"]').forEach(b => {
+                b.classList.remove('bg-primary', 'text-on-primary');
+            });
+            btn.classList.add('bg-primary', 'text-on-primary');
+            shouldApply = true;
+        }
+    }
+    if (baths) {
+        const btn = document.querySelector(`button[data-filter="baths"][data-value="${baths}"]`);
+        if (btn) {
+            document.querySelectorAll('button[data-filter="baths"]').forEach(b => {
+                b.classList.remove('bg-primary', 'text-on-primary');
+            });
+            btn.classList.add('bg-primary', 'text-on-primary');
+            shouldApply = true;
+        }
+    }
+
+    if (shouldApply || brokerId || intent) {
+        applyFilters();
     }
 }
 
@@ -1922,7 +2539,7 @@ async function initBuyerMapPage() {
     document.getElementById('map').style.background = '#ebebeb';
 
     // Load Listings from Supabase
-    const listings = await getListings();
+    const listings = (await getListings()).filter(l => l.status === 'Active');
     
     // Filter to those with coordinates
     const markersData = listings.filter(l => l.lat !== null && l.lng !== null).map(l => {
@@ -2041,9 +2658,14 @@ async function initBuyerMapPage() {
               <div class="p-5">
                 <div class="flex justify-between items-start mb-1">
                   <h3 class="text-xl font-black text-slate-900">₹${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</h3>
-                  <button class="transition-colors ${isSaved ? 'text-red-500' : 'text-slate-200 hover:text-red-500'}" onclick="toggleMapFavorite(event, ${l.id})">
-                    <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">favorite</span>
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <button class="transition-colors text-slate-200 hover:text-red-500 flex items-center justify-center" onclick="event.stopPropagation(); window.openReportModal('listing', ${l.id}, '${escHtml(l.title)}');" title="Report Listing">
+                      <span class="material-symbols-outlined text-[20px]">flag</span>
+                    </button>
+                    <button class="transition-colors ${isSaved ? 'text-red-500' : 'text-slate-200 hover:text-red-500'}" onclick="toggleMapFavorite(event, ${l.id})">
+                      <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' ${isSaved ? '1' : '0'};">favorite</span>
+                    </button>
+                  </div>
                 </div>
                 <p class="text-slate-500 text-sm font-medium mb-4 truncate">${escHtml(l.title)}, ${escHtml(l.location)}</p>
                 <div class="flex flex-wrap items-center gap-y-2 gap-x-4 text-slate-400">
@@ -2059,6 +2681,18 @@ async function initBuyerMapPage() {
                     <span class="material-symbols-outlined text-[18px]">square_foot</span>
                     <span class="text-xs font-black text-slate-900">${(l.sqft || 0).toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span>
                   </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">schedule</span> Listed ${listingAge(l.created_at).date}
+                  </span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider ${
+                    listingAge(l.created_at).days <= 7 
+                      ? 'bg-emerald-50 text-emerald-700' 
+                      : listingAge(l.created_at).days <= 30 
+                        ? 'bg-amber-50 text-amber-700' 
+                        : 'bg-slate-50 text-slate-600'
+                  }">${listingAge(l.created_at).label}</span>
                 </div>
               </div>
             </div>
@@ -2193,6 +2827,16 @@ async function initBuyerDetailsPage() {
         return;
     }
 
+    // Check if the user is authorized to view non-Active properties
+    const { data: { session } } = await supabase.auth.getSession();
+    const isOwner = session && session.user && session.user.id === l.broker_id;
+    const isStaff = userRole === 'Admin' || userRole === 'Employee';
+    if (l.status !== 'Active' && !isOwner && !isStaff) {
+        showToast('Property details are pending review or unavailable.', true);
+        setTimeout(() => { window.location.href = 'properties.html'; }, 2000);
+        return;
+    }
+
     // Fetch and populate actual broker profile from Supabase
     let brokerName = 'Mehdi Ali'; // Default fallback
     let brokerRole = 'ProjectX Executive Partner';
@@ -2266,6 +2910,21 @@ async function initBuyerDetailsPage() {
     if (sqftEl) sqftEl.textContent = (l.sqft || 0).toLocaleString();
     const typeEl = document.getElementById('detail-type');
     if (typeEl) typeEl.textContent = l.type;
+    
+    const listedDateEl = document.getElementById('detail-listed-date');
+    const daysOldEl = document.getElementById('detail-days-old');
+    if (listedDateEl && daysOldEl) {
+        const age = listingAge(l.created_at);
+        listedDateEl.textContent = age.date;
+        daysOldEl.textContent = age.label || 'Listed Date';
+    }
+
+    const reportBtn = document.getElementById('report-listing-btn');
+    if (reportBtn) {
+        reportBtn.onclick = () => {
+            window.openReportModal('listing', l.id, l.title);
+        };
+    }
 
     // Description
     const descEl = document.getElementById('detail-desc');
@@ -2299,6 +2958,12 @@ async function initBuyerDetailsPage() {
     } else {
         // Fallback to inquiry form for guests/others
         if (form && submitBtn) {
+            // Allow Enter key on text inputs (not textarea) to trigger submit
+            ['buyer-first-name', 'buyer-last-name', 'buyer-email', 'buyer-phone'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitBtn.click(); });
+            });
+
             submitBtn.onclick = async (e) => {
                 e.preventDefault();
                 const firstName = document.getElementById('buyer-first-name')?.value?.trim();
@@ -2508,6 +3173,16 @@ function initEmployeePanelInteractions() {
 function escHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function listingAge(createdAt) {
+    if (!createdAt) return { date: '—', days: null, label: '' };
+    const created = new Date(createdAt);
+    const diffTime = Date.now() - created.getTime();
+    const days = Math.max(0, Math.floor(diffTime / 86400000));
+    const date = created.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    const label = days === 0 ? 'Today' : days === 1 ? '1 day old' : `${days} days old`;
+    return { date, days, label };
 }
 
 // ─── Global Navbar Search ─────────────────────────────────────────────────────
@@ -2852,5 +3527,367 @@ window.renderMessage = function renderMessage(m, currentUserId, container) {
     msgWrapper.appendChild(header);
     msgWrapper.appendChild(bubble);
     container.appendChild(msgWrapper);
+};
+
+// ─── AJAX Single Page Application (SPA) Router ──────────────────────────────
+
+// Dynamic CSS injection for transitions
+const style = document.createElement('style');
+style.id = 'spa-transition-style';
+style.innerHTML = `
+    body {
+        opacity: 1;
+    }
+    body.spa-fade {
+        transition: opacity 0.15s ease-in-out;
+    }
+    body.spa-hidden {
+        opacity: 0 !important;
+    }
+`;
+document.head.appendChild(style);
+
+let isNavigating = false;
+
+async function ajaxLoadPage(url, replaceState = false) {
+    if (isNavigating) return;
+    isNavigating = true;
+
+    // Create or find Progress Bar
+    let progressBar = document.getElementById('spa-progress-bar');
+    if (!progressBar) {
+        progressBar = document.createElement('div');
+        progressBar.id = 'spa-progress-bar';
+        progressBar.style.cssText = 'position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg, #0f172a, #3b82f6, #0f172a);z-index:99999;width:0%;transition:width 0.2s ease, opacity 0.2s ease;';
+        document.body.appendChild(progressBar);
+    }
+    progressBar.style.opacity = '1';
+    progressBar.style.width = '0%';
+    setTimeout(() => { if (isNavigating) progressBar.style.width = '30%'; }, 50);
+    setTimeout(() => { if (isNavigating) progressBar.style.width = '60%'; }, 200);
+
+    // Fade out current body
+    document.body.classList.add('spa-fade', 'spa-hidden');
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+
+        const htmlText = await response.text();
+
+        // Parse HTML
+        const parser = new DOMParser();
+        const parsedDoc = parser.parseFromString(htmlText, 'text/html');
+
+        // Progress update
+        progressBar.style.width = '90%';
+
+        // Wait a tiny bit for the fade-out transition to finish
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        // Sync head elements (CSS and scripts, wait for scripts to load)
+        await syncHead(parsedDoc);
+
+        // Swap body classes and content
+        document.body.className = parsedDoc.body.className;
+        document.body.innerHTML = parsedDoc.body.innerHTML;
+
+        // Force execution of script tags in the new body
+        executeScripts(document.body);
+
+        // Update title and history
+        document.title = parsedDoc.title || document.title;
+        if (replaceState) {
+            history.replaceState({ url }, '', url);
+        } else {
+            history.pushState({ url }, '', url);
+        }
+
+        // Re-run the page initialization lifecycle
+        initAppPage();
+
+        // Scroll management
+        if (url.includes('#')) {
+            const hash = url.substring(url.indexOf('#'));
+            const targetEl = document.querySelector(hash);
+            if (targetEl) {
+                targetEl.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                window.scrollTo(0, 0);
+            }
+        } else {
+            window.scrollTo(0, 0);
+        }
+
+        // Finish progress bar
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+            progressBar.style.opacity = '0';
+            setTimeout(() => { progressBar.style.width = '0%'; }, 200);
+        }, 150);
+
+    } catch (error) {
+        console.error('SPA navigation failed, reloading page natively:', error);
+        window.location.href = url;
+    } finally {
+        isNavigating = false;
+        // Fade in new body
+        requestAnimationFrame(() => {
+            document.body.classList.remove('spa-hidden');
+            // Remove spa-fade after transition completes to prevent hover lag or side effects
+            setTimeout(() => {
+                document.body.classList.remove('spa-fade');
+            }, 150);
+        });
+    }
+}
+
+async function syncHead(parsedDoc) {
+    const currentHead = document.head;
+    const newHead = parsedDoc.head;
+
+    // 1. Sync Stylesheets
+    const newStylesheets = Array.from(newHead.querySelectorAll('link[rel="stylesheet"]'));
+    newStylesheets.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && !currentHead.querySelector(`link[href="${href}"]`)) {
+            const newLink = document.createElement('link');
+            Array.from(link.attributes).forEach(attr => {
+                newLink.setAttribute(attr.name, attr.value);
+            });
+            currentHead.appendChild(newLink);
+        }
+    });
+
+    // 2. Load and wait for external scripts in the head (excluding auth.js)
+    const newScripts = Array.from(newHead.querySelectorAll('script[src]'));
+    const loadPromises = [];
+
+    newScripts.forEach(script => {
+        const src = script.getAttribute('src');
+        if (src) {
+            if (src.includes('auth.js')) return; // ignore auth.js
+            
+            // If it's not already loaded
+            if (!currentHead.querySelector(`script[src="${src}"]`)) {
+                const newScript = document.createElement('script');
+                Array.from(script.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+
+                const promise = new Promise((resolve) => {
+                    newScript.onload = () => resolve();
+                    newScript.onerror = () => {
+                        console.warn(`Failed to load script: ${src}`);
+                        resolve(); // Resolve to avoid hanging the app
+                    };
+                });
+                loadPromises.push(promise);
+                currentHead.appendChild(newScript);
+            }
+        }
+    });
+
+    // 3. Run inline head scripts
+    const inlineHeadScripts = Array.from(newHead.querySelectorAll('script:not([src])'));
+    inlineHeadScripts.forEach(script => {
+        const newScript = document.createElement('script');
+        newScript.textContent = script.textContent;
+        currentHead.appendChild(newScript);
+    });
+
+    if (loadPromises.length > 0) {
+        await Promise.all(loadPromises);
+    }
+}
+
+function executeScripts(container) {
+    const scripts = Array.from(container.querySelectorAll('script'));
+    scripts.forEach(oldScript => {
+        const src = oldScript.getAttribute('src');
+        if (src && src.includes('auth.js')) return; // ignore auth.js
+        
+        const newScript = document.createElement('script');
+        Array.from(oldScript.attributes).forEach(attr => {
+            newScript.setAttribute(attr.name, attr.value);
+        });
+
+        if (oldScript.src) {
+            newScript.src = oldScript.src;
+        } else {
+            newScript.textContent = oldScript.textContent;
+        }
+
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
+
+// Global Click Interception
+document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+
+    // Ignore special clicks
+    if (e.button !== 0 || e.ctrlKey || e.shiftKey || e.metaKey || e.altKey) return;
+
+    const href = link.getAttribute('href');
+    if (!href) return;
+
+    // Ignore javascript, mailto, tel, and same-page anchor tags
+    if (href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if (href.startsWith('#')) return;
+    if (link.getAttribute('target') === '_blank') return;
+    if (link.hasAttribute('data-no-ajax')) return;
+
+    // Verify it is an internal page
+    const targetUrl = new URL(href, window.location.href);
+    if (targetUrl.origin !== window.location.origin) return;
+
+    e.preventDefault();
+    ajaxLoadPage(targetUrl.href);
+});
+
+// History popstate handling
+window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.url) {
+        ajaxLoadPage(e.state.url, true);
+    } else {
+        ajaxLoadPage(window.location.href, true);
+    }
+});
+
+// Initialize first history state
+if (!history.state) {
+    history.replaceState({ url: window.location.href }, '', window.location.href);
+}
+
+// Expose loader to global window scope
+window.ajaxLoadPage = ajaxLoadPage;
+
+// ─── Reporting & Flagging System ──────────────────────────────────────────────
+function injectReportModal() {
+    if (document.getElementById('report-modal')) return;
+
+    const modal = document.createElement('div');
+    modal.id = 'report-modal';
+    modal.className = 'hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm';
+    modal.innerHTML = `
+      <div class="bg-white rounded-[32px] shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-slate-100 font-sans">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <div>
+            <h3 class="text-lg font-black text-slate-900">Report Issue</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Help us maintain platform integrity.</p>
+          </div>
+          <button onclick="closeReportModal()" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-900 rounded-full hover:bg-slate-100 transition-colors">
+            <span class="material-symbols-outlined text-[20px]">close</span>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <input type="hidden" id="report-target-type"/>
+          <input type="hidden" id="report-target-id"/>
+          
+          <div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Item</span>
+            <p id="report-target-name" class="text-sm font-bold text-slate-900 mt-1 truncate">—</p>
+          </div>
+          
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Reason for Report *</label>
+            <select id="report-reason" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 outline-none focus:border-slate-900 transition-all">
+              <option value="" disabled selected>Select a reason...</option>
+              <option value="Fraudulent/Misleading Content">Fraudulent/Misleading Content</option>
+              <option value="Inappropriate/Offensive Content">Inappropriate/Offensive Content</option>
+              <option value="Spam or Harassment">Spam or Harassment</option>
+              <option value="Abusive Behavior">Abusive Behavior</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Additional Details *</label>
+            <textarea id="report-description" placeholder="Please describe the issue in detail..." rows="4" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900 transition-all resize-none"></textarea>
+          </div>
+          
+          <button onclick="submitReportForm()" id="submit-report-btn" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors mt-2">
+            Submit Report
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeReportModal(); });
+}
+
+window.closeReportModal = function() {
+    const modal = document.getElementById('report-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+};
+
+window.openReportModal = async function(targetType, targetId, targetName) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        showToast('Please sign in to file a report.', true);
+        window.location.href = '/login.html';
+        return;
+    }
+    
+    injectReportModal();
+    
+    document.getElementById('report-target-type').value = targetType;
+    document.getElementById('report-target-id').value = targetId;
+    document.getElementById('report-target-name').textContent = targetName;
+    document.getElementById('report-reason').value = '';
+    document.getElementById('report-description').value = '';
+    
+    const modal = document.getElementById('report-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+};
+
+window.submitReportForm = async function() {
+    const targetType = document.getElementById('report-target-type').value;
+    const targetId = document.getElementById('report-target-id').value;
+    const reason = document.getElementById('report-reason').value;
+    const description = document.getElementById('report-description').value.trim();
+    const btn = document.getElementById('submit-report-btn');
+
+    if (!reason) {
+        showToast('Please select a reason for your report.', true);
+        return;
+    }
+    if (!description) {
+        showToast('Please provide some details for the report.', true);
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated.');
+
+        const { error } = await supabase.from('reports').insert([{
+            reporter_id: user.id,
+            target_type: targetType,
+            target_id: targetId,
+            reason: reason,
+            description: description
+        }]);
+
+        if (error) throw error;
+
+        showToast('✓ Thank you. Your report has been submitted.');
+        closeReportModal();
+    } catch (err) {
+        console.error(err);
+        showToast(err.message || 'Failed to submit report.', true);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Report';
+    }
 };
 

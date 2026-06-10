@@ -341,7 +341,7 @@
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) {
-          window.location.replace('/login.html');
+          window.navigateTo('/login.html');
           return null;
         }
 
@@ -800,6 +800,14 @@
                   Save Note
                 </button>
               </div>
+              
+              <!-- Report User -->
+              <div class="space-y-3 pt-3 border-t border-slate-100">
+                <button onclick="window.openReportModal('profile', '${targetUserId}', '${profile.name.replace(/'/g, "\\'")}')" class="w-full flex items-center justify-center gap-2 py-2.5 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[16px]">flag</span>
+                  Report This User
+                </button>
+              </div>
             `;
 
             // Populate the active broker's properties list dynamically
@@ -921,6 +929,14 @@
                   <span class="material-symbols-outlined text-[16px]">search</span>
                   View Active Listings
                 </a>
+              </div>
+              
+              <!-- Report Broker -->
+              <div class="space-y-3 pt-3 border-t border-slate-100">
+                <button onclick="window.openReportModal('profile', '${targetUserId}', '${profile.name.replace(/'/g, "\\'")}')" class="w-full flex items-center justify-center gap-2 py-2.5 border border-red-200 hover:bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors active:scale-[0.98]">
+                  <span class="material-symbols-outlined text-[16px]">flag</span>
+                  Report This Broker
+                </button>
               </div>
             `;
 
@@ -1276,6 +1292,22 @@
         }
       };
 
+      // Allow Enter to save on text inputs; Ctrl+Enter for textarea (bio)
+      ['field-name', 'field-phone', 'field-city'].forEach(id => {
+        document.getElementById(id)?.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && isEditing) {
+            e.preventDefault();
+            document.getElementById('save-btn')?.click();
+          }
+        });
+      });
+      document.getElementById('field-bio')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && isEditing) {
+          e.preventDefault();
+          document.getElementById('save-btn')?.click();
+        }
+      });
+
       document.getElementById('cancel-btn').onclick = () => {
         renderProfile(loadLocalProfile());
         setEditMode(false);
@@ -1331,7 +1363,7 @@
           } else {
             localStorage.removeItem('role');
             localStorage.removeItem('userName');
-            window.location.href = '/login.html';
+            window.navigateTo('/login.html');
           }
         }
       };
