@@ -2,6 +2,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/signup",
+      "destination": "/login.html"
+    },
+    {
       "source": "/signup.html",
       "destination": "/login.html"
     }
