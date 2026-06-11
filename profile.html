@@ -405,7 +405,7 @@
         // Saved count from localStorage or database
         let savedCount = 0;
         if (isOwnProfile && profile.role !== 'Broker') {
-          savedCount = JSON.parse(localStorage.getItem('savedListings') || '[]').length || 0;
+          savedCount = JSON.parse(localStorage.getItem('savedProperties') || '[]').length || 0;
         } else if (profile.role === 'Broker') {
           // If viewing or owning broker, savedCount is inquiries received!
           try {

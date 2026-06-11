@@ -655,7 +655,7 @@ function initAppPage() {
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (session) {
                 const userId = session.user.id;
-                const referralUrl = `${window.location.origin}/signup.html?ref=${userId}&role=broker`;
+                const referralUrl = `${window.location.origin}/login.html?ref=${userId}&role=broker`;
                 
                 const linkInput = document.getElementById('referral-link-input');
                 if (linkInput) linkInput.value = referralUrl;
