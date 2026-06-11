@@ -124,6 +124,12 @@ window.buildCardHTML = buildCardHTML;
 window.formatPrice = formatPrice;
 window.seedPropertyGrid = seedPropertyGrid;
 
-// Auto-seed on DOM ready
-document.addEventListener('DOMContentLoaded', seedPropertyGrid);
+// Only seed on pages that don't load from Supabase
+document.addEventListener('DOMContentLoaded', () => {
+  const page = window.location.pathname.split('/').pop() || 'index.html';
+  const supabasePages = ['properties.html', 'properties', 'index.html', 'index', 'map.html', 'map'];
+  if (!supabasePages.some(p => page.includes(p))) {
+    seedPropertyGrid();
+  }
+});
 
