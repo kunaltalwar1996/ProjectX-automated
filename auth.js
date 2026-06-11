@@ -216,7 +216,7 @@ async function checkAuth() {
 
     if (!session && localRole !== 'Guest' && !isLoginPage) {
         if (isGuestPage) {
-            localStorage.setItem('role', 'Guest');
+            // Allow guest access in-memory only — do NOT persist to localStorage
         } else {
             navigateTo('login.html');
             return;
@@ -226,7 +226,7 @@ async function checkAuth() {
     let role = localRole;
     if (!session && isGuestPage) {
         role = 'Guest';
-        localStorage.setItem('role', 'Guest');
+        // Do not write Guest to localStorage — session-only
     }
 
     if (session) {

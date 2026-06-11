@@ -23,6 +23,31 @@ function formatPrice(crore, intent = "Buy") {
   return `₹${(crore * 100).toFixed(0)} L`;
 }
 
+// Returns a listing-age footer row with colour-coded freshness
+function getListingAgeBadge(dateStr) {
+  const listed = new Date(dateStr);
+  const now = new Date();
+  const days = Math.floor((now - listed) / (1000 * 60 * 60 * 24));
+
+  let color;
+  if (days <= 5) color = 'text-emerald-600';
+  else if (days <= 10) color = 'text-orange-500';
+  else color = 'text-red-500';
+
+  const listedFormatted = listed.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+  const label = days === 0 ? 'NEW TODAY' : `${days} DAY${days === 1 ? '' : 'S'} OLD`;
+
+  return `
+    <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+      <div class="flex items-center gap-1.5 text-slate-400">
+        <span class="material-symbols-outlined text-[14px]">schedule</span>
+        <span class="text-[10px] font-bold uppercase tracking-widest">Listed ${listedFormatted}</span>
+      </div>
+      <span class="text-[10px] font-black uppercase tracking-widest ${color}">${label}</span>
+    </div>
+  `;
+}
+
 // Build a card HTML string from a listing object
 function buildCardHTML(l) {
   return `
@@ -59,6 +84,7 @@ function buildCardHTML(l) {
           ${l.baths > 0 ? `<div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">bathtub</span><span class="text-xs font-black text-slate-900">${l.baths}</span></div>` : ''}
           <div class="flex items-center gap-1.5"><span class="material-symbols-outlined text-[18px]">square_foot</span><span class="text-xs font-black text-slate-900">${l.sqft.toLocaleString()} <span class="font-normal text-slate-400">sqft</span></span></div>
         </div>
+        ${getListingAgeBadge(l.date)}
       </div>
     </div>
   `;
