@@ -239,6 +239,19 @@ async function checkAuth() {
             } else {
                 localStorage.setItem('role', role); // Sync for sync checks
             }
+
+            // Hydrate savedProperties from Supabase preferences on login
+            if (session) {
+                const { data: savedProfile } = await supabase
+                    .from('profiles')
+                    .select('preferences')
+                    .eq('id', session.user.id)
+                    .single();
+                const remoteSaved = savedProfile?.preferences?.saved_listings;
+                if (remoteSaved && Array.isArray(remoteSaved)) {
+                    localStorage.setItem('savedProperties', JSON.stringify(remoteSaved));
+                }
+            }
         }
     }
 
@@ -2476,7 +2489,7 @@ async function initBuyerListingsPage() {
         });
 
         const saveBtn = card.querySelector('.save-property-btn');
-        saveBtn?.addEventListener('click', (e) => {
+        saveBtn?.addEventListener('click', async (e) => {
             e.stopPropagation();
             const id = card.dataset.id;
             const index = savedProperties.indexOf(id);
@@ -2489,6 +2502,24 @@ async function initBuyerListingsPage() {
             }
             localStorage.setItem('savedProperties', JSON.stringify(savedProperties));
             syncSavedHearts();
+
+            // Sync to Supabase if logged in
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('preferences')
+                    .eq('id', session.user.id)
+                    .single();
+                const merged = {
+                    ...(profile?.preferences || {}),
+                    saved_listings: savedProperties
+                };
+                await supabase
+                    .from('profiles')
+                    .update({ preferences: merged })
+                    .eq('id', session.user.id);
+            }
         });
     });
 
@@ -2683,7 +2714,7 @@ async function initBuyerMapPage() {
     const sidebarContainer = document.querySelector('.overflow-y-auto.p-6');
     const matchesCountEl = document.querySelector('#map-listings-count');
 
-    window.toggleMapFavorite = function(e, id) {
+    window.toggleMapFavorite = async function(e, id) {
         e.stopPropagation();
         let saved = JSON.parse(localStorage.getItem('savedProperties') || '[]');
         if (saved.includes(id)) {
@@ -2694,7 +2725,25 @@ async function initBuyerMapPage() {
             showToast('Added to favorites');
         }
         localStorage.setItem('savedProperties', JSON.stringify(saved));
-        updateSidebar(); 
+        updateSidebar();
+
+        // Sync to Supabase if logged in
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('preferences')
+                .eq('id', session.user.id)
+                .single();
+            const merged = {
+                ...(profile?.preferences || {}),
+                saved_listings: saved
+            };
+            await supabase
+                .from('profiles')
+                .update({ preferences: merged })
+                .eq('id', session.user.id);
+        }
     };
 
     window.clickSidebarCard = function(id) {
