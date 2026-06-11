@@ -32,7 +32,8 @@ export default defineConfig({
         profile: 'profile.html',
         sell: 'sell.html',
         terms: 'terms.html',
-        privacy: 'privacy.html'
+        privacy: 'privacy.html',
+        staffLogin: 'staff-login.html'
       }
     }
   }
