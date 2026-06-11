@@ -1261,7 +1261,8 @@
         })
         .catch(err => {
           console.error('Failed background profile load:', err);
-          if (targetUserId) showToast('Failed to load profile.', true);
+          // Only show error toast if profile data is genuinely missing, not a render error
+          if (targetUserId && err?.message?.includes('fetch')) showToast('Failed to load profile.', true);
         });
 
       let isEditing = false;
@@ -1282,7 +1283,8 @@
         document.getElementById('save-actions').classList.toggle('hidden', !on);
       }
 
-      document.getElementById('edit-toggle-btn').onclick = () => {
+      const editToggleBtn = document.getElementById('edit-toggle-btn');
+      if (editToggleBtn) editToggleBtn.onclick = () => {
         if (isEditing) {
           // Cancel: reload cached
           renderProfile(loadLocalProfile());
@@ -1308,19 +1310,20 @@
         }
       });
 
-      document.getElementById('cancel-btn').onclick = () => {
+      const cancelBtn = document.getElementById('cancel-btn');
+      if (cancelBtn) cancelBtn.onclick = () => {
         renderProfile(loadLocalProfile());
         setEditMode(false);
       };
 
-      document.getElementById('save-btn').onclick = async () => {
-        const saveBtn = document.getElementById('save-btn');
+      const saveBtn = document.getElementById('save-btn');
+      if (saveBtn) saveBtn.onclick = async () => {
         const cancelBtn = document.getElementById('cancel-btn');
         const origText = saveBtn.textContent;
         
         try {
           saveBtn.disabled = true;
-          cancelBtn.disabled = true;
+          if (cancelBtn) cancelBtn.disabled = true;
           saveBtn.textContent = 'Saving...';
           
           const updated = await saveProfile();
@@ -1333,13 +1336,13 @@
           console.error(err);
         } finally {
           saveBtn.disabled = false;
-          cancelBtn.disabled = false;
+          if (cancelBtn) cancelBtn.disabled = false;
           saveBtn.textContent = origText;
         }
       };
 
-      document.getElementById('save-prefs-btn').onclick = async () => {
-        const savePrefsBtn = document.getElementById('save-prefs-btn');
+      const savePrefsBtn = document.getElementById('save-prefs-btn');
+      if (savePrefsBtn) savePrefsBtn.onclick = async () => {
         const origContent = savePrefsBtn.innerHTML;
         
         try {
@@ -1356,7 +1359,8 @@
         }
       };
 
-      document.getElementById('logout-btn').onclick = () => {
+      const logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) logoutBtn.onclick = () => {
         if (confirm('Are you sure you want to sign out?')) {
           if (typeof window.logout === 'function') {
             window.logout();
