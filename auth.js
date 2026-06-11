@@ -1248,9 +1248,85 @@ async function saveListingForm() {
     if (result.error) {
         showToast('Error saving listing: ' + result.error.message);
     } else {
-        showToast('Listing saved successfully.');
         await renderListings();
         closeListingModal();
+
+        // Only show share popup for NEW listings (no id means it was an insert)
+        if (!id) {
+            // Get the newly inserted listing id
+            const { data: newListing } = await supabase
+                .from('listings')
+                .select('id')
+                .eq('broker_id', (await supabase.auth.getUser()).data.user.id)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            const newId = newListing?.id;
+            const shareUrl = newId
+                ? `${window.location.origin}/property-details.html?id=${newId}`
+                : null;
+
+            // Inject popup
+            const overlay = document.createElement('div');
+            overlay.id = 'listing-success-overlay';
+            overlay.className = 'fixed inset-0 z-[300] flex items-center justify-center bg-black/50 backdrop-blur-sm';
+            overlay.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 space-y-6 text-center">
+                    <div class="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+                        <span class="material-symbols-outlined text-emerald-600 text-[28px]">check_circle</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-black text-slate-900 tracking-tight">Listing Created!</h3>
+                        <p class="text-sm text-slate-500 font-medium mt-1">Your listing <span class="font-black text-slate-900">#${newId || '—'}</span> has been submitted for review.</p>
+                    </div>
+                    ${shareUrl ? `
+                    <div class="space-y-2 text-left">
+                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shareable Link</label>
+                        <div class="flex gap-2">
+                            <input 
+                                type="text" 
+                                value="${shareUrl}" 
+                                readonly 
+                                id="listing-share-input"
+                                class="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 outline-none truncate"
+                            />
+                            <button id="listing-copy-btn" class="px-4 py-3 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-slate-800 transition-colors active:scale-95 flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[16px]">content_copy</span>
+                                Copy
+                            </button>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <button id="listing-success-close" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors active:scale-[0.98]">
+                        Done
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Copy button
+            document.getElementById('listing-copy-btn')?.addEventListener('click', () => {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    const btn = document.getElementById('listing-copy-btn');
+                    if (btn) {
+                        btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span> Copied!';
+                        btn.classList.replace('bg-slate-900', 'bg-emerald-600');
+                        setTimeout(() => {
+                            btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">content_copy</span> Copy';
+                            btn.classList.replace('bg-emerald-600', 'bg-slate-900');
+                        }, 2000);
+                    }
+                });
+            });
+
+            // Close button and backdrop
+            const closePopup = () => overlay.remove();
+            document.getElementById('listing-success-close').addEventListener('click', closePopup);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup(); });
+        } else {
+            showToast('Listing updated successfully.');
+        }
     }
 }
 
