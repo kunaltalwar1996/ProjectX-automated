@@ -739,6 +739,8 @@
         });
 
         // 6. Dynamically apply Broker POV modifications if the viewer is a Broker
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUserId = urlParams.get('id');
         if (profile.viewerRole === 'Broker' && profile.role === 'Buyer') {
           // A. Convert all Personal Information inputs/textarea into flat, premium display divs (read-only plain text)
           convertToDisplayField('field-name', profile.name);
@@ -876,7 +878,8 @@
         }
 
         // 7. Dynamically apply Buyer POV modifications if the viewer is a Buyer visiting a Broker's profile
-        if ((profile.viewerRole === 'Buyer' || localStorage.getItem('role') === 'Buyer') && profile.role === 'Broker') {
+        const viewerIsBuyer = profile.viewerRole === 'Buyer' || localStorage.getItem('role') === 'Buyer';
+        if (viewerIsBuyer && profile.role === 'Broker') {
           // A. Convert all Personal Information inputs/textarea into flat, premium display divs (read-only plain text)
           convertToDisplayField('field-name', profile.name);
           convertToDisplayField('field-email', profile.email);
