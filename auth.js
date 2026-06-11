@@ -2837,6 +2837,12 @@ async function initBuyerDetailsPage() {
         return;
     }
 
+    // Increment view count — but only if the viewer is NOT the listing owner
+    if (!isOwner) {
+        await supabase.rpc('increment_listing_views', { listing_id: id });
+        l.views = (l.views || 0) + 1;
+    }
+
     // Fetch and populate actual broker profile from Supabase
     let brokerName = 'Mehdi Ali'; // Default fallback
     let brokerRole = 'ProjectX Executive Partner';
@@ -2918,6 +2924,9 @@ async function initBuyerDetailsPage() {
         listedDateEl.textContent = age.date;
         daysOldEl.textContent = age.label || 'Listed Date';
     }
+
+    const viewsEl = document.getElementById('detail-views');
+    if (viewsEl) viewsEl.textContent = (l.views || 0).toLocaleString('en-IN');
 
     const reportBtn = document.getElementById('report-listing-btn');
     if (reportBtn) {
