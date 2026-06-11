@@ -38,8 +38,9 @@
       display: none;
     }
   </style>
-  <script type="module" crossorigin src="/assets/auth-DayTCkG1.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-C27CVGt5.css">
+  <script type="module" crossorigin src="/assets/login-C4C15irA.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-At5Rc3Z-.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
 </head>
 
 <body class="bg-background text-on-background font-body-md antialiased min-h-screen flex flex-col relative">
@@ -147,6 +148,41 @@
             of Service</a> and <a class="text-primary hover:underline font-medium" href="/privacy.html">Privacy
             Policy</a>.
         </p>
+      </div>
+    </div>
+    <!-- Referral Invite Screen -->
+    <div id="invite-screen" class="hidden w-full min-h-screen flex items-center justify-center bg-[#f8f9fa] px-6">
+      <div class="max-w-md w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-10 space-y-6 text-center">
+        <!-- a) Invite label -->
+        <p class="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">✦ You've been invited</p>
+
+        <!-- b) Referrer block -->
+        <div id="referrer-card" class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-left">
+          <!-- skeleton shown during load, replaced by JS -->
+          <div class="w-10 h-10 rounded-full bg-slate-200 animate-pulse shrink-0"></div>
+          <div class="space-y-1.5 flex-1">
+            <div class="h-3.5 w-3/4 bg-slate-200 rounded animate-pulse"></div>
+            <div class="h-3 w-1/2 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+        </div>
+
+        <!-- c) Heading -->
+        <h2 class="text-2xl font-black text-slate-900 tracking-tight">Join as a Broker on ProjectX</h2>
+
+        <!-- d) Subtext -->
+        <p class="text-sm text-slate-500 font-medium">You've been personally referred. Create your broker account to get started.</p>
+
+        <!-- e) CTA button -->
+        <button id="invite-cta-btn"
+          class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-colors shadow-lg active:scale-[0.98]">
+          Create Broker Account →
+        </button>
+
+        <!-- f) Sign in link -->
+        <p class="text-sm text-slate-400">Already have an account? <a href="/login.html" class="font-bold text-slate-900 hover:underline">Sign in</a></p>
+
+        <!-- g) Footer -->
+        <p class="text-[10px] text-slate-300 pt-4">© 2026 ProjectX · Broker invite only.</p>
       </div>
     </div>
   </main>
