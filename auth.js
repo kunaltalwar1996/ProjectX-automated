@@ -619,12 +619,12 @@ function initAppPage() {
         if (container) {
             if (currentRole === 'Guest') {
                 container.innerHTML = `
-                    <button onclick="window.location.href=window.toAppUrl('login.html')" class="text-slate-600 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider px-3 py-2">
+                    <a href="${window.toAppUrl('login.html')}" class="text-slate-600 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider px-3 py-2 inline-block">
                         Sign In
-                    </button>
-                    <button onclick="window.location.href=window.toAppUrl('login.html?mode=signup')" class="bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider shadow-sm ml-2">
+                    </a>
+                    <a href="${window.toAppUrl('login.html?mode=signup')}" class="bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider shadow-sm ml-2 inline-block">
                         Sign Up
-                    </button>
+                    </a>
                 `;
             } else if (currentRole === 'Buyer') {
                 container.innerHTML = `

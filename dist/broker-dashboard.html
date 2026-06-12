@@ -11,8 +11,22 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 
+<<<<<<< Updated upstream
   <script type="module" crossorigin src="/assets/auth-At5Rc3Z-.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
+=======
+<style>
+  .mobile-nav-btn.active-mobile-tab {
+    color: #0f172a;
+    background: #f1f5f9;
+  }
+  .mobile-nav-btn.active-mobile-tab span.material-symbols-outlined {
+    font-variation-settings: 'FILL' 1;
+  }
+</style>
+  <script type="module" crossorigin src="/assets/auth-CGSrzNei.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-C-C3CwTn.css">
+>>>>>>> Stashed changes
 </head>
 <body class="estate-admin-theme bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex">
 <!-- SideNavBar -->
@@ -71,8 +85,32 @@
             </button>
 </div>
 </nav>
+<!-- Mobile Bottom Navigation Bar -->
+<nav id="mobile-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 flex items-center justify-around px-2 py-2 safe-area-inset-bottom">
+  <button data-tab="#overview-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors active-mobile-tab">
+    <span class="material-symbols-outlined text-[22px]">dashboard</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Overview</span>
+  </button>
+  <button data-tab="#listings-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors">
+    <span class="material-symbols-outlined text-[22px]">domain</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Listings</span>
+  </button>
+  <button data-tab="#leads-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors">
+    <span class="material-symbols-outlined text-[22px]">person_search</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Leads</span>
+  </button>
+  <button data-tab="#messages-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors relative">
+    <span class="material-symbols-outlined text-[22px]">forum</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Messages</span>
+    <span id="mobile-unread-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full items-center justify-center hidden">!</span>
+  </button>
+  <button data-tab="#settings-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors">
+    <span class="material-symbols-outlined text-[22px]">settings</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Settings</span>
+  </button>
+</nav>
 <!-- Main Content Area -->
-<main class="flex-1 ml-0 md:ml-64 p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto w-full">
+<main class="flex-1 ml-0 md:ml-64 p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto w-full pb-20 md:pb-0">
     <!-- TAB: OVERVIEW -->
     <div id="tab-overview" class="tab-content block">
         <!-- Header Section -->
@@ -82,6 +120,10 @@
                 <p class="font-body-sm text-body-sm text-on-surface-variant mt-unit">Welcome back. Here is your portfolio performance.</p>
             </div>
             <div class="flex items-center gap-3">
+                <button class="md:hidden bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest flex items-center gap-1.5 active:scale-[0.98] transition-transform" onclick="openListingModal(null)">
+                  <span class="material-symbols-outlined text-[16px]">add</span>
+                  Add
+                </button>
                 <button class="p-2 border border-outline-variant rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-low transition-colors">
                     <span class="material-symbols-outlined">download</span>
                 </button>
@@ -304,16 +346,16 @@
                 <p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Real-time chat with interested buyers.</p>
             </div>
         </header>
-        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-1 overflow-hidden min-h-[500px]">
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm flex flex-col md:flex-row flex-1 overflow-hidden min-h-[500px]">
             <!-- Chat List Sidebar -->
-            <div class="w-1/3 border-r border-outline-variant flex flex-col bg-slate-50">
+            <div class="w-full md:w-1/3 border-r border-outline-variant flex flex-col bg-slate-50 md:max-h-none" id="chat-list-panel">
                 <div class="p-4 border-b border-outline-variant font-bold text-slate-700 bg-white">Conversations</div>
                 <div id="chat-list" class="flex-1 overflow-y-auto">
                     <!-- Injected by JS -->
                 </div>
             </div>
             <!-- Chat Area -->
-            <div class="w-2/3 flex flex-col bg-white relative">
+            <div class="hidden md:flex w-full md:w-2/3 flex-col bg-white relative" id="chat-area-panel">
                 <div id="chat-header" class="p-4 border-b border-outline-variant font-bold text-slate-800 flex items-center justify-between shadow-sm z-10 bg-white">
                     Select a conversation
                 </div>
@@ -402,4 +444,69 @@
         </section>
     </div>
 </main>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const mobileBtns = document.querySelectorAll('.mobile-nav-btn');
+    mobileBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const hash = btn.dataset.tab;
+        // Trigger the same sidebar link click
+        const sidebarLink = document.querySelector(`#broker-sidebar a[href="${hash}"]`);
+        if (sidebarLink) sidebarLink.click();
+        // Update active state
+        mobileBtns.forEach(b => b.classList.remove('active-mobile-tab'));
+        btn.classList.add('active-mobile-tab');
+      });
+    });
+
+    // Sync unread badge to mobile
+    const observer = new MutationObserver(() => {
+      const desktopBadge = document.getElementById('unread-messages-badge');
+      const mobileBadge = document.getElementById('mobile-unread-badge');
+      if (!desktopBadge || !mobileBadge) return;
+      if (desktopBadge.classList.contains('hidden')) {
+        mobileBadge.classList.add('hidden');
+        mobileBadge.classList.remove('flex');
+      } else {
+        mobileBadge.classList.remove('hidden');
+        mobileBadge.classList.add('flex');
+      }
+    });
+    const desktopBadge = document.getElementById('unread-messages-badge');
+    if (desktopBadge) observer.observe(desktopBadge, { attributes: true, attributeFilter: ['class'] });
+
+    // On mobile, tapping a chat conversation shows the chat area and hides the list
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('#chat-list .cursor-pointer');
+      if (!card) return;
+      const isMobile = window.innerWidth < 768;
+      if (!isMobile) return;
+      const listPanel = document.getElementById('chat-list-panel');
+      const chatPanel = document.getElementById('chat-area-panel');
+      if (listPanel && chatPanel) {
+        listPanel.classList.add('hidden');
+        chatPanel.classList.remove('hidden');
+        chatPanel.classList.add('flex');
+      }
+    });
+
+    // Back button in chat header on mobile
+    const chatHeader = document.getElementById('chat-header');
+    if (chatHeader) {
+      const backBtn = document.createElement('button');
+      backBtn.className = 'md:hidden mr-2 text-slate-500 hover:text-slate-900 flex items-center';
+      backBtn.innerHTML = '<span class="material-symbols-outlined text-[20px]">arrow_back</span>';
+      backBtn.onclick = () => {
+        const listPanel = document.getElementById('chat-list-panel');
+        const chatPanel = document.getElementById('chat-area-panel');
+        if (listPanel && chatPanel) {
+          listPanel.classList.remove('hidden');
+          chatPanel.classList.add('hidden');
+          chatPanel.classList.remove('flex');
+        }
+      };
+      chatHeader.prepend(backBtn);
+    }
+  });
+</script>
 </body></html>
