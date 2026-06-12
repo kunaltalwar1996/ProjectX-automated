@@ -230,7 +230,7 @@ async function checkAuth() {
     }
 
     if (session) {
-        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).maybeSingle();
         if (profile) {
             role = profile.role;
             const activeRole = localStorage.getItem('role');
@@ -548,13 +548,25 @@ function initAppPage() {
                         if (error) throw error;
 
                         // Fetch profile to get role
-                        const { data: profile, error: profileError } = await supabase
+                        let { data: profile, error: profileError } = await supabase
                             .from('profiles')
                             .select('role, full_name')
                             .eq('id', data.user.id)
-                            .single();
+                            .maybeSingle();
                         
                         if (profileError) throw profileError;
+
+                        // Auto-create profile if missing (e.g. from a previously failed sign-up)
+                        if (!profile) {
+                            const profileData = {
+                                id: data.user.id,
+                                full_name: email.split('@')[0], // fallback name
+                                role: selectedRole
+                            };
+                            const { error: insertError } = await supabase.from('profiles').insert(profileData);
+                            if (insertError) throw insertError;
+                            profile = profileData;
+                        }
 
                         let matched = (profile.role === selectedRole);
                         if (!matched && profile.role === 'Admin' && (selectedRole === 'Broker' || selectedRole === 'Employee' || selectedRole === 'Admin')) {
@@ -596,27 +608,39 @@ function initAppPage() {
 
     // ── Global Header Visibility ──
     updateHeaderVisibility = function() {
-        const currentRole = localStorage.getItem('role') || 'Guest';
+        let currentRoleRaw = localStorage.getItem('role') || 'Guest';
+        let currentRole = currentRoleRaw;
+        if (currentRoleRaw) {
+            currentRole = currentRoleRaw.charAt(0).toUpperCase() + currentRoleRaw.slice(1).toLowerCase();
+        }
         const isStaff = ['Admin', 'Employee', 'Broker'].includes(currentRole);
         
-        // Find the trailing actions container by looking for the standard navigation items
-        const accountIcon = Array.from(document.querySelectorAll('.material-symbols-outlined')).find(el => 
-            el.textContent.trim() === 'account_circle' || 
-            el.textContent.trim() === 'logout'
-        );
-        let container = accountIcon ? accountIcon.closest('.flex.items-center.gap-4') : null;
-        
-        // Fallback query if standard icon isn't found (e.g. already replaced with Sign In button)
-        if (!container) {
-            const signInBtn = Array.from(document.querySelectorAll('button, a')).find(el => 
-                el.textContent.trim().includes('Sign In') || el.textContent.trim().includes('Sign Up')
-            );
-            if (signInBtn) {
-                container = signInBtn.closest('.flex.items-center.gap-4');
+        // Find all trailing actions containers
+        const containers = [];
+        const accountIcons = document.querySelectorAll('.material-symbols-outlined');
+        accountIcons.forEach(el => {
+            if (el.textContent.trim() === 'account_circle' || el.textContent.trim() === 'logout') {
+                const c = el.closest('.items-center.gap-4') || el.closest('#mobile-trailing-actions');
+                if (c && !containers.includes(c)) containers.push(c);
             }
+        });
+        
+        // Fallback query if standard icon isn't found
+        if (containers.length === 0) {
+            const signInBtns = document.querySelectorAll('button, a');
+            signInBtns.forEach(el => {
+                if (el.textContent.trim().includes('Sign In') || el.textContent.trim().includes('Sign Up')) {
+                    const c = el.closest('.items-center.gap-4') || el.closest('#mobile-trailing-actions');
+                    if (c && !containers.includes(c)) containers.push(c);
+                }
+            });
         }
+        
+        // Also manually add the mobile container if empty
+        const mobileContainer = document.getElementById('mobile-trailing-actions');
+        if (mobileContainer && !containers.includes(mobileContainer)) containers.push(mobileContainer);
 
-        if (container) {
+        containers.forEach(container => {
             if (currentRole === 'Guest') {
                 container.innerHTML = `
                     <a href="${window.toAppUrl('login.html')}" class="text-slate-600 hover:text-slate-900 transition-colors font-bold text-xs uppercase tracking-wider px-3 py-2 inline-block">
@@ -645,7 +669,7 @@ function initAppPage() {
                     </button>
                 `;
             }
-        }
+        });
     }
 
     updateHeaderVisibility();
@@ -791,20 +815,79 @@ function initAppPage() {
                     listings = listings.filter(l => l.broker_id === user.id);
                 }
                 const inquiries = await getInquiries();
-                const report = {
-                    generatedAt: new Date().toISOString(),
-                    broker: localStorage.getItem('userName') || 'Broker',
-                    listings: listings,
-                    inquiries: inquiries
-                };
-                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const brokerName = localStorage.getItem('userName') || 'Broker';
+                const generatedAt = new Date().toLocaleString('en-IN');
+
+                // Build Excel-compatible CSV content for two sheets via HTML table format
+                // Using Excel XML Spreadsheet format for native .xls support
+                const xmlHeader = `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">`;
+
+                const xmlFooter = `</Workbook>`;
+
+                const escXml = (val) => String(val ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+                const makeSheet = (name, headers, rows) => `
+  <Worksheet ss:Name="${escXml(name)}">
+    <Table>
+      <Row>${headers.map(h => `<Cell><Data ss:Type="String">${escXml(h)}</Data></Cell>`).join('')}</Row>
+      ${rows.map(row => `<Row>${row.map(cell => `<Cell><Data ss:Type="String">${escXml(cell)}</Data></Cell>`).join('')}</Row>`).join('')}
+    </Table>
+  </Worksheet>`;
+
+                const listingHeaders = ['ID', 'Title', 'Location', 'Price (Cr)', 'Intent', 'Type', 'Status', 'Beds', 'Baths', 'SqFt', 'Views', 'Listed On'];
+                const listingRows = listings.map(l => [
+                    l.id,
+                    l.title,
+                    l.location,
+                    l.price,
+                    l.intent,
+                    l.type,
+                    l.status,
+                    l.beds,
+                    l.baths,
+                    l.sqft,
+                    l.views || 0,
+                    l.created_at ? new Date(l.created_at).toLocaleDateString('en-IN') : '—'
+                ]);
+
+                const inquiryHeaders = ['ID', 'Name', 'Message', 'Type', 'Read', 'Broker Reply', 'Received At'];
+                const inquiryRows = inquiries.map(i => [
+                    i.id,
+                    i.name,
+                    i.message,
+                    i.type,
+                    i.read ? 'Yes' : 'No',
+                    i.broker_reply || '',
+                    i.created_at ? new Date(i.created_at).toLocaleDateString('en-IN') : '—'
+                ]);
+
+                const summaryHeaders = ['Field', 'Value'];
+                const summaryRows = [
+                    ['Broker', brokerName],
+                    ['Generated At', generatedAt],
+                    ['Total Listings', listings.length],
+                    ['Total Inquiries', inquiries.length],
+                    ['Total Views', listings.reduce((sum, l) => sum + (l.views || 0), 0)],
+                ];
+
+                const xmlContent = [
+                    xmlHeader,
+                    makeSheet('Summary', summaryHeaders, summaryRows),
+                    makeSheet('Listings', listingHeaders, listingRows),
+                    makeSheet('Inquiries', inquiryHeaders, inquiryRows),
+                    xmlFooter
+                ].join('\n');
+
+                const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'estatepro-broker-report.json';
+                a.download = `estatepro-broker-report-${new Date().toISOString().slice(0,10)}.xls`;
                 a.click();
                 URL.revokeObjectURL(url);
-                showToast('Portfolio report downloaded.');
+                showToast('Portfolio report exported as Excel.');
             });
         }
 
@@ -942,6 +1025,47 @@ async function initListingsManager() {
     injectListingModal();
 }
 
+function updateTrendBadge(items, elementId, dateField = 'created_at', valueField = null) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    const now = new Date();
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+    let current = 0;
+    let previous = 0;
+
+    items.forEach(item => {
+        const date = new Date(item[dateField]);
+        const val = valueField ? (item[valueField] || 0) : 1;
+        if (date >= startOfThisMonth) {
+            current += val;
+        } else if (date >= startOfLastMonth && date <= endOfLastMonth) {
+            previous += val;
+        }
+    });
+
+    let percentage = 0;
+    if (previous === 0) {
+        percentage = current > 0 ? 100 : 0;
+    } else {
+        percentage = ((current - previous) / previous) * 100;
+    }
+
+    const isPositive = percentage >= 0;
+    const absVal = Math.abs(percentage).toFixed(1);
+    
+    if (isPositive) {
+        el.className = 'flex items-center text-secondary font-body-sm text-body-sm bg-secondary-container px-2 py-0.5 rounded-full';
+        el.innerHTML = `<span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>${absVal}%`;
+    } else {
+        el.className = 'flex items-center text-error font-body-sm text-body-sm bg-error-container px-2 py-0.5 rounded-full';
+        el.innerHTML = `<span class="material-symbols-outlined text-[14px] mr-1">trending_down</span>${absVal}%`;
+    }
+}
+
 async function renderListings() {
     const { data: { user } } = await supabase.auth.getUser();
     let listings = await getListings();
@@ -962,6 +1086,10 @@ async function renderListings() {
     if (listingsCountEl) {
         listingsCountEl.textContent = listings.length.toLocaleString();
     }
+    
+    // Update KPI trend badges
+    updateTrendBadge(listings, 'stat-views-trend', 'created_at', 'views');
+    updateTrendBadge(listings, 'stat-listings-trend', 'created_at');
     
     // Render widget (max 3)
     const tbodyWidget = document.getElementById('listings-tbody-widget');
@@ -1310,6 +1438,20 @@ async function saveListingForm() {
                             </button>
                         </div>
                     </div>
+                    <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-center gap-4">
+                        <a href="https://api.whatsapp.com/send?text=${encodeURIComponent('Check out this property: ' + shareUrl)}" target="_blank" class="w-10 h-10 rounded-full bg-[#25D366]/10 text-[#25D366] flex items-center justify-center hover:bg-[#25D366]/20 transition-colors" title="Share on WhatsApp">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.127.555 4.195 1.613 6.015L.175 23.364l5.474-1.436c1.758.966 3.743 1.478 5.795 1.478 6.643 0 12.031-5.385 12.031-12.031S18.675 0 12.031 0zm3.844 17.202c-.174.492-.988.948-1.393 1.011-.34.053-.8.113-2.392-.511-1.926-.754-3.16-2.73-3.21-2.798-.052-.066-.766-1.02-.766-1.944 0-.923.483-1.378.653-1.564.168-.184.364-.23.485-.23.123 0 .245.006.353.012.115.005.27-.044.422.324.16.388.544 1.328.594 1.428.05.101.084.218.017.35-.067.133-.102.215-.203.334-.1.118-.21.258-.3.354-.102.108-.207.228-.09.431.115.203.513.85 1.101 1.377.758.681 1.402.893 1.603.993.203.102.321.084.441-.053.118-.135.513-.598.651-.803.138-.204.275-.17.46-.102.185.068 1.171.552 1.371.652.203.1.338.153.388.236.05.084.05.485-.124.977z"/></svg>
+                        </a>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}" target="_blank" class="w-10 h-10 rounded-full bg-[#1877F2]/10 text-[#1877F2] flex items-center justify-center hover:bg-[#1877F2]/20 transition-colors" title="Share on Facebook">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent('Check out this amazing property listing!')}" target="_blank" class="w-10 h-10 rounded-full bg-[#1DA1F2]/10 text-[#1DA1F2] flex items-center justify-center hover:bg-[#1DA1F2]/20 transition-colors" title="Share on X (Twitter)">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 22.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.005 4.15H5.059z"/></svg>
+                        </a>
+                        <a href="mailto:?subject=Check out this property listing&body=${encodeURIComponent('Here is a great property listing I thought you might like: ' + shareUrl)}" class="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-200 transition-colors" title="Share via Email">
+                            <span class="material-symbols-outlined text-[20px]">mail</span>
+                        </a>
+                    </div>
                     ` : ''}
                     <button id="listing-success-close" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-800 transition-colors active:scale-[0.98]">
                         Done
@@ -1319,23 +1461,24 @@ async function saveListingForm() {
             document.body.appendChild(overlay);
 
             // Copy button
-            document.getElementById('listing-copy-btn')?.addEventListener('click', () => {
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    const btn = document.getElementById('listing-copy-btn');
-                    if (btn) {
-                        btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span> Copied!';
-                        btn.classList.replace('bg-slate-900', 'bg-emerald-600');
+            const copyBtn = overlay.querySelector('#listing-copy-btn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(shareUrl).then(() => {
+                        copyBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">check</span> Copied!';
+                        copyBtn.classList.replace('bg-slate-900', 'bg-emerald-600');
                         setTimeout(() => {
-                            btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">content_copy</span> Copy';
-                            btn.classList.replace('bg-emerald-600', 'bg-slate-900');
+                            copyBtn.innerHTML = '<span class="material-symbols-outlined text-[16px]">content_copy</span> Copy';
+                            copyBtn.classList.replace('bg-emerald-600', 'bg-slate-900');
                         }, 2000);
-                    }
+                    });
                 });
-            });
+            }
 
             // Close button and backdrop
             const closePopup = () => overlay.remove();
-            document.getElementById('listing-success-close').addEventListener('click', closePopup);
+            const closeBtn = overlay.querySelector('#listing-success-close');
+            if (closeBtn) closeBtn.addEventListener('click', closePopup);
             overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup(); });
         } else {
             showToast('Listing updated successfully.');
@@ -1642,6 +1785,9 @@ async function renderInquiries() {
     if (contactsEl) {
         contactsEl.textContent = inquiries.length.toLocaleString();
     }
+    
+    // Update KPI trend badge for leads
+    updateTrendBadge(inquiries, 'stat-leads-trend', 'created_at');
 
     const unreadCount = inquiries.filter(i => !i.read).length;
     const badge = document.getElementById('new-inquiries-badge');
