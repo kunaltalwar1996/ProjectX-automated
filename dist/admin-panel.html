@@ -11,19 +11,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 
 
-<<<<<<< Updated upstream
-  <script type="module" crossorigin src="/assets/adminPanel-4RMpZU6l.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/auth-At5Rc3Z-.js">
-  <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
-=======
-  <script type="module" crossorigin src="/assets/adminPanel-DOxx5Wb9.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/auth-CGSrzNei.js">
-  <link rel="stylesheet" crossorigin href="/assets/style-C-C3CwTn.css">
->>>>>>> Stashed changes
+  <script type="module" crossorigin src="/assets/adminPanel-CWvG0tut.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-B5j3y_3m.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-BnzbAXZf.css">
 </head>
-<body class="bg-background text-on-background font-body-md antialiased flex min-h-screen">
+<body class="estate-admin-theme bg-background text-on-background font-body-md antialiased flex flex-col md:flex-row min-h-screen">
+<!-- Mobile Sidebar Backdrop -->
+<div id="mobile-sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-[55] hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
+
 <!-- SideNavBar (Generated from JSON Anchor) -->
-<aside class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-['Outfit'] text-sm font-medium h-screen w-64 border-r fixed left-0 top-0 border-r border-slate-200 dark:border-slate-800 flex flex-col p-4 gap-2 z-40 transition-all duration-200 ease-in-out">
+<aside class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-['Outfit'] text-sm font-medium h-screen w-64 border-r fixed left-0 top-0 border-slate-200 dark:border-slate-800 flex flex-col p-4 gap-2 z-[60] transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0">
 <!-- Header -->
 <div class="flex items-center gap-3 mb-6 px-2 pt-2">
 <div class="w-10 h-10 rounded-full overflow-hidden border border-slate-200 flex-shrink-0">
@@ -37,7 +34,7 @@
 <!-- Main Navigation -->
 <nav class="flex-1 flex flex-col gap-1">
 <!-- Active Tab: Overview (Mappings: Dashboard/Analytics Intent) -->
-<a class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out" href="/admin-panel.html">
+<a class="bg-surface-container-lowest dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out" href="/admin-panel.html">
 <span class="material-symbols-outlined text-[20px]" data-icon="dashboard">dashboard</span>
                 Overview
             </a>
@@ -55,13 +52,8 @@
             </a>
 <a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out flex justify-between" href="/employee-panel.html">
 <div class="flex items-center gap-3">
-<<<<<<< Updated upstream
 <span class="material-symbols-outlined text-[20px]" data-icon="support_agent">support_agent</span>
                     Employee Panel
-=======
-<span class="material-symbols-outlined text-[20px]" data-icon="forum">forum</span>
-                    Messages
->>>>>>> Stashed changes
                 </div>
 </a>
 <a class="text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 px-3 py-2.5 transition-all duration-200 ease-in-out" href="/admin-panel.html">
@@ -81,13 +73,25 @@
             </a>
 </div>
 </aside>
+
+<!-- Mobile Top Header -->
+<header class="md:hidden sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center justify-between px-4 py-3">
+    <div class="flex items-center gap-2">
+        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" alt="Profile" class="w-8 h-8 rounded-full object-cover">
+        <span class="font-bold text-slate-900 dark:text-white text-sm">Premier Realty</span>
+    </div>
+    <button id="mobile-menu-btn" class="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800 p-2 rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-[20px]">menu</span>
+    </button>
+</header>
+
 <!-- Main Canvas -->
-<main class="flex-1 ml-64 p-margin-desktop bg-background min-h-screen">
+<main class="flex-1 ml-0 md:ml-64 p-margin-mobile md:p-margin-desktop bg-background min-h-screen">
 <div class="max-w-container-max mx-auto">
 <!-- Page Header -->
 <header class="flex flex-col md:flex-row md:items-end justify-between gap-stack-md mb-stack-lg border-b border-outline-variant pb-stack-sm">
 <div>
-<h1 class="font-h1 text-h1 text-on-background">System Administration</h1>
+<h1 class="text-3xl md:text-h1 font-h1 text-on-background">System Administration</h1>
 <p class="font-body-lg text-body-lg text-on-surface-variant mt-unit">Manage users, oversee broker verification, and monitor platform integrity.</p>
 </div>
 <div class="flex items-center gap-stack-sm">
@@ -95,17 +99,10 @@
 <span class="material-symbols-outlined text-[18px]">download</span>
                         Export Log
                     </button>
-<<<<<<< Updated upstream
-=======
-<button class="bg-primary text-on-primary rounded-lg px-4 py-2 font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2">
-<span class="material-symbols-outlined text-[18px]">security_update_good</span>
-                        Force Sync
-                    </button>
->>>>>>> Stashed changes
 </div>
 </header>
 <!-- Grid Layout -->
-<div class="grid grid-cols-12 gap-gutter">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
 <!-- Section 1: Site-wide Analytics (Bento Cards) -->
 <div class="col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-stack-lg">
 <!-- Metric Card 1 -->
@@ -208,7 +205,6 @@ Loading platform user profiles...
 </div>
 <span class="bg-primary text-on-primary font-label-caps text-[10px] px-2 py-0.5 rounded-full" id="active-listings-badge">... Active</span>
 </div>
-<<<<<<< Updated upstream
 <div class="px-stack-md pt-stack-sm flex flex-wrap gap-2 border-b border-outline-variant pb-2 bg-surface-container-low">
   <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
   <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
@@ -244,10 +240,7 @@ Loading platform user profiles...
       </tbody>
     </table>
   </div>
-=======
-<div class="p-stack-md flex flex-col gap-stack-sm flex-1" id="listings-moderation-list">
-<div class="text-center py-8 text-on-surface-variant text-sm">Loading recent listings...</div>
->>>>>>> Stashed changes
+</div>
 </div>
 </div>
 </div>
@@ -262,6 +255,7 @@ Loading platform user profiles...
 <div class="p-stack-md flex flex-col gap-stack-lg" id="platform-breakdown-container">
 <!-- Will be populated dynamically -->
 <div class="text-center py-8 text-on-surface-variant text-sm">Loading composition...</div>
+</div>
 </div>
 </div>
 </div>
@@ -305,4 +299,27 @@ Loading platform user profiles...
   </div>
 </div>
 
+<!-- Remarks Modal -->
+<div id="admin-remarks-modal" class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-outline-variant animate-fade-in">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+      <h3 class="font-h3 text-h3 text-primary font-bold text-base" id="admin-remarks-modal-title">Change Status Remarks</h3>
+      <button onclick="closeAdminRemarksModal()" class="text-slate-400 hover:text-slate-700 transition-colors flex items-center justify-center">
+        <span class="material-symbols-outlined text-[24px]">close</span>
+      </button>
+    </div>
+    <div class="p-6">
+      <p class="text-xs text-slate-500 mb-4 font-medium" id="admin-remarks-modal-desc">Please provide remarks/reason for this status change.</p>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Remarks *</label>
+        <textarea id="admin-remarks-input" placeholder="e.g. Rejecting because of incomplete property photos." class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent h-24 resize-none font-medium text-slate-700"></textarea>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+      <button onclick="closeAdminRemarksModal()" class="px-5 py-2 rounded-lg border border-outline-variant text-on-surface-variant text-xs font-medium hover:bg-surface-container transition-colors">Cancel</button>
+      <button id="submit-admin-remarks-btn" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors">Submit</button>
+    </div>
+  </div>
+</div>
+
 </body></html>

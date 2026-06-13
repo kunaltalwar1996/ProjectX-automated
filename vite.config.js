@@ -33,7 +33,8 @@ export default defineConfig({
         sell: 'sell.html',
         terms: 'terms.html',
         privacy: 'privacy.html',
-        staffLogin: 'staff-login.html'
+        staffLogin: 'staff-login.html',
+        sitemap: 'sitemap.html'
       }
     }
   }

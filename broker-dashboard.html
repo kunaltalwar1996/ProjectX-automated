@@ -61,6 +61,13 @@
     </div>
     <span id="unread-messages-badge" class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden">0</span>
 </a>
+<a id="nav-notifications" class="flex items-center justify-between px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors w-full" href="#notifications-section">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+        Notifications
+    </div>
+    <span id="unread-notifications-badge" class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden">0</span>
+</a>
 <a id="nav-settings" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors" href="#settings-section">
 <span class="material-symbols-outlined text-[20px]">settings</span>
             Settings
@@ -101,6 +108,11 @@
     <span class="material-symbols-outlined text-[22px]">forum</span>
     <span class="text-[9px] font-black uppercase tracking-widest">Messages</span>
     <span id="mobile-unread-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full items-center justify-center hidden">!</span>
+  </button>
+  <button data-tab="#notifications-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors relative">
+    <span class="material-symbols-outlined text-[22px]">notifications</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Alerts</span>
+    <span id="mobile-unread-notifications-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full items-center justify-center hidden">!</span>
   </button>
   <button data-tab="#settings-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors">
     <span class="material-symbols-outlined text-[22px]">settings</span>
@@ -412,6 +424,27 @@
             <p class="font-body-sm text-body-sm text-on-surface-variant">
                 Your active inventory is receiving steady visibility. Focus follow-up on high-intent inquiries in premium neighborhoods for better close rates.
             </p>
+        </section>
+    </div>
+
+    <!-- TAB: NOTIFICATIONS -->
+    <div id="tab-notifications" class="tab-content hidden">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-stack-lg gap-4">
+            <div>
+                <h1 class="font-h2 text-h2 text-primary">Notifications</h1>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-unit">Stay updated on your listing reviews and status changes.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="mark-all-read-btn" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 active:scale-95">
+                    <span class="material-symbols-outlined text-[16px]">done_all</span>
+                    Mark all as read
+                </button>
+            </div>
+        </header>
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 md:p-6">
+            <div id="notifications-list-container" class="flex flex-col gap-4">
+                <div class="text-center text-slate-400 py-10 font-medium">Loading notifications...</div>
+            </div>
         </section>
     </div>
 

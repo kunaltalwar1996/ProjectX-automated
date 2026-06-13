@@ -11,14 +11,9 @@
   <link href="https://fonts.googleapis.com" rel="preconnect" />
   <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap"
-    rel="stylesheet" />
-<<<<<<< Updated upstream
-  <script type="module" crossorigin src="/assets/auth-At5Rc3Z-.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
-=======
-  <script type="module" crossorigin src="/assets/auth-CGSrzNei.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-C-C3CwTn.css">
->>>>>>> Stashed changes
+    rel="stylesheet" />
+  <script type="module" crossorigin src="/assets/auth-B5j3y_3m.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-BnzbAXZf.css">
 </head>
 
 <body class="bg-[#f8f9fa] text-slate-900 font-['Outfit'] antialiased min-h-screen flex flex-col">
@@ -32,16 +27,28 @@
       <!-- Navigation Links -->
       <div class="hidden md:flex items-center gap-8">
         <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-          href="/properties.html?intent=Buy">Buy</a>
-        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-          href="/properties.html?intent=Rent">Rent</a>
-        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-          href="/map.html">Map View</a>
-        <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-          href="/sell.html">Sell</a>
+          href="/map.html">Search Your Home</a>
+
+        <!-- Services Dropdown -->
+        <div class="relative group">
+          <button class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1 flex items-center gap-1">
+            Services
+            <span class="material-symbols-outlined text-[16px]">expand_more</span>
+          </button>
+          <div class="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+            <a href="/sell.html" class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+              <span class="material-symbols-outlined text-[18px] text-slate-400">sell</span>
+              Sell Property
+            </a>
+            <a href="/sell.html" class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors border-t border-slate-100">
+              <span class="material-symbols-outlined text-[18px] text-slate-400">home</span>
+              Rent Your Property
+            </a>
+          </div>
+        </div>
       </div>
-      <!-- Trailing Actions -->
-      <div class="flex items-center gap-4">
+      <!-- Trailing Actions (Desktop) -->
+      <div class="hidden md:flex items-center gap-4">
         <button class="text-slate-500 hover:text-slate-900 transition-colors">
           <span class="material-symbols-outlined text-[24px]">account_circle</span>
         </button>
@@ -50,6 +57,11 @@
           Dashboard
         </button>
       </div>
+
+      <!-- Mobile Menu Toggle -->
+      <button onclick="toggleMobileMenu()" class="md:hidden flex items-center justify-center text-slate-900 hover:text-slate-600 transition-colors">
+        <span class="material-symbols-outlined text-[28px]">menu</span>
+      </button>
     </div>
   </nav>
 
@@ -358,6 +370,43 @@
       </div>
     </div>
   </footer>
-</body>
 
+  <!-- Mobile Menu Backdrop -->
+  <div id="mobile-menu-backdrop" class="fixed inset-0 bg-slate-900/50 z-[60] hidden opacity-0 transition-opacity duration-300 md:hidden" onclick="toggleMobileMenu()"></div>
+
+  <!-- Mobile Menu -->
+  <nav id="mobile-menu" class="fixed right-0 top-0 bottom-0 w-64 bg-white z-[70] shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col p-6 md:hidden">
+    <div class="flex items-center justify-between mb-8">
+      <span class="text-xl font-black tracking-tighter text-slate-900">Menu</span>
+      <button onclick="toggleMobileMenu()" class="text-slate-500 hover:text-slate-900">
+        <span class="material-symbols-outlined text-[28px]">close</span>
+      </button>
+    </div>
+    <div class="flex flex-col gap-6">
+      <a class="text-sm font-bold text-slate-700 hover:text-slate-900 uppercase tracking-widest" href="/properties.html?intent=Buy">Buy</a>
+      <a class="text-sm font-bold text-slate-700 hover:text-slate-900 uppercase tracking-widest" href="/properties.html?intent=Rent">Rent</a>
+      <a class="text-sm font-bold text-slate-700 hover:text-slate-900 uppercase tracking-widest" href="/map.html">Map View</a>
+      <a class="text-sm font-bold text-slate-700 hover:text-slate-900 uppercase tracking-widest" href="/sell.html">Sell</a>
+    </div>
+    <div class="mt-auto pt-8 border-t border-slate-100 flex flex-col gap-4" id="mobile-trailing-actions">
+      <!-- Injected by auth.js -->
+    </div>
+  </nav>
+
+  <script>
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const backdrop = document.getElementById('mobile-menu-backdrop');
+      if (menu.classList.contains('translate-x-full')) {
+        menu.classList.remove('translate-x-full');
+        backdrop.classList.remove('hidden');
+        setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+      } else {
+        menu.classList.add('translate-x-full');
+        backdrop.classList.add('opacity-0');
+        setTimeout(() => backdrop.classList.add('hidden'), 300);
+      }
+    }
+  </script>
+</body>
 </html>

@@ -14,18 +14,16 @@
 <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
-<<<<<<< Updated upstream
-  <script type="module" crossorigin src="/assets/employeePanel-L3BEpC8r.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/auth-At5Rc3Z-.js">
-  <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
-=======
-  <script type="module" crossorigin src="/assets/auth-CGSrzNei.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-C-C3CwTn.css">
->>>>>>> Stashed changes
+  <script type="module" crossorigin src="/assets/employeePanel-KCWsNWmv.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/auth-B5j3y_3m.js">
+  <link rel="stylesheet" crossorigin href="/assets/style-BnzbAXZf.css">
 </head>
-<body class="bg-background text-on-background antialiased min-h-screen flex">
+<body class="estate-admin-theme bg-background text-on-background antialiased min-h-screen flex flex-col md:flex-row">
+<!-- Mobile Sidebar Backdrop -->
+<div id="mobile-sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-[55] hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
+
 <!-- SideNavBar (Shared Component) -->
-<nav class="h-screen w-64 border-r fixed left-0 top-0 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-['Outfit'] text-sm font-medium z-40 flex flex-col justify-between">
+<nav class="h-screen w-64 border-r fixed left-0 top-0 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-['Outfit'] text-sm font-medium z-[60] flex flex-col justify-between transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0">
 <div class="flex flex-col p-4 gap-2">
 <!-- Header -->
 <div class="flex items-center gap-3 px-3 py-4 mb-4">
@@ -39,9 +37,8 @@
 </div>
 <!-- Navigation Links -->
 <div class="flex flex-col gap-1">
-<<<<<<< Updated upstream
 <!-- ACTIVE TAB: Overview -->
-<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
+<a class="flex items-center gap-3 px-3 py-2 bg-surface-container-lowest dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
 <span class="material-symbols-outlined">dashboard</span>
 <span>Overview</span>
 </a>
@@ -50,18 +47,6 @@
 <span>Listings</span>
 </a>
 <a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/properties.html">
-=======
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
-<span class="material-symbols-outlined">dashboard</span>
-<span>Overview</span>
-</a>
-<!-- ACTIVE TAB: Listings -->
-<a class="flex items-center gap-3 px-3 py-2 bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
-<span class="material-symbols-outlined">domain</span>
-<span>Listings</span>
-</a>
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
->>>>>>> Stashed changes
 <span class="material-symbols-outlined">person_search</span>
 <span>Leads</span>
 </a>
@@ -69,11 +54,7 @@
 <span class="material-symbols-outlined">insights</span>
 <span>Analytics</span>
 </a>
-<<<<<<< Updated upstream
 <a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html#support-tickets-section">
-=======
-<a class="flex items-center gap-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/employee-panel.html">
->>>>>>> Stashed changes
 <span class="material-symbols-outlined">forum</span>
 <span>Messages</span>
 </a>
@@ -81,13 +62,10 @@
 <span class="material-symbols-outlined">settings</span>
 <span>Settings</span>
 </a>
-<<<<<<< Updated upstream
 <a id="admin-panel-link" class="hidden items-center gap-3 px-3 py-2 text-red-600 dark:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg transition-all duration-200 ease-in-out hover:bg-slate-100 dark:hover:bg-slate-800" href="/admin-panel.html">
 <span class="material-symbols-outlined">admin_panel_settings</span>
 <span>Admin Panel</span>
 </a>
-=======
->>>>>>> Stashed changes
 </div>
 <!-- CTA -->
 <div class="mt-6 px-3">
@@ -109,8 +87,20 @@
 </a>
 </div>
 </nav>
+
+<!-- Mobile Top Header -->
+<header class="md:hidden sticky top-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 z-40 flex items-center justify-between px-4 py-3">
+    <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-[24px]">real_estate_agent</span>
+        <span class="font-bold text-slate-900 dark:text-white text-sm">Premier Realty</span>
+    </div>
+    <button id="mobile-menu-btn" class="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors bg-slate-100 dark:bg-slate-800 p-2 rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-[20px]">menu</span>
+    </button>
+</header>
+
 <!-- Main Content Area -->
-<main class="ml-64 flex-1 p-margin-desktop bg-background min-h-screen">
+<main class="flex-1 ml-0 md:ml-64 p-margin-mobile md:p-margin-desktop bg-background min-h-screen">
 <div class="max-w-[1400px] mx-auto flex flex-col gap-gutter">
 <!-- Page Header -->
 <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-outline-variant pb-6">
@@ -127,24 +117,30 @@
 </header>
 <!-- Bento Grid Layout -->
 <div class="grid grid-cols-1 xl:grid-cols-3 gap-gutter">
-<<<<<<< Updated upstream
-=======
-<!-- Listings Review Queue (Spans 2 columns) -->
->>>>>>> Stashed changes
 <section class="xl:col-span-2 flex flex-col gap-stack-md bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-lg shadow-sm">
 <div class="flex justify-between items-center mb-2">
 <h2 class="font-h3 text-h3 text-on-background flex items-center gap-2">
 <span class="material-symbols-outlined text-outline">fact_check</span>
                             Listings Review Queue
                         </h2>
-<<<<<<< Updated upstream
 <span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md" id="pending-count-badge">... Pending</span>
 </div>
-<div class="flex flex-wrap gap-2 border-b border-outline-variant pb-3 mb-2 bg-surface-container-lowest">
-  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
-  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
-  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Active">Active</button>
-  <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Flagged">Flagged</button>
+<div class="flex flex-col gap-3 border-b border-outline-variant pb-4 mb-2 bg-surface-container-lowest">
+  <!-- Status Filter Row -->
+  <div class="flex flex-wrap gap-2 items-center">
+    <span class="text-xs font-semibold text-slate-500 mr-1 font-body-sm">Status:</span>
+    <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-status="All">All</button>
+    <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Pending">Pending</button>
+    <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Active">Active</button>
+    <button class="status-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-status="Flagged">Flagged</button>
+  </div>
+  <!-- Assignment Filter Row -->
+  <div class="flex flex-wrap gap-2 items-center">
+    <span class="text-xs font-semibold text-slate-500 mr-1 font-body-sm">Assignment:</span>
+    <button class="assign-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-slate-900 text-white transition-colors" data-assign="All">All</button>
+    <button class="assign-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-assign="Me">My Assignments</button>
+    <button class="assign-filter-tab px-3 py-1.5 text-xs font-bold rounded-full bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors" data-assign="Unassigned">Unassigned</button>
+  </div>
 </div>
 <div id="listings-review-queue-list" class="flex flex-col gap-4">
   <div class="text-center py-8 text-on-surface-variant text-sm">Loading review queue...</div>
@@ -178,75 +174,11 @@
         </tbody>
       </table>
     </div>
-=======
-<span class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container px-2 py-1 rounded-md">4 Pending</span>
-</div>
-<!-- Review Card 1 -->
-<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
-<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="A bright, high-resolution interior photograph of a modern, open-concept living room in a luxury urban penthouse. The space is flooded with natural daylight from floor-to-ceiling windows overlooking a city skyline. The decor features minimalist, light-colored furniture, hardwood floors, and a sleek, neutral color palette with subtle accents of deep blue and emerald green. The overall aesthetic is clean, airy, and highly professional, reflecting a premium real estate listing suitable for a high-end corporate dashboard." src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"/>
-</div>
-<div class="flex-1 flex flex-col justify-between">
-<div>
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-h3 text-h3 text-on-background text-lg">742 Evergreen Terrace</h3>
-<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">check_circle</span>
-                                        Content Checked ✓
-                                    </span>
-</div>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #8839</span> • 2 hours ago</p>
-<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹12.5 Cr</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 4 Beds</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 3 Baths</span>
-</div>
-</div>
-<div class="flex gap-3 mt-4">
-<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
-<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
-<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
-</div>
-</div>
-</div>
-<!-- Review Card 2 -->
-<div class="flex flex-col md:flex-row gap-6 p-4 rounded-lg border border-outline-variant bg-surface-bright hover:shadow-md transition-shadow">
-<div class="w-full md:w-48 h-32 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container">
-<img loading="lazy" decoding="async" class="w-full h-full object-cover" data-alt="An exterior shot of a contemporary single-family home on a sunny day with clear blue skies. The architecture features clean, geometric lines, large glass panels, and a mix of white stucco and natural wood siding. A neatly manicured green lawn and a small paved driveway complete the front yard. The lighting is crisp and natural, highlighting the property's modern aesthetic and premium quality, styled to fit perfectly within a clean, light-mode corporate software interface." src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"/>
-</div>
-<div class="flex-1 flex flex-col justify-between">
-<div>
-<div class="flex justify-between items-start mb-1">
-<h3 class="font-h3 text-h3 text-on-background text-lg">1001 Modernist Way</h3>
-<span class="bg-surface-container text-on-surface-variant border border-outline-variant px-2 py-1 rounded font-label-caps text-label-caps flex items-center gap-1">
-<span class="material-symbols-outlined text-[14px]">pending</span>
-                                        Scan Pending
-                                    </span>
-</div>
-<p class="font-body-sm text-body-sm text-on-surface-variant mb-2">Submitted by: <span class="font-medium text-on-background">Agent ID: #2104</span> • 5 hours ago</p>
-<div class="flex gap-4 font-body-sm text-body-sm text-on-background">
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">sell</span> ₹34.0 Cr</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">bed</span> 5 Beds</span>
-<span class="flex items-center gap-1"><span class="material-symbols-outlined text-outline text-[18px]">shower</span> 4.5 Baths</span>
-</div>
-</div>
-<div class="flex gap-3 mt-4">
-<button class="flex-1 bg-primary text-on-primary py-2 rounded font-body-sm text-body-sm font-medium hover:opacity-90 transition-opacity">Approve</button>
-<button class="px-4 py-2 bg-surface-container text-on-surface border border-outline-variant rounded font-body-sm text-body-sm font-medium hover:bg-surface-dim transition-colors">Flag</button>
-<button class="px-4 py-2 text-error hover:bg-error-container hover:text-on-error-container rounded font-body-sm text-body-sm font-medium transition-colors">Remove</button>
-</div>
-</div>
-</div>
->>>>>>> Stashed changes
 </section>
 <!-- Right Column: Support & Moderation -->
 <div class="flex flex-col gap-gutter">
 <!-- Support Tickets -->
-<<<<<<< Updated upstream
 <section id="support-tickets-section" class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
-=======
-<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md shadow-sm">
->>>>>>> Stashed changes
 <div class="flex justify-between items-center mb-4">
 <h2 class="font-h3 text-h3 text-on-background text-lg flex items-center gap-2">
 <span class="material-symbols-outlined text-outline">support_agent</span>
@@ -313,9 +245,28 @@
 </div>
 </div>
 </div>
-<<<<<<< Updated upstream
 </main>
-=======
-</main>
->>>>>>> Stashed changes
+<!-- Remarks Modal -->
+<div id="remarks-modal" class="hidden fixed inset-0 z-[100] items-center justify-center bg-black/50 backdrop-blur-sm">
+  <div class="bg-surface-container-lowest rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border border-outline-variant animate-fade-in">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+      <h3 class="font-h3 text-h3 text-primary font-bold text-base" id="remarks-modal-title">Change Status Remarks</h3>
+      <button onclick="closeRemarksModal()" class="text-slate-400 hover:text-slate-700 transition-colors flex items-center justify-center">
+        <span class="material-symbols-outlined text-[24px]">close</span>
+      </button>
+    </div>
+    <div class="p-6">
+      <p class="text-xs text-slate-500 mb-4 font-medium" id="remarks-modal-desc">Please provide remarks/reason for this status change.</p>
+      <div>
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Remarks *</label>
+        <textarea id="remarks-input" placeholder="e.g. Rejecting because of incomplete property photos." class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent h-24 resize-none font-medium text-slate-700"></textarea>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-surface-container-low border-t border-outline-variant flex justify-end gap-3">
+      <button onclick="closeRemarksModal()" class="px-5 py-2 rounded-lg border border-outline-variant text-on-surface-variant text-xs font-medium hover:bg-surface-container transition-colors">Cancel</button>
+      <button id="submit-remarks-btn" class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium transition-colors">Submit</button>
+    </div>
+  </div>
+</div>
+
 </body></html>

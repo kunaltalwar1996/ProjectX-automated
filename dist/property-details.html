@@ -16,15 +16,9 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
 
-<<<<<<< Updated upstream
-  <script type="module" crossorigin src="/assets/auth-At5Rc3Z-.js"></script>
-  <script type="module" crossorigin src="/assets/demo-data-D8C0TEu4.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
-=======
-  <script type="module" crossorigin src="/assets/auth-CGSrzNei.js"></script>
-  <script type="module" crossorigin src="/assets/demo-data-zTh-P6ys.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-C-C3CwTn.css">
->>>>>>> Stashed changes
+  <script type="module" crossorigin src="/assets/auth-B5j3y_3m.js"></script>
+  <script type="module" crossorigin src="/assets/demo-data-BvLM9QKs.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-BnzbAXZf.css">
 </head>
 
 <body class="bg-white text-slate-900 font-['Outfit'] antialiased pt-16">
@@ -38,13 +32,25 @@
             <!-- Navigation Links -->
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/properties.html?intent=Buy">Buy</a>
-                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/properties.html?intent=Rent">Rent</a>
-                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/map.html">Map View</a>
-                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/sell.html">Sell</a>
+                    href="/map.html">Search Your Home</a>
+
+                <!-- Services Dropdown -->
+                <div class="relative group">
+                    <button class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1 flex items-center gap-1">
+                        Services
+                        <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                    </button>
+                    <div class="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <a href="/sell.html" class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                            <span class="material-symbols-outlined text-[18px] text-slate-400">sell</span>
+                            Sell Property
+                        </a>
+                        <a href="/sell.html" class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors border-t border-slate-100">
+                            <span class="material-symbols-outlined text-[18px] text-slate-400">home</span>
+                            Rent Your Property
+                        </a>
+                    </div>
+                </div>
             </div>
             <!-- Trailing Actions -->
       <div class="flex items-center gap-4">
@@ -62,17 +68,20 @@
         <div class="mb-12">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8">
                 <div>
-                    <h1 id="detail-title" class="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-2">The Glass Pavilion
+                    <h1 id="detail-title" class="text-4xl md:text-5xl font-black tracking-tight text-slate-900 mb-2">
+                        <div class="h-10 md:h-12 w-3/4 bg-slate-200 animate-pulse rounded-xl"></div>
                     </h1>
                     <p id="detail-address" class="text-lg font-medium text-slate-500 flex items-center gap-2">
                         <span class="material-symbols-outlined text-[20px]">location_on</span>
-                        1428 Elm Street, Mumbai, MH 400050
+                        <span class="h-6 w-64 bg-slate-100 animate-pulse rounded-md block"></span>
                     </p>
                 </div>
                 <div class="mt-6 md:mt-0 text-left md:text-right">
-                    <div id="detail-price" class="text-4xl font-black text-slate-900">₹125.0 Cr</div>
+                    <div id="detail-price" class="text-4xl font-black text-slate-900 flex justify-end">
+                        <div class="h-10 w-32 bg-slate-200 animate-pulse rounded-xl"></div>
+                    </div>
                     <div class="flex items-center gap-2 mt-2 md:justify-end">
-                        <span
+                        <span id="detail-status-badge"
                             class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Active</span>
                         <span class="text-sm font-bold text-slate-500">Est. ₹5.8L/mo</span>
                     </div>
@@ -83,30 +92,11 @@
                     </button>
                 </div>
             </div>
-            <!-- Bento Gallery -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 h-auto md:h-[600px]">
-                <div class="md:col-span-3 rounded-[32px] overflow-hidden relative shadow-2xl">
-                    <img loading="lazy" decoding="async" alt="Main Property View"
-                        class="hero-img w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
-                        src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" />
-                </div>
-                <div class="hidden md:flex flex-col gap-4 h-full">
-                    <div class="flex-1 rounded-[32px] overflow-hidden relative shadow-xl">
-                        <img loading="lazy" decoding="async" alt="Interior Living Room"
-                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-1000"
-                            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" />
-                    </div>
-                    <div class="flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-xl">
-                        <img loading="lazy" decoding="async" alt="Kitchen View"
-                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-                            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80" />
-                        <div
-                            class="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <span class="text-white font-bold flex items-center gap-2"><span
-                                    class="material-symbols-outlined">photo_library</span> View All 24 Photos</span>
-                        </div>
-                    </div>
-                </div>
+            <!-- Image Gallery -->
+            <div class="h-[400px] md:h-[600px] w-full rounded-[32px] overflow-hidden relative shadow-2xl mb-8">
+                <img loading="lazy" decoding="async" alt="Main Property View"
+                    class="hero-img w-full h-full object-cover hover:scale-105 transition-transform duration-1000 bg-slate-200 animate-pulse"
+                    src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" />
             </div>
         </div>
 
@@ -120,50 +110,49 @@
                     <div class="grid grid-cols-2 md:flex md:flex-row md:justify-between md:items-start gap-6 md:gap-4">
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">bed</span>
-                            <span id="detail-beds" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">5</span>
+                            <span id="detail-beds" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900"><div class="h-8 w-12 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Beds</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">shower</span>
-                            <span id="detail-baths" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">6.5</span>
+                            <span id="detail-baths" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900"><div class="h-8 w-12 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Baths</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">straighten</span>
-                            <span id="detail-sqft" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">8,500</span>
+                            <span id="detail-sqft" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900"><div class="h-8 w-16 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Sq Ft</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">landscape</span>
-                            <span id="detail-type" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900" title="Property Type">1.2</span>
+                            <span id="detail-type" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900" title="Property Type"><div class="h-8 w-16 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Type</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">calendar_month</span>
-                            <span class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">2022</span>
+                            <span class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900"><div class="h-8 w-16 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Year Built</span>
                         </div>
-<<<<<<< Updated upstream
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">schedule</span>
-                            <span id="detail-listed-date" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">—</span>
+                            <span id="detail-listed-date" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900"><div class="h-8 w-16 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span id="detail-days-old" class="text-xs font-bold uppercase tracking-widest text-slate-500">Listed Date</span>
                         </div>
                         <div class="flex flex-col gap-1">
                             <span class="material-symbols-outlined text-slate-400 mb-2">visibility</span>
-                            <span id="detail-views" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900">—</span>
+                            <span id="detail-views" class="text-xl md:text-2xl lg:text-3xl font-black text-slate-900"><div class="h-8 w-12 bg-slate-100 animate-pulse rounded-md"></div></span>
                             <span class="text-xs font-bold uppercase tracking-widest text-slate-500">Views</span>
                         </div>
-=======
->>>>>>> Stashed changes
                     </div>
                 </section>
 
                 <!-- Description -->
                 <section>
                     <h3 class="text-2xl font-black text-slate-900 mb-4">About This Home</h3>
-                    <div id="detail-desc" class="text-lg font-medium text-slate-500 space-y-6 leading-relaxed">
-                        <p>An architectural masterpiece situated in the most prestigious enclave of Bandra West...</p>
+                    <div id="detail-desc" class="text-lg font-medium text-slate-500 space-y-4 leading-relaxed">
+                        <div class="h-4 w-full bg-slate-100 animate-pulse rounded-md"></div>
+                        <div class="h-4 w-[90%] bg-slate-100 animate-pulse rounded-md"></div>
+                        <div class="h-4 w-[80%] bg-slate-100 animate-pulse rounded-md"></div>
                     </div>
                 </section>
 
@@ -191,6 +180,17 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- Moderation History (Visible only to owner/staff) -->
+                <section id="moderation-history-section" class="hidden mt-8 pt-8 border-t border-slate-100">
+                    <h3 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-slate-700">history</span>
+                        Moderation History
+                    </h3>
+                    <div id="moderation-history-timeline" class="relative pl-6 border-l border-slate-200 flex flex-col gap-6">
+                        <!-- Injected by JS -->
+                    </div>
+                </section>
             </div>
 
             <!-- Sidebar Column -->
@@ -199,11 +199,15 @@
                 <div class="bg-white border border-slate-100 rounded-[32px] p-8 shadow-2xl sticky top-24">
                     <div class="flex items-center gap-4 mb-8">
                         <img loading="lazy" decoding="async" alt="Broker" id="detail-broker-img"
-                            class="w-16 h-16 rounded-full object-cover"
-                            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80" />
+                            class="w-16 h-16 rounded-full object-cover bg-slate-200 animate-pulse"
+                            src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" />
                         <div>
-                            <div class="text-xl font-black text-slate-900" id="detail-broker-name">Sarah Jenkins</div>
-                            <div class="text-sm font-bold text-slate-500" id="detail-broker-role">Premier Luxury Estates</div>
+                            <div class="text-xl font-black text-slate-900" id="detail-broker-name">
+                                <div class="h-6 w-32 bg-slate-200 animate-pulse rounded-md mb-2"></div>
+                            </div>
+                            <div class="text-sm font-bold text-slate-500" id="detail-broker-role">
+                                <div class="h-4 w-48 bg-slate-100 animate-pulse rounded-md"></div>
+                            </div>
                             <div class="flex items-center gap-1 text-sm font-bold text-slate-900 mt-1" id="detail-broker-rating-container">
                                 <span class="material-symbols-outlined text-[16px] text-amber-400" data-weight="fill"
                                     style="font-variation-settings: 'FILL' 1;">star</span>
@@ -265,14 +269,11 @@
                             <button id="buyer-chat-send" class="bg-slate-900 text-white px-5 py-3 rounded-2xl hover:bg-slate-800 flex items-center justify-center"><span class="material-symbols-outlined text-[20px]">send</span></button>
                         </div>
                     </div>
-<<<<<<< Updated upstream
                     <!-- Report Button -->
                     <button id="report-listing-btn" class="w-full mt-6 flex items-center justify-center gap-2 py-3.5 border border-red-200 hover:bg-red-50 text-red-600 rounded-2xl font-bold text-xs uppercase tracking-wider transition-colors active:scale-[0.98]">
                         <span class="material-symbols-outlined text-[18px]">flag</span>
                         Report This Listing
                     </button>
-=======
->>>>>>> Stashed changes
                 </div>
             </div>
         </div>

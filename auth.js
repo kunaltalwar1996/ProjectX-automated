@@ -930,6 +930,7 @@ function initAppPage() {
         initListingsManager();
         initInquiriesManager();
         initCustomFiltersManager();
+        initNotificationsManager();
 
         // Global Real-time Message Listener for Broker Dashboard
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1220,11 +1221,47 @@ async function openListingModal(id) {
     document.getElementById('modal-id').value            = listing ? listing.id : '';
     document.getElementById('modal-prop-title').value    = listing ? listing.title    : '';
     document.getElementById('modal-location').value      = listing ? listing.location  : '';
-    document.getElementById('modal-price').value         = listing ? listing.price     : '';
+    // Populate price display field for editing
+    const existingPrice = listing ? listing.price : '';
+    document.getElementById('modal-price').value = existingPrice;
+    const dispField = document.getElementById('modal-price-display');
+    const unitField = document.getElementById('modal-price-unit');
+    if (dispField && existingPrice !== '') {
+      const p = parseFloat(existingPrice);
+      if (listing && listing.intent === 'Rent') {
+        // Show in Lac
+        unitField.value = 'lac';
+        dispField.value = (p * 100).toFixed(2);
+      } else {
+        unitField.value = 'cr';
+        dispField.value = p;
+      }
+      // Trigger update of hidden input and preview
+      dispField.dispatchEvent(new Event('input'));
+    }
     document.getElementById('modal-intent').value        = listing ? listing.intent    : 'Buy';
     document.getElementById('modal-type').value          = listing ? listing.type      : 'Apartment';
-    const defaultStatus = (userRole === 'Broker') ? 'Pending' : 'Active';
-    document.getElementById('modal-status').value        = listing ? listing.status    : defaultStatus;
+    const statusSelect = document.getElementById('modal-status');
+    if (statusSelect) {
+        statusSelect.innerHTML = '';
+        const allowedStatuses = userRole === 'Broker' 
+            ? ['Draft', 'Pending', 'Sold']
+            : ['Draft', 'Pending', 'Under Review', 'Active', 'Rejected', 'Suspended', 'Sold'];
+        
+        const currentStatus = listing ? listing.status : (userRole === 'Broker' ? 'Draft' : 'Active');
+        const finalStatuses = [...allowedStatuses];
+        if (!finalStatuses.includes(currentStatus)) {
+            finalStatuses.push(currentStatus);
+        }
+        
+        finalStatuses.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s === 'Active' ? 'Approved' : s;
+            statusSelect.appendChild(opt);
+        });
+        statusSelect.value = currentStatus;
+    }
     document.getElementById('modal-beds').value          = listing ? listing.beds      : '0';
     document.getElementById('modal-baths').value         = listing ? listing.baths     : '0';
     document.getElementById('modal-sqft').value          = listing ? listing.sqft      : '0';
@@ -1373,9 +1410,16 @@ async function saveListingForm() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    const finalStatus = (userRole === 'Broker' && status !== 'Sold') ? 'Pending' : status;
+    
+    // Retrieve old status if this is an update
+    let oldStatus = null;
+    if (id) {
+        const { data: oldListing } = await supabase.from('listings').select('status').eq('id', id).single();
+        if (oldListing) oldStatus = oldListing.status;
+    }
+
     const listingData = { 
-        title, location, price, intent, type, status: finalStatus, beds, baths, sqft, views, lat, lng, img,
+        title, location, price, intent, type, status, beds, baths, sqft, views, lat, lng, img,
         broker_id: user ? user.id : null
     };
 
@@ -1389,6 +1433,22 @@ async function saveListingForm() {
     if (result.error) {
         showToast('Error saving listing: ' + result.error.message);
     } else {
+        // Log status change
+        if (!id) {
+            const { data: newListing } = await supabase
+                .from('listings')
+                .select('id')
+                .eq('broker_id', user ? user.id : null)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+            if (newListing) {
+                await logListingStatusChange(newListing.id, null, status, 'Listing created.');
+            }
+        } else if (oldStatus !== status) {
+            await logListingStatusChange(id, oldStatus, status, 'Status updated by owner.');
+        }
+
         await renderListings();
         closeListingModal();
 
@@ -1542,7 +1602,18 @@ function injectListingModal() {
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Price *</label>
-              <input id="modal-price" type="number" step="0.01" placeholder="e.g. 12.5" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+              <div class="flex gap-2">
+                <input id="modal-price-display" type="number" step="0.01" placeholder="e.g. 45" 
+                  class="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed focus:border-transparent"/>
+                <select id="modal-price-unit" 
+                  class="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
+                  <option value="cr">Cr</option>
+                  <option value="lac">Lac</option>
+                  <option value="k">/mo (₹)</option>
+                </select>
+              </div>
+              <input type="hidden" id="modal-price" />
+              <p id="modal-price-preview" class="text-[10px] text-slate-400 font-medium mt-1"></p>
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Intent *</label>
@@ -1563,9 +1634,6 @@ function injectListingModal() {
             <div>
               <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status *</label>
               <select id="modal-status" class="w-full bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-fixed">
-                ${userRole !== 'Broker' ? '<option value="Active">Active</option>' : ''}
-                <option value="Pending">Pending</option>
-                <option value="Sold">Sold</option>
               </select>
               ${userRole === 'Broker' ? '<p class="text-[10px] text-amber-600 font-semibold mt-1">Note: All new/edited listings require employee approval before going Active.</p>' : ''}
             </div>
@@ -1599,6 +1667,56 @@ function injectListingModal() {
     `;
     document.body.appendChild(modal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeListingModal(); });
+
+    // Price auto-converter
+    const priceDisplay = document.getElementById('modal-price-display');
+    const priceUnit = document.getElementById('modal-price-unit');
+    const priceHidden = document.getElementById('modal-price');
+    const pricePreview = document.getElementById('modal-price-preview');
+
+    function convertPrice() {
+      const val = parseFloat(priceDisplay.value);
+      if (isNaN(val)) {
+        priceHidden.value = '';
+        pricePreview.textContent = '';
+        return;
+      }
+      const unit = priceUnit.value;
+      let crores;
+      let preview;
+      if (unit === 'cr') {
+        crores = val;
+        preview = `₹${val} Crore${val !== 1 ? 's' : ''}`;
+      } else if (unit === 'lac') {
+        crores = val / 100;
+        preview = `₹${val} Lac = ₹${crores.toFixed(4)} Cr stored`;
+      } else if (unit === 'k') {
+        // Per month in rupees → convert to Crores
+        crores = val / 10000000;
+        const display = val >= 100000 
+          ? `₹${(val/100000).toFixed(2)} Lac/mo`
+          : `₹${val.toLocaleString('en-IN')}/mo`;
+        preview = `${display} = ₹${crores.toFixed(7)} Cr stored`;
+      }
+      priceHidden.value = crores;
+      pricePreview.textContent = `→ ${preview}`;
+    }
+
+    priceDisplay.addEventListener('input', convertPrice);
+    priceUnit.addEventListener('change', convertPrice);
+
+    // Also sync unit with intent selector
+    const intentSelect = document.getElementById('modal-intent');
+    if (intentSelect) {
+      intentSelect.addEventListener('change', () => {
+        if (intentSelect.value === 'Rent') {
+          priceUnit.value = 'lac';
+        } else {
+          priceUnit.value = 'cr';
+        }
+        convertPrice();
+      });
+    }
 
     // File upload event listeners
     const uploadZone = document.getElementById('modal-upload-zone');
@@ -2270,7 +2388,7 @@ function wireCommonLinks() {
         'Privacy Policy': 'privacy.html',
         'Cookie Settings': 'privacy.html',
         'Contact Support': 'login.html',
-        'Sitemap': 'index.html'
+        'Sitemap': 'sitemap.html'
     };
 
     document.querySelectorAll('a').forEach((a) => {
@@ -2741,6 +2859,18 @@ async function initBuyerListingsPage() {
 }
 
 async function initBuyerMapPage() {
+  function formatMapPrice(price, intent) {
+    const p = parseFloat(price);
+    if (isNaN(p)) return '—';
+    if (intent === 'Rent') {
+      const lac = p * 100;
+      if (lac >= 1) return `₹${lac % 1 === 0 ? lac : lac.toFixed(1)}L/mo`;
+      return `₹${(lac * 100000).toLocaleString('en-IN')}`;
+    }
+    if (p >= 1) return `₹${p % 1 === 0 ? p : p.toFixed(1)} Cr`;
+    return `₹${(p * 100).toFixed(0)} L`;
+  }
+
     console.log('Initializing Map with Supabase data...');
     if (typeof L === 'undefined') {
         console.error('Leaflet is not loaded!');
@@ -2818,9 +2948,20 @@ async function initBuyerMapPage() {
 
         updateSidebar();
         
-        document.querySelectorAll('.custom-price-pin').forEach(el => el.classList.remove('active-pin'));
+        // Reset all pins to default state
+        document.querySelectorAll('.map-pin-wrapper').forEach(wrapper => {
+            wrapper.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+            wrapper.style.transform = 'translate(-50%, -50%) scale(1)';
+            wrapper.style.zIndex = '';
+        });
+
+        // Activate selected pin
         const pinEl = document.getElementById(`pin-${id}`);
-        if (pinEl) pinEl.classList.add('active-pin');
+        if (pinEl) {
+            pinEl.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+            pinEl.style.transform = 'translate(-50%, -50%) scale(1.12)';
+            pinEl.style.zIndex = '1000';
+        }
 
         if (fromMap) {
             setTimeout(() => {
@@ -2833,9 +2974,45 @@ async function initBuyerMapPage() {
     }
 
     markersData.forEach(p => {
+        const intentColor = p.intent === 'Rent' 
+            ? { dot: '#059669', ring: '#d1fae5', text: '#065f46' }   // emerald for Rent
+            : { dot: '#0f172a', ring: '#e2e8f0', text: '#0f172a' };  // slate for Buy
+
         const icon = L.divIcon({
             className: 'bg-transparent border-none',
-            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${p.id}">${p.price}${p.intent === 'Rent' ? '' : ' Cr'}</div>`,
+            html: `
+              <div id="pin-${p.id}" class="map-pin-wrapper" style="
+                position: relative;
+                transform: translate(-50%, -50%);
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                background: white;
+                border: 2px solid ${p.intent === 'Rent' ? '#059669' : '#0f172a'};
+                border-radius: 999px;
+                padding: 4px 10px 4px 6px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                white-space: nowrap;
+              ">
+                <div class="pin-dot" style="
+                  width: 8px;
+                  height: 8px;
+                  background: ${p.intent === 'Rent' ? '#059669' : '#0f172a'};
+                  border-radius: 50%;
+                  flex-shrink: 0;
+                  transition: all 0.2s ease;
+                "></div>
+                <span class="pin-label" style="
+                  font-family: Outfit, sans-serif;
+                  font-size: 12px;
+                  font-weight: 800;
+                  color: ${p.intent === 'Rent' ? '#059669' : '#0f172a'};
+                  letter-spacing: 0.01em;
+                ">${formatMapPrice(p.price, p.intent)}</span>
+              </div>
+            `,
             iconSize: [0, 0],
             iconAnchor: [0, 0]
         });
@@ -2854,6 +3031,27 @@ async function initBuyerMapPage() {
         `, { closeButton: false, offset: [0, -35] });
 
         marker.on('click', () => selectListing(p.id, true));
+        marker.on('mouseover', () => {
+            const wrapper = document.getElementById(`pin-${p.id}`);
+            if (wrapper) {
+                const tooltip = wrapper.querySelector('.pin-tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '1';
+                    tooltip.style.transform = 'translateX(-50%) translateY(0)';
+                }
+            }
+        });
+        marker.on('mouseout', () => {
+            if (activeListingId == p.id) return;
+            const wrapper = document.getElementById(`pin-${p.id}`);
+            if (wrapper) {
+                const tooltip = wrapper.querySelector('.pin-tooltip');
+                if (tooltip) {
+                    tooltip.style.opacity = '0';
+                    tooltip.style.transform = 'translateX(-50%) translateY(4px)';
+                }
+            }
+        });
         markers.push({ marker, data: p });
     });
 
@@ -2970,10 +3168,18 @@ async function initBuyerMapPage() {
             `;
         }).join('');
 
-        document.querySelectorAll('.custom-price-pin').forEach(el => el.classList.remove('active-pin'));
+        document.querySelectorAll('.map-pin-wrapper').forEach(wrapper => {
+            wrapper.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+            wrapper.style.transform = 'translate(-50%, -50%) scale(1)';
+            wrapper.style.zIndex = '';
+        });
         if (activeListingId) {
             const pinEl = document.getElementById(`pin-${activeListingId}`);
-            if (pinEl) pinEl.classList.add('active-pin');
+            if (pinEl) {
+                pinEl.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)';
+                pinEl.style.transform = 'translate(-50%, -50%) scale(1.12)';
+                pinEl.style.zIndex = '1000';
+            }
         }
     }
 
@@ -2996,7 +3202,39 @@ async function initBuyerMapPage() {
                         
                         const icon = L.divIcon({
                             className: 'bg-transparent border-none',
-                            html: `<div class="custom-price-pin cursor-pointer" style="transform: translate(-50%, -100%); margin-top: -5px;" id="pin-${l.id}">${l.price}${l.intent === 'Rent' ? '' : ' Cr'}</div>`,
+                            html: `
+                              <div id="pin-${l.id}" class="map-pin-wrapper" style="
+                                position: relative;
+                                transform: translate(-50%, -50%);
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 5px;
+                                background: white;
+                                border: 2px solid ${l.intent === 'Rent' ? '#059669' : '#0f172a'};
+                                border-radius: 999px;
+                                padding: 4px 10px 4px 6px;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                white-space: nowrap;
+                              ">
+                                <div class="pin-dot" style="
+                                  width: 8px;
+                                  height: 8px;
+                                  background: ${l.intent === 'Rent' ? '#059669' : '#0f172a'};
+                                  border-radius: 50%;
+                                  flex-shrink: 0;
+                                  transition: all 0.2s ease;
+                                "></div>
+                                <span class="pin-label" style="
+                                  font-family: Outfit, sans-serif;
+                                  font-size: 12px;
+                                  font-weight: 800;
+                                  color: ${l.intent === 'Rent' ? '#059669' : '#0f172a'};
+                                  letter-spacing: 0.01em;
+                                ">${formatMapPrice(l.price, l.intent)}</span>
+                              </div>
+                            `,
                             iconSize: [0, 0],
                             iconAnchor: [0, 0]
                         });
@@ -3014,6 +3252,27 @@ async function initBuyerMapPage() {
                         `, { closeButton: false, offset: [0, -35] });
                         
                         marker.on('click', () => selectListing(l.id, true));
+                        marker.on('mouseover', () => {
+                            const wrapper = document.getElementById(`pin-${l.id}`);
+                            if (wrapper) {
+                                const tooltip = wrapper.querySelector('.pin-tooltip');
+                                if (tooltip) {
+                                    tooltip.style.opacity = '1';
+                                    tooltip.style.transform = 'translateX(-50%) translateY(0)';
+                                }
+                            }
+                        });
+                        marker.on('mouseout', () => {
+                            if (activeListingId == l.id) return;
+                            const wrapper = document.getElementById(`pin-${l.id}`);
+                            if (wrapper) {
+                                const tooltip = wrapper.querySelector('.pin-tooltip');
+                                if (tooltip) {
+                                    tooltip.style.opacity = '0';
+                                    tooltip.style.transform = 'translateX(-50%) translateY(4px)';
+                                }
+                            }
+                        });
                         markers.push({ marker, data: updatedListing });
                         
                         updateSidebar();
@@ -3102,10 +3361,268 @@ async function initBuyerDetailsPage() {
     const { data: { session } } = await supabase.auth.getSession();
     const isOwner = session && session.user && session.user.id === l.broker_id;
     const isStaff = userRole === 'Admin' || userRole === 'Employee';
-    if (l.status !== 'Active' && !isOwner && !isStaff) {
+    const isAdminPreview = new URLSearchParams(window.location.search).get('adminPreview') === '1';
+    if (l.status !== 'Active' && !isOwner && !isStaff && !isAdminPreview) {
         showToast('Property details are pending review or unavailable.', true);
         setTimeout(() => { window.location.href = 'properties.html'; }, 2000);
         return;
+    }
+
+    // Render Moderation History timeline for owner or staff
+    if (isOwner || isStaff) {
+        const modHistorySec = document.getElementById('moderation-history-section');
+        const modHistoryTimeline = document.getElementById('moderation-history-timeline');
+        if (modHistorySec && modHistoryTimeline) {
+            try {
+                const { data: logs, error: logsError } = await supabase
+                    .from('listing_status_history')
+                    .select('*, profiles(full_name, role)')
+                    .eq('listing_id', id)
+                    .order('created_at', { ascending: false });
+
+                if (logsError) throw logsError;
+
+                modHistorySec.classList.remove('hidden');
+
+                if (!logs || logs.length === 0) {
+                    modHistoryTimeline.innerHTML = `<div class="text-xs text-slate-400 italic">No moderation history logged yet.</div>`;
+                } else {
+                    modHistoryTimeline.innerHTML = logs.map(log => {
+                        const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('en-IN') : '—';
+                        const newStatusVal = log.new_status === 'Active' ? 'Approved' : log.new_status;
+                        const oldStatusVal = log.old_status ? (log.old_status === 'Active' ? 'Approved' : log.old_status) : 'None';
+                        
+                        let dotColor = 'bg-slate-400';
+                        if (log.new_status === 'Active') dotColor = 'bg-emerald-500 ring-4 ring-emerald-100';
+                        else if (log.new_status === 'Rejected') dotColor = 'bg-rose-500 ring-4 ring-rose-100';
+                        else if (log.new_status === 'Suspended') dotColor = 'bg-slate-700 ring-4 ring-slate-200';
+                        else if (log.new_status === 'Under Review') dotColor = 'bg-blue-500 ring-4 ring-blue-100';
+                        else if (log.new_status === 'Pending') dotColor = 'bg-amber-500 ring-4 ring-amber-100';
+
+                        return `
+                            <div class="relative">
+                                <!-- Timeline Dot -->
+                                <div class="absolute left-0 top-1.5 w-3 h-3 rounded-full -translate-x-[30.5px] ${dotColor}"></div>
+                                <div class="flex flex-col gap-1 font-sans">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-bold text-slate-800">
+                                            ${oldStatusVal} ➔ ${newStatusVal}
+                                        </span>
+                                        <span class="text-[10px] text-slate-400 font-semibold">• ${dateStr}</span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 font-medium">
+                                        Changed by: <span class="font-bold text-slate-700">${log.profiles?.full_name || 'System'}</span> 
+                                        (${log.profiles?.role || 'System'})
+                                    </p>
+                                    <div class="text-xs bg-slate-50 border border-slate-100 rounded-lg p-2.5 mt-1 text-slate-500 italic font-medium">
+                                        "${log.reason}"
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error("Failed to load moderation history:", err);
+            }
+        }
+    }
+
+    // Update top status badge dynamically
+    const statusBadge = document.getElementById('detail-status-badge');
+    if (statusBadge) {
+        statusBadge.textContent = l.status;
+        if (l.status === 'Active') {
+            statusBadge.className = 'bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest';
+        } else if (l.status === 'Pending') {
+            statusBadge.className = 'bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest';
+        } else if (l.status === 'Flagged') {
+            statusBadge.className = 'bg-rose-100 text-rose-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest';
+        } else if (l.status === 'Sold') {
+            statusBadge.className = 'bg-slate-100 text-slate-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest';
+        }
+    }
+
+    if (isAdminPreview) {
+        const banner = document.createElement('div');
+        banner.id = 'admin-preview-banner';
+        banner.className = 'fixed top-0 left-0 right-0 z-[999] bg-amber-500 text-amber-950 text-center text-xs font-black uppercase tracking-widest py-2 flex items-center justify-center gap-2';
+        banner.innerHTML = `<span class="material-symbols-outlined text-[16px]">admin_panel_settings</span> Admin Preview Mode — Status: ${l.status} — Changes made here are live`;
+        document.body.prepend(banner);
+        document.body.style.paddingTop = '96px';
+
+        // Push down the fixed navigation bar
+        const navBar = document.querySelector('nav');
+        if (navBar) {
+            navBar.style.top = '32px';
+        }
+
+        // Hide buyer navigation links (Search your home, Services)
+        const navContainer = document.querySelector('nav .hidden.md\\:flex');
+        if (navContainer) {
+            navContainer.style.setProperty('display', 'none', 'important');
+        }
+
+        // Append "Admin Preview" tag next to logo
+        const logoContainer = Array.from(document.querySelectorAll('a')).find(a => a.textContent === 'ProjectX')?.parentElement;
+        if (logoContainer && !document.getElementById('admin-preview-tag')) {
+            const adminTag = document.createElement('span');
+            adminTag.id = 'admin-preview-tag';
+            adminTag.className = 'bg-slate-900 text-white px-2.5 py-1 rounded-md text-[10px] font-black tracking-widest uppercase ml-2';
+            adminTag.textContent = 'Admin Preview';
+            logoContainer.appendChild(adminTag);
+        }
+
+        // Hide profile button in nav
+        const rightContainer = document.querySelector('nav .flex.items-center.gap-4');
+        if (rightContainer) {
+            const profileBtn = Array.from(rightContainer.querySelectorAll('button')).find(btn => btn.querySelector('span')?.textContent === 'account_circle');
+            if (profileBtn) {
+                profileBtn.style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        // Hide buyer actions
+        const inquiryForm = document.getElementById('buyer-inquiry-form');
+        const chatSection = document.getElementById('buyer-chat-section');
+        const reportBtn = document.getElementById('report-listing-btn');
+        if (inquiryForm) inquiryForm.classList.add('hidden');
+        if (chatSection) chatSection.classList.add('hidden');
+        if (reportBtn) reportBtn.classList.add('hidden');
+
+        // Create Moderation Panel
+        const modPanel = document.createElement('div');
+        modPanel.id = 'admin-moderation-panel';
+        modPanel.className = 'space-y-6 mt-6 pt-6 border-t border-slate-100';
+        
+        let statusBadgeClass = 'bg-slate-100 text-slate-800';
+        if (l.status === 'Active') statusBadgeClass = 'bg-emerald-100 text-emerald-800';
+        else if (l.status === 'Pending') statusBadgeClass = 'bg-amber-100 text-amber-800';
+        else if (l.status === 'Flagged') statusBadgeClass = 'bg-rose-100 text-rose-800';
+        else if (l.status === 'Sold') statusBadgeClass = 'bg-slate-100 text-slate-800';
+
+        const updateButtonsVisibility = (status) => {
+            const showApprove = status !== 'Active';
+            const showFlag = status !== 'Flagged' && status !== 'Sold';
+            
+            const approveBtn = modPanel.querySelector('#mod-approve-btn');
+            const flagBtn = modPanel.querySelector('#mod-flag-btn');
+            
+            if (approveBtn) {
+                if (showApprove) approveBtn.classList.remove('hidden');
+                else approveBtn.classList.add('hidden');
+            }
+            if (flagBtn) {
+                if (showFlag) flagBtn.classList.remove('hidden');
+                else flagBtn.classList.add('hidden');
+            }
+        };
+
+        modPanel.innerHTML = `
+            <div>
+                <h4 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-2">Moderation Console</h4>
+                <div class="flex items-center gap-2 mb-4 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                    <span class="text-xs font-bold text-slate-500">Current Status:</span>
+                    <span class="px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider ${statusBadgeClass}" id="mod-status-badge">
+                        ${l.status}
+                    </span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button id="mod-approve-btn" class="w-full flex items-center justify-center gap-2 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-sm transition-colors shadow-sm ${l.status === 'Active' ? 'hidden' : ''}">
+                    <span class="material-symbols-outlined text-[20px]">check_circle</span>
+                    Approve Listing
+                </button>
+                <button id="mod-flag-btn" class="w-full flex items-center justify-center gap-2 py-3.5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-bold text-sm transition-colors shadow-sm ${(l.status === 'Flagged' || l.status === 'Sold') ? 'hidden' : ''}">
+                    <span class="material-symbols-outlined text-[20px]">flag</span>
+                    Flag Listing
+                </button>
+                <button id="mod-delete-btn" class="w-full flex items-center justify-center gap-2 py-3.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-100 rounded-2xl font-bold text-sm transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                    Delete Listing
+                </button>
+            </div>
+        `;
+
+        if (inquiryForm && inquiryForm.parentElement) {
+            inquiryForm.parentElement.appendChild(modPanel);
+        }
+
+        // Bind handler functions
+        const approveBtn = modPanel.querySelector('#mod-approve-btn');
+        if (approveBtn) {
+            approveBtn.onclick = async () => {
+                if (confirm(`Are you sure you want to approve "${l.title}"?`)) {
+                    const { error } = await supabase.from('listings').update({ status: 'Active' }).eq('id', l.id);
+                    if (error) {
+                        showToast(error.message, true);
+                    } else {
+                        showToast('✓ Listing approved successfully');
+                        l.status = 'Active';
+                        const badge = document.getElementById('mod-status-badge');
+                        if (badge) {
+                            badge.textContent = 'Active';
+                            badge.className = 'px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800';
+                        }
+                        if (statusBadge) {
+                            statusBadge.textContent = 'Active';
+                            statusBadge.className = 'bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest';
+                        }
+                        const topBanner = document.getElementById('admin-preview-banner');
+                        if (topBanner) {
+                            topBanner.innerHTML = `<span class="material-symbols-outlined text-[16px]">admin_panel_settings</span> Admin Preview Mode — Status: Active — Changes made here are live`;
+                        }
+                        updateButtonsVisibility('Active');
+                    }
+                }
+            };
+        }
+
+        const flagBtn = modPanel.querySelector('#mod-flag-btn');
+        if (flagBtn) {
+            flagBtn.onclick = async () => {
+                if (confirm(`Are you sure you want to flag "${l.title}"?`)) {
+                    const { error } = await supabase.from('listings').update({ status: 'Flagged' }).eq('id', l.id);
+                    if (error) {
+                        showToast(error.message, true);
+                    } else {
+                        showToast('✓ Listing flagged successfully');
+                        l.status = 'Flagged';
+                        const badge = document.getElementById('mod-status-badge');
+                        if (badge) {
+                            badge.textContent = 'Flagged';
+                            badge.className = 'px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider bg-rose-100 text-rose-800';
+                        }
+                        if (statusBadge) {
+                            statusBadge.textContent = 'Flagged';
+                            statusBadge.className = 'bg-rose-100 text-rose-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest';
+                        }
+                        const topBanner = document.getElementById('admin-preview-banner');
+                        if (topBanner) {
+                            topBanner.innerHTML = `<span class="material-symbols-outlined text-[16px]">admin_panel_settings</span> Admin Preview Mode — Status: Flagged — Changes made here are live`;
+                        }
+                        updateButtonsVisibility('Flagged');
+                    }
+                }
+            };
+        }
+
+        const deleteBtn = modPanel.querySelector('#mod-delete-btn');
+        if (deleteBtn) {
+            deleteBtn.onclick = async () => {
+                if (confirm(`Are you sure you want to permanently delete "${l.title}"? This cannot be undone.`)) {
+                    const { error } = await supabase.from('listings').delete().eq('id', l.id);
+                    if (error) {
+                        showToast(error.message, true);
+                    } else {
+                        showToast('✓ Listing deleted successfully');
+                        setTimeout(() => {
+                            window.close();
+                        }, 1000);
+                    }
+                }
+            };
+        }
     }
 
     // Increment view count — but only if the viewer is NOT the listing owner
@@ -4170,4 +4687,209 @@ window.submitReportForm = async function() {
         btn.textContent = 'Submit Report';
     }
 };
+
+async function logListingStatusChange(listingId, oldStatus, newStatus, reason) {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session && session.user ? session.user.id : null;
+        const { error } = await supabase.from('listing_status_history').insert([{
+            listing_id: listingId,
+            changed_by: userId,
+            old_status: oldStatus,
+            new_status: newStatus,
+            reason: reason || 'No remarks provided.'
+        }]);
+        if (error) console.error('Error logging status change:', error.message);
+    } catch (err) {
+        console.error('Failed to log listing status change:', err);
+    }
+}
+
+async function sendBrokerNotification(brokerId, listingTitle, oldStatus, newStatus, reason) {
+    try {
+        if (!brokerId) return;
+        const msg = `Your listing "${listingTitle}" status has been updated from "${oldStatus || 'None'}" to "${newStatus === 'Active' ? 'Approved' : newStatus}".${reason ? ` Reason: ${reason}` : ''}`;
+        const { error } = await supabase.from('notifications').insert([{
+            user_id: brokerId,
+            title: 'Listing Status Update',
+            message: msg,
+            read: false
+        }]);
+        if (error) console.error('Error sending broker notification:', error.message);
+    } catch (err) {
+        console.error('Failed to send broker notification:', err);
+    }
+}
+
+async function updateSidebarNotificationsBadge() {
+    const badge = document.getElementById('unread-notifications-badge');
+    const mobileBadge = document.getElementById('mobile-unread-notifications-badge');
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session || !session.user) return;
+        const { count, error } = await supabase
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', session.user.id)
+            .eq('read', false);
+        
+        if (error) {
+            console.error('Error fetching unread notification count:', error.message);
+            return;
+        }
+
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+                badge.classList.add('inline-block');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('inline-block');
+            }
+        }
+        if (mobileBadge) {
+            if (count > 0) {
+                mobileBadge.textContent = count;
+                mobileBadge.classList.remove('hidden');
+                mobileBadge.classList.add('flex');
+            } else {
+                mobileBadge.classList.add('hidden');
+                mobileBadge.classList.remove('flex');
+            }
+        }
+    } catch (err) {
+        console.error('Failed to update notifications badge:', err);
+    }
+}
+
+async function initNotificationsManager() {
+    const listContainer = document.getElementById('notifications-list-container');
+    if (!listContainer) return;
+
+    const markAllReadBtn = document.getElementById('mark-all-read-btn');
+    
+    const renderNotifications = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session || !session.user) return;
+            const userId = session.user.id;
+
+            const { data: notifications, error } = await supabase
+                .from('notifications')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                listContainer.innerHTML = `<div class="text-error font-medium py-4 text-center">Error loading notifications: ${error.message}</div>`;
+                return;
+            }
+
+            if (!notifications || notifications.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center text-slate-400 py-10 font-medium flex flex-col items-center gap-2">
+                        <span class="material-symbols-outlined text-[40px] text-slate-300">notifications_off</span>
+                        <span>No notifications yet.</span>
+                    </div>`;
+                return;
+            }
+
+            listContainer.innerHTML = notifications.map(notif => {
+                const dateStr = notif.created_at ? new Date(notif.created_at).toLocaleString('en-IN') : '—';
+                const unreadClass = notif.read ? 'bg-white opacity-80 border-slate-100' : 'bg-slate-50/70 border-primary-container border-l-4 ring-1 ring-primary-container/20';
+                return `
+                    <div class="p-4 rounded-xl border transition-all ${unreadClass} flex flex-col md:flex-row justify-between items-start md:items-center gap-4" data-id="${notif.id}">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="material-symbols-outlined text-[18px] text-primary">${notif.read ? 'notifications' : 'notifications_active'}</span>
+                                <h4 class="font-bold text-slate-900 text-sm">${notif.title || 'Notification'}</h4>
+                                ${notif.read ? '' : '<span class="bg-primary text-on-primary text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider">New</span>'}
+                            </div>
+                            <p class="text-xs md:text-sm text-slate-600 font-medium">${notif.message || ''}</p>
+                            <span class="text-[10px] text-slate-400 font-normal mt-2 block">${dateStr}</span>
+                        </div>
+                        ${notif.read ? '' : `
+                            <button class="mark-single-read-btn text-xs font-semibold text-primary hover:underline flex items-center gap-1 whitespace-nowrap bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container-high transition-colors" data-id="${notif.id}">
+                                <span class="material-symbols-outlined text-[14px]">done</span>
+                                Mark read
+                            </button>
+                        `}
+                    </div>
+                `;
+            }).join('');
+
+            // Wire up single read buttons
+            listContainer.querySelectorAll('.mark-single-read-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    const id = btn.dataset.id;
+                    const { error } = await supabase.from('notifications').update({ read: true }).eq('id', id);
+                    if (error) {
+                        showToast('Error marking notification as read: ' + error.message, true);
+                    } else {
+                        await renderNotifications();
+                        await updateSidebarNotificationsBadge();
+                    }
+                };
+            });
+
+        } catch (err) {
+            console.error('Failed to render notifications:', err);
+            listContainer.innerHTML = `<div class="text-error font-medium py-4 text-center">Failed to load notifications.</div>`;
+        }
+    };
+
+    if (markAllReadBtn) {
+        markAllReadBtn.onclick = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session || !session.user) return;
+                const { error } = await supabase
+                    .from('notifications')
+                    .update({ read: true })
+                    .eq('user_id', session.user.id)
+                    .eq('read', false);
+
+                if (error) {
+                    showToast('Error marking notifications as read: ' + error.message, true);
+                } else {
+                    showToast('All notifications marked as read.');
+                    await renderNotifications();
+                    await updateSidebarNotificationsBadge();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+    }
+
+    await renderNotifications();
+    await updateSidebarNotificationsBadge();
+
+    // Set up realtime channel for new notifications
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user) {
+        supabase.channel(`broker_notifications_${session.user.id}`)
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'notifications',
+                filter: `user_id=eq.${session.user.id}`
+            }, async () => {
+                const notifTab = document.getElementById('tab-notifications');
+                if (notifTab && !notifTab.classList.contains('hidden')) {
+                    await renderNotifications();
+                } else {
+                    await updateSidebarNotificationsBadge();
+                }
+            })
+            .subscribe();
+    }
+}
+
+window.logListingStatusChange = logListingStatusChange;
+window.sendBrokerNotification = sendBrokerNotification;
+window.updateSidebarNotificationsBadge = updateSidebarNotificationsBadge;
+window.initNotificationsManager = initNotificationsManager;
+
 

@@ -11,10 +11,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 
-<<<<<<< Updated upstream
-  <script type="module" crossorigin src="/assets/auth-At5Rc3Z-.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-Cm2EumOC.css">
-=======
 <style>
   .mobile-nav-btn.active-mobile-tab {
     color: #0f172a;
@@ -24,13 +20,15 @@
     font-variation-settings: 'FILL' 1;
   }
 </style>
-  <script type="module" crossorigin src="/assets/auth-CGSrzNei.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/style-C-C3CwTn.css">
->>>>>>> Stashed changes
+  <script type="module" crossorigin src="/assets/auth-B5j3y_3m.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/style-BnzbAXZf.css">
 </head>
-<body class="estate-admin-theme bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex">
+<body class="estate-admin-theme bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col md:flex-row">
+<!-- Mobile Sidebar Backdrop -->
+<div id="mobile-sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 z-[55] hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
+
 <!-- SideNavBar -->
-<nav id="broker-sidebar" class="h-screen w-64 border-r fixed left-0 top-0 border-slate-200 bg-slate-50 flex flex-col p-4 gap-2 text-slate-900 font-['Outfit'] text-sm font-medium transition-all duration-200 ease-in-out hidden md:flex z-50">
+<nav id="broker-sidebar" class="h-screen w-64 border-r fixed left-0 top-0 border-slate-200 bg-slate-50 flex flex-col p-4 gap-2 text-slate-900 font-['Outfit'] text-sm font-medium transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0 z-[60]">
 <!-- Header -->
 <a href="/profile.html" class="flex items-center gap-4 px-2 py-4 mb-4 hover:bg-slate-100/80 rounded-xl transition-all duration-200 group cursor-pointer active:scale-[0.98]">
 <img loading="lazy" decoding="async" id="broker-profile-img" alt="Broker Profile" class="w-10 h-10 rounded-full object-cover border border-slate-200 group-hover:scale-105 transition-transform duration-200" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80"/>
@@ -62,6 +60,13 @@
         Messages
     </div>
     <span id="unread-messages-badge" class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden">0</span>
+</a>
+<a id="nav-notifications" class="flex items-center justify-between px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors w-full" href="#notifications-section">
+    <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+        Notifications
+    </div>
+    <span id="unread-notifications-badge" class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full hidden">0</span>
 </a>
 <a id="nav-settings" class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:bg-slate-100 rounded-lg hover:text-slate-900 transition-colors" href="#settings-section">
 <span class="material-symbols-outlined text-[20px]">settings</span>
@@ -104,11 +109,27 @@
     <span class="text-[9px] font-black uppercase tracking-widest">Messages</span>
     <span id="mobile-unread-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full items-center justify-center hidden">!</span>
   </button>
+  <button data-tab="#notifications-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors relative">
+    <span class="material-symbols-outlined text-[22px]">notifications</span>
+    <span class="text-[9px] font-black uppercase tracking-widest">Alerts</span>
+    <span id="mobile-unread-notifications-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[8px] font-black w-4 h-4 rounded-full items-center justify-center hidden">!</span>
+  </button>
   <button data-tab="#settings-section" class="mobile-nav-btn flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl text-slate-400 transition-colors">
     <span class="material-symbols-outlined text-[22px]">settings</span>
     <span class="text-[9px] font-black uppercase tracking-widest">Settings</span>
   </button>
 </nav>
+<!-- Mobile Top Header -->
+<header class="md:hidden sticky top-0 bg-white border-b border-slate-200 z-40 flex items-center justify-between px-4 py-3">
+    <div class="flex items-center gap-2">
+        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" alt="Profile" class="w-8 h-8 rounded-full object-cover">
+        <span class="font-bold text-slate-900 text-sm">Premier Realty</span>
+    </div>
+    <button id="mobile-menu-btn" class="text-slate-500 hover:text-slate-900 transition-colors bg-slate-100 p-2 rounded-lg flex items-center justify-center">
+        <span class="material-symbols-outlined text-[20px]">menu</span>
+    </button>
+</header>
+
 <!-- Main Content Area -->
 <main class="flex-1 ml-0 md:ml-64 p-margin-mobile md:p-margin-desktop max-w-container-max mx-auto w-full pb-20 md:pb-0">
     <!-- TAB: OVERVIEW -->
@@ -151,9 +172,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="flex items-center text-secondary font-body-sm text-body-sm bg-secondary-container px-2 py-0.5 rounded-full">
+                    <span id="stat-views-trend" class="flex items-center text-secondary font-body-sm text-body-sm bg-secondary-container px-2 py-0.5 rounded-full">
                         <span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
-                        14.2%
+                        0.0%
                     </span>
                     <span class="font-body-sm text-body-sm text-on-surface-variant">vs last month</span>
                 </div>
@@ -170,9 +191,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="flex items-center text-secondary font-body-sm text-body-sm bg-secondary-container px-2 py-0.5 rounded-full">
+                    <span id="stat-listings-trend" class="flex items-center text-secondary font-body-sm text-body-sm bg-secondary-container px-2 py-0.5 rounded-full">
                         <span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
-                        5.8%
+                        0.0%
                     </span>
                     <span class="font-body-sm text-body-sm text-on-surface-variant">vs last month</span>
                 </div>
@@ -189,9 +210,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="flex items-center text-error font-body-sm text-body-sm bg-error-container px-2 py-0.5 rounded-full">
-                        <span class="material-symbols-outlined text-[14px] mr-1">trending_down</span>
-                        2.1%
+                    <span id="stat-leads-trend" class="flex items-center text-secondary font-body-sm text-body-sm bg-secondary-container px-2 py-0.5 rounded-full">
+                        <span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
+                        0.0%
                     </span>
                     <span class="font-body-sm text-body-sm text-on-surface-variant">vs last month</span>
                 </div>
@@ -406,6 +427,27 @@
         </section>
     </div>
 
+    <!-- TAB: NOTIFICATIONS -->
+    <div id="tab-notifications" class="tab-content hidden">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-stack-lg gap-4">
+            <div>
+                <h1 class="font-h2 text-h2 text-primary">Notifications</h1>
+                <p class="font-body-sm text-body-sm text-on-surface-variant mt-unit">Stay updated on your listing reviews and status changes.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="mark-all-read-btn" class="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-xs hover:bg-slate-800 transition-colors uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 active:scale-95">
+                    <span class="material-symbols-outlined text-[16px]">done_all</span>
+                    Mark all as read
+                </button>
+            </div>
+        </header>
+        <section class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm p-4 md:p-6">
+            <div id="notifications-list-container" class="flex flex-col gap-4">
+                <div class="text-center text-slate-400 py-10 font-medium">Loading notifications...</div>
+            </div>
+        </section>
+    </div>
+
     <!-- TAB: SETTINGS -->
     <div id="tab-settings" class="tab-content hidden">
         <header class="flex justify-between items-center mb-stack-lg gap-4">
@@ -506,6 +548,41 @@
         }
       };
       chatHeader.prepend(backBtn);
+    }
+
+    // Mobile Sidebar Toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.getElementById('broker-sidebar');
+    const backdrop = document.getElementById('mobile-sidebar-backdrop');
+
+    if (mobileMenuBtn && sidebar && backdrop) {
+      function toggleSidebar() {
+        const isOpen = !sidebar.classList.contains('-translate-x-full');
+        if (isOpen) {
+          sidebar.classList.add('-translate-x-full');
+          backdrop.classList.add('opacity-0');
+          setTimeout(() => backdrop.classList.add('hidden'), 300);
+        } else {
+          backdrop.classList.remove('hidden');
+          // force reflow
+          void backdrop.offsetWidth;
+          backdrop.classList.remove('opacity-0');
+          sidebar.classList.remove('-translate-x-full');
+        }
+      }
+
+      mobileMenuBtn.addEventListener('click', toggleSidebar);
+      backdrop.addEventListener('click', toggleSidebar);
+      
+      // Close sidebar when clicking a link inside it on mobile
+      const sidebarLinks = sidebar.querySelectorAll('a, button');
+      sidebarLinks.forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth < 768 && !sidebar.classList.contains('-translate-x-full')) {
+            toggleSidebar();
+          }
+        });
+      });
     }
   });
 </script>

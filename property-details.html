@@ -32,13 +32,25 @@
             <!-- Navigation Links -->
             <div class="hidden md:flex items-center gap-8">
                 <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/properties.html?intent=Buy">Buy</a>
-                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/properties.html?intent=Rent">Rent</a>
-                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/map.html">Map View</a>
-                <a class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1"
-                    href="/sell.html">Sell</a>
+                    href="/map.html">Search Your Home</a>
+
+                <!-- Services Dropdown -->
+                <div class="relative group">
+                    <button class="text-[13px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-widest pb-1 flex items-center gap-1">
+                        Services
+                        <span class="material-symbols-outlined text-[16px]">expand_more</span>
+                    </button>
+                    <div class="absolute top-full left-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                        <a href="/sell.html" class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                            <span class="material-symbols-outlined text-[18px] text-slate-400">sell</span>
+                            Sell Property
+                        </a>
+                        <a href="/sell.html" class="flex items-center gap-3 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors border-t border-slate-100">
+                            <span class="material-symbols-outlined text-[18px] text-slate-400">home</span>
+                            Rent Your Property
+                        </a>
+                    </div>
+                </div>
             </div>
             <!-- Trailing Actions -->
       <div class="flex items-center gap-4">
@@ -69,7 +81,7 @@
                         <div class="h-10 w-32 bg-slate-200 animate-pulse rounded-xl"></div>
                     </div>
                     <div class="flex items-center gap-2 mt-2 md:justify-end">
-                        <span
+                        <span id="detail-status-badge"
                             class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest">Active</span>
                         <span class="text-sm font-bold text-slate-500">Est. ₹5.8L/mo</span>
                     </div>
@@ -166,6 +178,17 @@
                         <div class="flex items-center gap-3 font-bold text-slate-700">
                             <span class="material-symbols-outlined text-slate-400">security</span> Smart Security
                         </div>
+                    </div>
+                </section>
+
+                <!-- Moderation History (Visible only to owner/staff) -->
+                <section id="moderation-history-section" class="hidden mt-8 pt-8 border-t border-slate-100">
+                    <h3 class="text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-slate-700">history</span>
+                        Moderation History
+                    </h3>
+                    <div id="moderation-history-timeline" class="relative pl-6 border-l border-slate-200 flex flex-col gap-6">
+                        <!-- Injected by JS -->
                     </div>
                 </section>
             </div>
