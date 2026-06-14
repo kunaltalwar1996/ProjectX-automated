@@ -1,7 +1,7 @@
 name: Sync Intern Branches
 on:
   schedule:
-    - cron: '0 * * * *' # This automatically checks for updates every single hour
+    - cron: '0 */6 * * *' # This automatically checks for updates every 6 hours
   workflow_dispatch: # This gives you a manual button to sync whenever you want
 
 jobs:
