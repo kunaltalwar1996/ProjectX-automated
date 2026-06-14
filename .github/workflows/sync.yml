@@ -1,0 +1,35 @@
+name: Sync Intern Branches
+on:
+  schedule:
+    - cron: '0 * * * *' # This automatically checks for updates every single hour
+  workflow_dispatch: # This gives you a manual button to sync whenever you want
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync Mirror Branches
+        run: |
+          # Add the intern's original repository as a remote source
+          git remote add intern_source https://github.com/kunaltalwar1996/ProjectX-mirror.git
+          git fetch intern_source
+
+          # Automate syncing for all three tracking branches
+          for branch in main mvp release-1
+          do
+            echo "Processing branch: $branch"
+            git checkout $branch || git checkout -b $branch intern_source/$branch
+            git reset --hard intern_source/$branch
+            git push origin $branch --force
+          done
